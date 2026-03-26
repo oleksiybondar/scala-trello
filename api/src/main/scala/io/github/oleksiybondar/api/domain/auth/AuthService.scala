@@ -1,9 +1,12 @@
 package io.github.oleksiybondar.api.domain.auth
 
+import io.github.oleksiybondar.api.domain.user.UserId
+
 trait AuthService[F[_]] {
   def login(command: LoginCommand): F[Option[AuthTokens]]
   def refresh(command: RefreshTokenCommand): F[Option[AuthTokens]]
   def logout(command: LogoutCommand): F[Unit]
+  def verifyAccessToken(accessToken: AccessToken): F[Option[UserId]]
 }
 
 final case class LoginCommand(

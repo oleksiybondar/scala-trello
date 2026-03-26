@@ -3,7 +3,7 @@ package io.github.oleksiybondar.api.testkit.fixtures
 import cats.effect.IO
 import cats.effect.std.Dispatcher
 import cats.effect.unsafe.implicits.global
-import io.github.oleksiybondar.api.domain.auth.AccessToken
+import io.github.oleksiybondar.api.domain.auth.{AccessToken, AuthServiceLive}
 import io.github.oleksiybondar.api.domain.user.{User, UserId}
 import io.github.oleksiybondar.api.http.middleware.AuthMiddleware
 import io.github.oleksiybondar.api.http.routes.graphql.GraphQLRoutes
@@ -32,9 +32,10 @@ object GraphQLFixtures {
       for {
         userRepo <- InMemoryUserRepo.create[IO](users)
         authRepo <- InMemoryAuthRepo.create[IO]()
+        authService = AuthServiceLive[IO](userRepo, authRepo.accessTokens, authRepo.refreshTokens)
         graphqlRoutes <- GraphQLRoutes.routes(userRepo)
         protectedGraphqlRoutes =
-          AuthMiddleware.middleware[IO](authRepo.accessTokens)(graphqlRoutes)
+          AuthMiddleware.middleware[IO](authService)(graphqlRoutes)
         httpApp =
           Router("/graphql" -> protectedGraphqlRoutes).orNotFound
         result <- run(GraphQLContext(userRepo, authRepo, httpApp))

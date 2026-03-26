@@ -63,4 +63,25 @@ class AuthServiceLiveSpec extends FunSuite {
 
     assertEquals(result, None)
   }
+
+  test("verifyAccessToken returns the matching user id for a valid access token") {
+    val user = UserFixtures.sampleUser
+
+    val result = withAuthService(List(user)) { ctx =>
+      for {
+        loginTokens <- ctx.authService.login(LoginCommand("alice@example.com", "secret"))
+        userId <- ctx.authService.verifyAccessToken(loginTokens.get.accessToken)
+      } yield userId
+    }
+
+    assertEquals(result, Some(user.id))
+  }
+
+  test("verifyAccessToken returns none for an invalid access token") {
+    val result = withAuthService() { ctx =>
+      ctx.authService.verifyAccessToken(AccessToken("missing-token"))
+    }
+
+    assertEquals(result, None)
+  }
 }

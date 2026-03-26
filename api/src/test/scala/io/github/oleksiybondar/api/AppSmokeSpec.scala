@@ -1,24 +1,21 @@
 package io.github.oleksiybondar.api
 
 import cats.effect.IO
-import cats.effect.std.Dispatcher
 import cats.effect.unsafe.implicits.global
-import io.github.oleksiybondar.api.config.{ConfigLoader, HttpConfig}
+import io.github.oleksiybondar.api.config.HttpConfig
 import munit.FunSuite
-import zio.Runtime
 
 import java.net.URL
 
 class AppSmokeSpec extends FunSuite {
 
   test("the application starts and serves GET /health") {
-    val response = Dispatcher.parallel[IO].use { implicit dispatcher =>
-      given Runtime[Any] = Runtime.default
-
+    val response = Main.withDispatcher {
       for {
-        config <- IO.fromEither(ConfigLoader.load())
+        config <- Main.loadConfig
         testConfig = config.copy(http = HttpConfig(host = "127.0.0.1", port = 0))
-        response <- AppServer.resource(testConfig).use { server =>
+        httpApp <- Main.buildApp(testConfig)
+        response <- Main.buildServer(testConfig, httpApp).use { server =>
           IO.blocking {
             val connection =
               URL(s"http://127.0.0.1:${server.address.getPort}/health").openConnection()

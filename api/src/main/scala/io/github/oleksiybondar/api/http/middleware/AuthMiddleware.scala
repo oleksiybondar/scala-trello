@@ -1,10 +1,8 @@
 package io.github.oleksiybondar.api.http.middleware
 
 import cats.effect.Async
-import cats.effect.Ref
 import cats.syntax.all.*
-import io.github.oleksiybondar.api.domain.auth.AccessToken
-import io.github.oleksiybondar.api.domain.user.UserId
+import io.github.oleksiybondar.api.domain.auth.{AccessToken, AuthService}
 import org.http4s.{AuthScheme, Credentials, HttpRoutes, Request, Response, Status}
 import org.http4s.dsl.Http4sDsl
 import org.http4s.headers.Authorization
@@ -12,7 +10,7 @@ import org.http4s.headers.Authorization
 object AuthMiddleware {
 
   def middleware[F[_]: Async](
-                               accessTokenStore: Ref[F, Map[AccessToken, UserId]]
+                               authService: AuthService[F]
                              )(routes: HttpRoutes[F]): HttpRoutes[F] = {
     val dsl = new Http4sDsl[F] {}
     import dsl.*
@@ -25,16 +23,14 @@ object AuthMiddleware {
             .pure[F]
 
         case Some(accessToken) =>
-          accessTokenStore.get.flatMap { store =>
-            store.get(accessToken) match {
-              case None =>
-                Response[F](status = Status.Unauthorized)
-                  .withEntity("Invalid access token")
-                  .pure[F]
+          authService.verifyAccessToken(accessToken).flatMap {
+            case None =>
+              Response[F](status = Status.Unauthorized)
+                .withEntity("Invalid access token")
+                .pure[F]
 
-              case Some(_) =>
-                routes(req).getOrElseF(NotFound())
-            }
+            case Some(_) =>
+              routes(req).getOrElseF(NotFound())
           }
       }
     }

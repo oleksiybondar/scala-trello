@@ -56,6 +56,9 @@ final class AuthServiceLive[F[_]: Sync](
   override def logout(command: LogoutCommand): F[Unit] =
     refreshTokenStore.update(_ - command.refreshToken)
 
+  override def verifyAccessToken(accessToken: AccessToken): F[Option[UserId]] =
+    accessTokenStore.get.map(_.get(accessToken))
+
   private def generateAccessToken: F[AccessToken] =
     Sync[F].delay(AccessToken(UUID.randomUUID().toString))
 
