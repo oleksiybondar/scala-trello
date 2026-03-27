@@ -1,7 +1,6 @@
 package io.github.oleksiybondar.api.testkit.fixtures
 
 import cats.effect.IO
-import cats.effect.std.Dispatcher
 import cats.effect.unsafe.implicits.global
 import io.github.oleksiybondar.api.domain.auth.{AccessToken, AuthServiceLive}
 import io.github.oleksiybondar.api.domain.user.{User, UserId}
@@ -10,7 +9,6 @@ import io.github.oleksiybondar.api.http.routes.graphql.GraphQLRoutes
 import io.github.oleksiybondar.api.testkit.support.{InMemoryAuthRepo, InMemoryUserRepo}
 import org.http4s.HttpApp
 import org.http4s.server.Router
-import zio.Runtime
 
 object GraphQLFixtures {
 
@@ -26,19 +24,15 @@ object GraphQLFixtures {
   def withGraphQLRoutes[A](
     users: List[User] = List(UserFixtures.sampleUser)
   )(run: GraphQLContext => IO[A]): A =
-    Dispatcher.parallel[IO].use { implicit dispatcher =>
-      given Runtime[Any] = Runtime.default
-
-      for {
-        userRepo <- InMemoryUserRepo.create[IO](users)
-        authRepo <- InMemoryAuthRepo.create[IO]()
-        authService = AuthServiceLive[IO](userRepo, authRepo.accessTokens, authRepo.refreshTokens)
-        graphqlRoutes <- GraphQLRoutes.routes(userRepo)
-        protectedGraphqlRoutes =
-          AuthMiddleware.middleware[IO](authService)(graphqlRoutes)
-        httpApp =
-          Router("/graphql" -> protectedGraphqlRoutes).orNotFound
-        result <- run(GraphQLContext(userRepo, authRepo, httpApp))
-      } yield result
-    }.unsafeRunSync()
+    (for {
+      userRepo <- InMemoryUserRepo.create[IO](users)
+      authRepo <- InMemoryAuthRepo.create[IO]()
+      authService = AuthServiceLive[IO](userRepo, authRepo.accessTokens, authRepo.refreshTokens)
+      graphqlRoutes <- GraphQLRoutes.routes(userRepo)
+      protectedGraphqlRoutes =
+        AuthMiddleware.middleware[IO](authService)(graphqlRoutes)
+      httpApp =
+        Router("/graphql" -> protectedGraphqlRoutes).orNotFound
+      result <- run(GraphQLContext(userRepo, authRepo, httpApp))
+    } yield result).unsafeRunSync()
 }

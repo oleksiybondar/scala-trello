@@ -1,26 +1,77 @@
 package io.github.oleksiybondar.api.http.routes.graphql
 
-import caliban.{CalibanError, Http4sAdapter}
-import caliban.interop.cats.implicits.*
-import caliban.interop.tapir.HttpInterpreter
 import cats.effect.IO
-import cats.effect.std.Dispatcher
+import cats.syntax.all.*
+import io.circe.Decoder
+import io.circe.Json
 import io.github.oleksiybondar.api.http.routes.graphql.user.UserApi
 import io.github.oleksiybondar.api.infrastructure.db.user.UserRepo
+import org.http4s.EntityDecoder
 import org.http4s.HttpRoutes
-import zio.Runtime
+import org.http4s.Response
+import org.http4s.circe.CirceEntityCodec.*
+import org.http4s.circe.jsonOf
+import org.http4s.dsl.Http4sDsl
+import sangria.execution.ErrorWithResolver
+import sangria.execution.Executor
+import sangria.execution.QueryAnalysisError
+import sangria.marshalling.circe.*
+import sangria.parser.QueryParser
 
-object GraphQLRoutes {
+import scala.concurrent.ExecutionContext
 
-  def routes(
-              userRepo: UserRepo[IO]
-            )(using dispatcher: Dispatcher[IO], runtime: Runtime[Any]): IO[HttpRoutes[IO]] = {
-    val api = UserApi.api(userRepo)
+object GraphQLRoutes extends Http4sDsl[IO] {
 
-    api.interpreterF[IO].map { interpreter =>
-      Http4sAdapter.makeHttpServiceF[IO, Any, CalibanError](
-        HttpInterpreter(interpreter)
-      )
+  given ExecutionContext = ExecutionContext.global
+
+  final case class GraphQLRequest(
+    query: String,
+    operationName: Option[String],
+    variables: Option[Json]
+  )
+
+  given Decoder[GraphQLRequest] =
+    Decoder.forProduct3("query", "operationName", "variables")(GraphQLRequest.apply)
+
+  private given EntityDecoder[IO, GraphQLRequest] = jsonOf[IO, GraphQLRequest]
+
+  def routes(userRepo: UserRepo[IO]): IO[HttpRoutes[IO]] =
+    IO.pure(
+      HttpRoutes.of[IO] { case request @ POST -> Root =>
+        request
+          .as[GraphQLRequest]
+          .flatMap(executeQuery(userRepo, _))
+      }
+    )
+
+  private def executeQuery(
+    userRepo: UserRepo[IO],
+    request: GraphQLRequest
+  ): IO[Response[IO]] =
+    parseQuery(request.query).flatMap { queryAst =>
+      val result =
+        Executor
+          .execute(
+            schema = UserApi.schema,
+            queryAst = queryAst,
+            userContext = userRepo,
+            variables = request.variables.getOrElse(Json.obj()),
+            operationName = request.operationName
+          )
+          .recover {
+            case error: QueryAnalysisError => error.resolveError
+            case error: ErrorWithResolver => error.resolveError
+          }
+
+      IO.fromFuture(IO(result)).flatMap(Ok(_))
     }
-  }
+
+  private def parseQuery(query: String) =
+    IO.fromEither(
+      QueryParser
+        .parse(query)
+        .toEither
+        .left
+        .map(error => new IllegalArgumentException(error.getMessage))
+    )
 }

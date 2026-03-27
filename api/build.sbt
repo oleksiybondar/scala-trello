@@ -46,10 +46,9 @@ lazy val root = (project in file("."))
       "com.softwaremill.sttp.tapir" %% "tapir-openapi-docs" % "1.11.50",
       "com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-bundle" % "1.11.50",
 
-      // GraphQL: Caliban + http4s + cats-effect interop
-      "com.github.ghostdogpr" %% "caliban" % "3.0.0",
-      "com.github.ghostdogpr" %% "caliban-http4s" % "3.0.0",
-      "com.github.ghostdogpr" %% "caliban-cats" % "3.0.0",
+      // GraphQL: Sangria + Circe
+      "org.sangria-graphql" %% "sangria" % "4.2.15",
+      "org.sangria-graphql" %% "sangria-circe" % "1.3.2",
 
       // Tests
       "org.scalameta" %% "munit" % "1.1.1" % Test

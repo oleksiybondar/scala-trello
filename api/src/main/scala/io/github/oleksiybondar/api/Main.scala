@@ -1,7 +1,6 @@
 package io.github.oleksiybondar.api
 
 import cats.effect.{IO, IOApp, Ref, Resource}
-import cats.effect.std.Dispatcher
 import com.comcast.ip4s.{Host, Port}
 import io.github.oleksiybondar.api.config.{AppConfig, ConfigLoader}
 import io.github.oleksiybondar.api.domain.auth.{AccessToken, RefreshToken}
@@ -18,34 +17,22 @@ import org.http4s.HttpApp
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.Server
 import slick.jdbc.PostgresProfile.api.Database
-import zio.Runtime
 
 import scala.concurrent.ExecutionContext
 
 object Main extends IOApp.Simple {
 
   given ExecutionContext = ExecutionContext.global
-  given Runtime[Any] = Runtime.default
 
   override def run: IO[Unit] =
-    loadConfig.flatMap { config =>
-      withDispatcher {
-        buildAndRun(config)
-      }
-    }
+    loadConfig.flatMap(buildAndRun)
 
   def loadConfig: IO[AppConfig] =
     IO.fromEither(ConfigLoader.load())
 
-  def withDispatcher[A](fa: Dispatcher[IO] ?=> IO[A]): IO[A] =
-    Dispatcher.parallel[IO].use { dispatcher =>
-      given Dispatcher[IO] = dispatcher
-      fa
-    }
-
   private def buildAndRun(
                            config: AppConfig
-                         )(using Dispatcher[IO]): IO[Unit] =
+                         ): IO[Unit] =
     for {
       httpApp <- buildApp(config)
       _ <- runServer(config, httpApp)
@@ -53,7 +40,7 @@ object Main extends IOApp.Simple {
 
   def buildApp(
                         config: AppConfig
-                      )(using Dispatcher[IO]): IO[HttpApp[IO]] =
+                      ): IO[HttpApp[IO]] =
     buildHttpApp(config)
 
   def buildServer(
@@ -81,7 +68,7 @@ object Main extends IOApp.Simple {
 
   def buildHttpApp(
                             config: AppConfig
-                          )(using Dispatcher[IO]): IO[HttpApp[IO]] =
+                          ): IO[HttpApp[IO]] =
     for {
       db <- IO(
         Database.forURL(

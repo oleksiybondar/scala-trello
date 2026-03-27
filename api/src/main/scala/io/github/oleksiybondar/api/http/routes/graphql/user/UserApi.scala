@@ -1,44 +1,67 @@
 package io.github.oleksiybondar.api.http.routes.graphql.user
 
-import caliban.*
-import caliban.interop.cats.implicits.*
-import caliban.schema.{ArgBuilder, Schema, SchemaDerivation}
 import cats.effect.IO
-import cats.effect.std.Dispatcher
+import cats.effect.unsafe.implicits.global
 import io.github.oleksiybondar.api.domain.user.UserId
 import io.github.oleksiybondar.api.infrastructure.db.user.UserRepo
-import io.github.oleksiybondar.api.http.routes.graphql.user.UserSchema.*
+import sangria.execution.UserFacingError
+import sangria.schema.Argument
+import sangria.schema.Field
+import sangria.schema.ObjectType
+import sangria.schema.OptionType
+import sangria.schema.Schema
+import sangria.schema.StringType
+import sangria.schema.fields
 
 import java.util.UUID
 import scala.util.Try
 
-object UserApi extends SchemaDerivation[Any] {
+object UserApi {
 
-  final case class UserArgs(id: String) derives Schema.SemiAuto, ArgBuilder
+  final case class InvalidUserInput(override val getMessage: String)
+      extends IllegalArgumentException(getMessage)
+      with UserFacingError
 
-  def api(userRepo: UserRepo[IO])(using Dispatcher[IO]): GraphQL[Any] = {
-
-    final case class Queries(
-                              user: UserArgs => IO[Option[UserView]]
-                            ) derives Schema.SemiAuto
-
-    val queries =
-      Queries(
-        user = args =>
-          IO.fromEither(
-            Try(UUID.fromString(args.id))
-              .toEither
-              .left
-              .map(e => new RuntimeException(s"Invalid UUID: ${args.id}", e))
-          ).flatMap { uuid =>
-            userRepo.findById(UserId(uuid)).map(_.map(toView))
-          }
+  val UserType: ObjectType[Unit, UserView] =
+    ObjectType(
+      name = "UserView",
+      fields[Unit, UserView](
+        Field("id", StringType, resolve = _.value.id),
+        Field("username", OptionType(StringType), resolve = _.value.username),
+        Field("email", OptionType(StringType), resolve = _.value.email),
+        Field("firstName", StringType, resolve = _.value.firstName),
+        Field("lastName", StringType, resolve = _.value.lastName),
+        Field("avatarUrl", OptionType(StringType), resolve = _.value.avatarUrl),
+        Field("createdAt", StringType, resolve = _.value.createdAt)
       )
-
-    graphQL(
-      RootResolver(queries)
     )
-  }
+
+  private val IdArg = Argument("id", StringType)
+
+  val QueryType: ObjectType[UserRepo[IO], Unit] =
+    ObjectType(
+      name = "Queries",
+      fields[UserRepo[IO], Unit](
+        Field(
+          name = "user",
+          fieldType = OptionType(UserType),
+          arguments = IdArg :: Nil,
+          resolve = ctx => {
+            val userId = parseUserId(ctx.arg(IdArg))
+            ctx.ctx.findById(userId).map(_.map(toView)).unsafeToFuture()
+          }
+        )
+      )
+    )
+
+  val schema: Schema[UserRepo[IO], Unit] =
+    Schema(query = QueryType)
+
+  private def parseUserId(rawId: String): UserId =
+    UserId(
+      Try(UUID.fromString(rawId))
+        .getOrElse(throw InvalidUserInput(s"Invalid UUID: $rawId"))
+    )
 
   private def toView(user: io.github.oleksiybondar.api.domain.user.User): UserView =
     UserView(
