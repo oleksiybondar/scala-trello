@@ -23,8 +23,7 @@ object AuthServiceFixtures {
         authRepo <- InMemoryAuthRepo.create[IO]()
         authService = io.github.oleksiybondar.api.domain.auth.AuthServiceLive[IO](
           userRepo,
-          authRepo.accessTokens,
-          authRepo.refreshTokens
+          authRepo
         )
         result <- run(AuthServiceContext(userRepo, authRepo, authService))
       } yield result

@@ -28,7 +28,7 @@ object GraphQLFixtures {
     (for {
       userRepo <- InMemoryUserRepo.create[IO](users)
       authRepo <- InMemoryAuthRepo.create[IO]()
-      authService = AuthServiceLive[IO](userRepo, authRepo.accessTokens, authRepo.refreshTokens)
+      authService = AuthServiceLive[IO](userRepo, authRepo)
       graphqlRoutes <- GraphQLRoutes.routes(GraphQLContext(userRepo = userRepo))
       protectedGraphqlRoutes =
         AuthMiddleware.middleware[IO](authService)(graphqlRoutes)

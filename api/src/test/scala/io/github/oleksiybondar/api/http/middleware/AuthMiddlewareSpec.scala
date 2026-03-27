@@ -86,8 +86,7 @@ class AuthMiddlewareSpec extends FunSuite {
         userRepo <- InMemoryUserRepo.create[IO]()
         authService = io.github.oleksiybondar.api.domain.auth.AuthServiceLive[IO](
           userRepo,
-          authRepo.accessTokens,
-          authRepo.refreshTokens
+          authRepo
         )
         routes = HttpRoutes.of[IO] {
           case GET -> Root / "protected" => Ok("protected content")

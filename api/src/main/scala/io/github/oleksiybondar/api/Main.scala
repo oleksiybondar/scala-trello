@@ -1,10 +1,9 @@
 package io.github.oleksiybondar.api
 
-import cats.effect.{IO, IOApp, Ref, Resource}
+import cats.effect.{IO, IOApp, Resource}
 import com.comcast.ip4s.{Host, Port}
 import io.github.oleksiybondar.api.config.{AppConfig, ConfigLoader}
-import io.github.oleksiybondar.api.domain.auth.{AccessToken, RefreshToken}
-import io.github.oleksiybondar.api.domain.user.UserId
+import io.github.oleksiybondar.api.domain.auth.TokenRepo
 import io.github.oleksiybondar.api.http.HttpApi
 import io.github.oleksiybondar.api.http.docs.graphql.GraphiQLRoutes
 import io.github.oleksiybondar.api.http.docs.rest.OpenAPI
@@ -12,9 +11,12 @@ import io.github.oleksiybondar.api.http.middleware.AuthMiddleware
 import io.github.oleksiybondar.api.http.routes.graphql.GraphQLContext
 import io.github.oleksiybondar.api.http.routes.graphql.GraphQLRoutes
 import io.github.oleksiybondar.api.http.routes.rest.health.HealthRoutes
+import io.github.oleksiybondar.api.infrastructure.db.auth.SlickTokenRepo
+import io.github.oleksiybondar.api.infrastructure.db.DatabaseResource
 import io.github.oleksiybondar.api.infrastructure.db.user.SlickUserRepo
+import io.github.oleksiybondar.api.infrastructure.db.user.UserRepo
 import io.github.oleksiybondar.api.modules.AuthModule
-import org.http4s.HttpApp
+import org.http4s.{HttpApp, HttpRoutes}
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.Server
 import slick.jdbc.PostgresProfile.api.Database
@@ -26,28 +28,28 @@ object Main extends IOApp.Simple {
   given ExecutionContext = ExecutionContext.global
 
   override def run: IO[Unit] =
-    loadConfig.flatMap(buildAndRun)
+    loadConfig.flatMap(config => serverResource(config).useForever)
 
   def loadConfig: IO[AppConfig] =
     IO.fromEither(ConfigLoader.load())
 
-  private def buildAndRun(
-                           config: AppConfig
-                         ): IO[Unit] =
+  def serverResource(
+    config: AppConfig
+  ): Resource[IO, Server] =
     for {
       httpApp <- buildApp(config)
-      _ <- runServer(config, httpApp)
-    } yield ()
+      server <- buildServer(config, httpApp)
+    } yield server
 
   def buildApp(
-                        config: AppConfig
-                      ): IO[HttpApp[IO]] =
-    buildHttpApp(config)
+    config: AppConfig
+  ): Resource[IO, HttpApp[IO]] =
+    appResource(config)
 
   def buildServer(
-                           config: AppConfig,
-                           httpApp: HttpApp[IO]
-                         ): Resource[IO, Server] =
+    config: AppConfig,
+    httpApp: HttpApp[IO]
+  ): Resource[IO, Server] =
     Resource.suspend {
       for {
         host <- parseHost(config)
@@ -60,54 +62,56 @@ object Main extends IOApp.Simple {
           .withHttpApp(httpApp)
           .build
     }
-    
-  private def runServer(
-                         config: AppConfig,
-                         httpApp: HttpApp[IO]
-                       ): IO[Unit] =
-    buildServer(config, httpApp).useForever
+
+  def appResource(
+    config: AppConfig
+  ): Resource[IO, HttpApp[IO]] =
+    for {
+      db <- databaseResource(config)
+      userRepo = buildUserRepo(db)
+      tokenRepo = buildTokenRepo(db)
+      graphqlRoutes <- graphqlRoutesResource(userRepo)
+    } yield {
+      val authModule = buildAuthModule(userRepo, tokenRepo)
+      buildHttpApp(authModule, graphqlRoutes)
+    }
+
+  def databaseResource(config: AppConfig): Resource[IO, Database] =
+    DatabaseResource.make(config.database)
+
+  def graphqlRoutesResource(userRepo: UserRepo[IO]): Resource[IO, HttpRoutes[IO]] =
+    Resource.eval(GraphQLRoutes.routes(GraphQLContext(userRepo = userRepo)))
+
+  def buildUserRepo(db: Database): UserRepo[IO] =
+    new SlickUserRepo[IO](db)
+
+  def buildTokenRepo(db: Database): TokenRepo[IO] =
+    new SlickTokenRepo[IO](db)
+
+  def buildAuthModule(
+    userRepo: UserRepo[IO],
+    tokenRepo: TokenRepo[IO]
+  ): AuthModule[IO] =
+    AuthModule.make[IO](
+      userRepo,
+      tokenRepo
+    )
 
   def buildHttpApp(
-                            config: AppConfig
-                          ): IO[HttpApp[IO]] =
-    for {
-      db <- IO(
-        Database.forURL(
-          url = config.database.db.url,
-          user = config.database.db.user,
-          password = config.database.db.password,
-          driver = config.database.db.driver
-        )
-      )
+    authModule: AuthModule[IO],
+    graphqlRoutes: HttpRoutes[IO]
+  ): HttpApp[IO] = {
+    val authenticatedGraphqlRoutes =
+      AuthMiddleware.middleware[IO](authModule.authService)(graphqlRoutes)
 
-      userRepo = new SlickUserRepo[IO](db)
-      graphQLContext = GraphQLContext(userRepo = userRepo)
-
-      accessTokenStore <- Ref.of[IO, Map[AccessToken, UserId]](Map.empty)
-      refreshTokenStore <- Ref.of[IO, Map[RefreshToken, UserId]](Map.empty)
-
-      authModule = AuthModule.make[IO](
-        userRepo,
-        accessTokenStore,
-        refreshTokenStore
-      )
-
-      healthRoutes = HealthRoutes.routes[IO]
-      swaggerRoutes = OpenAPI.routes[IO]
-      graphqlRoutes <- GraphQLRoutes.routes(graphQLContext)
-      graphiqlRoutes = GraphiQLRoutes.routes[IO]
-
-      authenticatedGraphqlRoutes =
-        AuthMiddleware.middleware[IO](authModule.authService)(graphqlRoutes)
-
-      httpApp = HttpApi.make[IO](
-        healthRoutes,
-        authModule.authRoutes,
-        authenticatedGraphqlRoutes,
-        swaggerRoutes,
-        graphiqlRoutes
-      )
-    } yield httpApp
+    HttpApi.make[IO](
+      HealthRoutes.routes[IO],
+      authModule.authRoutes,
+      authenticatedGraphqlRoutes,
+      OpenAPI.routes[IO],
+      GraphiQLRoutes.routes[IO]
+    )
+  }
 
   private def parseHost(config: AppConfig): IO[Host] =
     IO.fromOption(Host.fromString(config.http.host))(

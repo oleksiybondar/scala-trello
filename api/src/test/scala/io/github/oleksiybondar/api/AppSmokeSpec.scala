@@ -13,8 +13,7 @@ class AppSmokeSpec extends FunSuite {
     val response = (for {
       config <- Main.loadConfig
       testConfig = config.copy(http = HttpConfig(host = "127.0.0.1", port = 0))
-      httpApp <- Main.buildApp(testConfig)
-      response <- Main.buildServer(testConfig, httpApp).use { server =>
+      response <- Main.buildApp(testConfig).flatMap(Main.buildServer(testConfig, _)).use { server =>
         IO.blocking {
           val connection =
             URL(s"http://127.0.0.1:${server.address.getPort}/health").openConnection()
