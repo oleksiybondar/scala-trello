@@ -13,7 +13,7 @@ The repository uses shared Git hooks at the monorepo root. Git only supports one
 ### Tooling
 
 - `api/`: `scalafmt`, `scalafix` (`ExplicitResultTypes`, `DisableSyntax`, `OrganizeImports`, `RedundantSyntax`), compiler warning linting, `scapegoat`, `scoverage`
-- `app/`: reserved for standard TypeScript-native tools such as `eslint` and the app test runner once the app exists
+- `app/`: TypeScript-native `eslint` + `tsc --noEmit`, with framework-specific rules to be layered in once the UI scaffold exists
 - CI only: `jscpd` for duplication
 
 ### Setup
@@ -27,7 +27,7 @@ sh ./scripts/install-hooks.sh
 Local workstation requirements stay project-native:
 
 - `api/`: JDK + `sbt`
-- `app/`: Node.js once the app is initialized
+- `app/`: Node.js once dependencies are installed
 
 ### Manual runs
 
@@ -36,6 +36,7 @@ sh ./scripts/run-api-checks.sh pre-commit
 sh ./scripts/run-api-checks.sh build
 sh ./scripts/run-api-checks.sh migrate
 sh ./scripts/run-api-checks.sh coverage
+sh ./scripts/run-app-checks.sh pre-commit
 ```
 
 ### App integration
@@ -46,6 +47,7 @@ When `app` is bootstrapped, add standard scripts to `app/package.json` so the sh
 {
   "scripts": {
     "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit --project tsconfig.json",
     "build": "your-app-build-command",
     "test:coverage": "your-app-coverage-command"
   }

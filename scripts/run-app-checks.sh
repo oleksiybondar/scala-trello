@@ -40,7 +40,9 @@ require_script() {
 case "$mode" in
   pre-commit|static)
     require_script lint
-    exec npm run lint
+    require_script typecheck
+    npm run lint
+    exec npm run typecheck
     ;;
   build)
     if has_script build; then
