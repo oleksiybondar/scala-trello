@@ -18,12 +18,12 @@ class UserServiceLiveSpec extends FunSuite {
 
     withUserService() { ctx =>
       for {
-        _ <- ctx.userService.createUser(createdUser)
+        _        <- ctx.userService.createUser(createdUser)
         reloaded <- ctx.userService.getUser(createdUser.id)
       } yield reloaded
     } match {
       case result =>
-      assertEquals(result, Some(createdUser))
+        assertEquals(result, Some(createdUser))
     }
   }
 
@@ -58,7 +58,7 @@ class UserServiceLiveSpec extends FunSuite {
   }
 
   test("listUsers returns all users") {
-    val firstUser = UserFixtures.sampleUser
+    val firstUser  = UserFixtures.sampleUser
     val secondUser =
       UserFixtures.user(
         id = UserId(UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")),
@@ -78,7 +78,7 @@ class UserServiceLiveSpec extends FunSuite {
 
   test("updateUser returns true and persists changes for an existing user") {
     val existingUser = UserFixtures.sampleUser
-    val updatedUser =
+    val updatedUser  =
       existingUser.copy(
         firstName = FirstName("Alicia"),
         lastName = LastName("Updated")
@@ -86,7 +86,7 @@ class UserServiceLiveSpec extends FunSuite {
 
     val result = withUserService(List(existingUser)) { ctx =>
       for {
-        updated <- ctx.userService.updateUser(updatedUser)
+        updated  <- ctx.userService.updateUser(updatedUser)
         reloaded <- ctx.userService.getUser(existingUser.id)
       } yield (updated, reloaded)
     }
@@ -111,7 +111,7 @@ class UserServiceLiveSpec extends FunSuite {
 
     val result = withUserService(List(user)) { ctx =>
       for {
-        deleted <- ctx.userService.deleteUser(user.id)
+        deleted  <- ctx.userService.deleteUser(user.id)
         reloaded <- ctx.userService.getUser(user.id)
       } yield (deleted, reloaded)
     }

@@ -10,14 +10,14 @@ trait AuthService[F[_]] {
 }
 
 final case class LoginCommand(
-                               login: String,
-                               password: String
-                             )
+    login: String,
+    password: String
+)
 
 final case class RefreshTokenCommand(
-                                      refreshToken: RefreshToken
-                                    )
+    refreshToken: RefreshToken
+)
 
 final case class LogoutCommand(
-                                refreshToken: RefreshToken
-                              )
+    refreshToken: RefreshToken
+)

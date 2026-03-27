@@ -2,7 +2,7 @@ package io.github.oleksiybondar.api.http.routes.rest.health
 
 import cats.effect.Async
 import org.http4s.HttpRoutes
-import sttp.tapir.*
+import sttp.tapir._
 import sttp.tapir.server.http4s.Http4sServerInterpreter
 
 object HealthRoutes {

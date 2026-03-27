@@ -1,9 +1,7 @@
 package io.github.oleksiybondar.api.http.routes.graphql
 
 import io.github.oleksiybondar.api.http.routes.graphql.user.UserApi
-import sangria.schema.ObjectType
-import sangria.schema.Schema
-import sangria.schema.fields
+import sangria.schema.{ObjectType, Schema, fields}
 
 object GraphQLSchema {
 

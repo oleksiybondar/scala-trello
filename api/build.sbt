@@ -1,10 +1,26 @@
 ThisBuild / scalaVersion := "3.3.3"
 ThisBuild / organization := "io.github.oleksiybondar"
 ThisBuild / version := "0.1.0-SNAPSHOT"
+ThisBuild / semanticdbEnabled := true
+ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 
 lazy val root = (project in file("."))
   .settings(
     name := "api",
+
+    scalacOptions ++= Seq(
+      "-deprecation",
+      "-feature",
+      "-unchecked",
+      "-Werror",
+      "-Wunused:all",
+      "-Wvalue-discard"
+    ),
+
+    coverageMinimumStmtTotal := 80,
+    coverageMinimumBranchTotal := 70,
+    coverageFailOnMinimum := true,
+    coverageHighlighting := true,
 
     libraryDependencies ++= Seq(
       // FP core
@@ -52,9 +68,20 @@ lazy val root = (project in file("."))
 
       // Tests
       "org.scalameta" %% "munit" % "1.1.1" % Test
-    ),
-
-    addCommandAlias("migrate", "runMain io.github.oleksiybondar.api.MigrateMain"),
-    addCommandAlias("app", "runMain io.github.oleksiybondar.api.Main"),
-    addCommandAlias("migrateAndRun", "migrate; app")
+    )
   )
+
+addCommandAlias("fmt", "scalafmtAll")
+addCommandAlias("fmtCheck", "scalafmtCheckAll")
+addCommandAlias(
+  "lint",
+  "; compile; Test / compile; scalafixAll --check; Test / scalafixAll --check; scapegoat; Test / scapegoat"
+)
+addCommandAlias(
+  "coverageCheck",
+  "; clean; coverage; test; coverageReport; coverageOff"
+)
+addCommandAlias("quality", "; fmtCheck; lint; coverageCheck")
+addCommandAlias("migrate", "runMain io.github.oleksiybondar.api.MigrateMain")
+addCommandAlias("app", "runMain io.github.oleksiybondar.api.Main")
+addCommandAlias("migrateAndRun", "migrate; app")

@@ -2,7 +2,7 @@ package io.github.oleksiybondar.api.http.docs.graphql
 
 import cats.effect.Async
 import org.http4s.HttpRoutes
-import sttp.tapir.*
+import sttp.tapir._
 import sttp.tapir.server.http4s.Http4sServerInterpreter
 
 object GraphiQLRoutes {

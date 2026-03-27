@@ -1,6 +1,6 @@
 package io.github.oleksiybondar.api.infrastructure.db.user
 
-import io.github.oleksiybondar.api.domain.user.*
+import io.github.oleksiybondar.api.domain.user._
 
 trait UserRepo[F[_]] {
   def create(user: User): F[Unit]

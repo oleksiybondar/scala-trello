@@ -3,12 +3,12 @@ package io.github.oleksiybondar.api.http.routes.graphql
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import io.circe.Json
-import io.github.oleksiybondar.api.testkit.fixtures.UserFixtures
 import io.github.oleksiybondar.api.testkit.fixtures.GraphQLFixtures.withGraphQLRoutes
+import io.github.oleksiybondar.api.testkit.fixtures.UserFixtures
 import io.github.oleksiybondar.api.testkit.support.GraphQLRequestSupport.graphqlRequest
 import munit.FunSuite
 import org.http4s.Status
-import org.http4s.circe.CirceEntityCodec.*
+import org.http4s.circe.CirceEntityCodec._
 
 class GraphQLRoutesSpec extends FunSuite {
 
@@ -26,17 +26,17 @@ class GraphQLRoutesSpec extends FunSuite {
   test("POST /graphql serves the schema for an authorized request") {
     val response = withGraphQLRoutes() { ctx =>
       for {
-        _ <- ctx.seedAccessToken("valid-token", UserFixtures.sampleUser.id)
+        _        <- ctx.seedAccessToken("valid-token", UserFixtures.sampleUser.id)
         response <- ctx.httpApp.run(
-          graphqlRequest(
-            introspectionQuery,
-            accessToken = Some("valid-token")
-          )
-        )
+                      graphqlRequest(
+                        introspectionQuery,
+                        accessToken = Some("valid-token")
+                      )
+                    )
       } yield response
     }
 
-    val body = response.as[Json].unsafeRunSync()
+    val body   = response.as[Json].unsafeRunSync()
     val cursor =
       body.hcursor.downField("data").downField("__schema").downField("queryType")
 
@@ -47,17 +47,17 @@ class GraphQLRoutesSpec extends FunSuite {
   test("POST /graphql returns GraphQL errors for an invalid schema query") {
     val response = withGraphQLRoutes() { ctx =>
       for {
-        _ <- ctx.seedAccessToken("valid-token", UserFixtures.sampleUser.id)
+        _        <- ctx.seedAccessToken("valid-token", UserFixtures.sampleUser.id)
         response <- ctx.httpApp.run(
-          graphqlRequest(
-            invalidSchemaQuery,
-            accessToken = Some("valid-token")
-          )
-        )
+                      graphqlRequest(
+                        invalidSchemaQuery,
+                        accessToken = Some("valid-token")
+                      )
+                    )
       } yield response
     }
 
-    val body = response.as[Json].unsafeRunSync()
+    val body   = response.as[Json].unsafeRunSync()
     val errors =
       body.hcursor
         .downField("errors")

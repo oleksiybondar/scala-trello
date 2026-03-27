@@ -1,45 +1,46 @@
 package io.github.oleksiybondar.api.infrastructure.db.auth
 
 import cats.effect.Async
-import cats.syntax.all.*
+import cats.syntax.all._
 import io.github.oleksiybondar.api.domain.auth.{AccessToken, RefreshToken, TokenRepo, TokenType}
 import io.github.oleksiybondar.api.domain.user.UserId
-import slick.jdbc.PostgresProfile.api.*
+import slick.jdbc.PostgresProfile.api._
 
 import java.time.Instant
 import java.util.UUID
 import scala.concurrent.ExecutionContext
 
 final class SlickTokenRepo[F[_]: Async](
-  db: Database
+    db: Database
 )(implicit ec: ExecutionContext) extends TokenRepo[F] {
 
   private final case class TokenRow(
-    token: String,
-    userId: UUID,
-    tokenType: String,
-    createdAt: Instant
+      token: String,
+      userId: UUID,
+      tokenType: String,
+      createdAt: Instant
   )
 
   private final class AuthTokensTable(tag: Tag) extends Table[TokenRow](tag, "auth_tokens") {
-    def token = column[String]("token", O.PrimaryKey)
-    def userId = column[UUID]("user_id")
+    def token     = column[String]("token", O.PrimaryKey)
+    def userId    = column[UUID]("user_id")
     def tokenType = column[String]("token_type")
     def createdAt = column[Instant]("created_at")
 
-    def userFk = foreignKey("auth_tokens_user_id_fk", userId, users)(_.id, onDelete = ForeignKeyAction.Cascade)
+    def userFk =
+      foreignKey("auth_tokens_user_id_fk", userId, users)(_.id, onDelete = ForeignKeyAction.Cascade)
 
     def * = (token, userId, tokenType, createdAt).mapTo[TokenRow]
   }
 
   private final class UsersTable(tag: Tag) extends Table[(UUID, String)](tag, "users") {
-    def id = column[UUID]("id", O.PrimaryKey)
+    def id           = column[UUID]("id", O.PrimaryKey)
     def passwordHash = column[String]("password_hash")
 
     def * = (id, passwordHash)
   }
 
-  private val users = TableQuery[UsersTable]
+  private val users      = TableQuery[UsersTable]
   private val authTokens = TableQuery[AuthTokensTable]
 
   private def run[A](action: DBIO[A]): F[A] =
@@ -67,18 +68,24 @@ final class SlickTokenRepo[F[_]: Async](
   override def findUserIdByRefreshToken(token: RefreshToken): F[Option[UserId]] =
     findUserId(token.value, TokenType.Refresh)
 
-  override def rotateRefreshToken(current: RefreshToken, next: RefreshToken, userId: UserId): F[Unit] =
+  override def rotateRefreshToken(
+      current: RefreshToken,
+      next: RefreshToken,
+      userId: UserId
+  ): F[Unit] =
     run {
       for {
         _ <- authTokens
-          .filter(row => row.token === current.value && row.tokenType === TokenType.Refresh.toString)
-          .delete
+               .filter(row =>
+                 row.token === current.value && row.tokenType === TokenType.Refresh.toString
+               )
+               .delete
         _ <- authTokens += TokenRow(
-          token = next.value,
-          userId = userId.value,
-          tokenType = TokenType.Refresh.toString,
-          createdAt = Instant.now()
-        )
+               token = next.value,
+               userId = userId.value,
+               tokenType = TokenType.Refresh.toString,
+               createdAt = Instant.now()
+             )
       } yield ()
     }
 

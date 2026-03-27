@@ -10,10 +10,10 @@ enum TokenType {
 }
 
 final case class StoredToken[T](
-  token: T,
-  userId: UserId,
-  tokenType: TokenType,
-  createdAt: Instant
+    token: T,
+    userId: UserId,
+    tokenType: TokenType,
+    createdAt: Instant
 )
 
 trait TokenRepo[F[_]] {

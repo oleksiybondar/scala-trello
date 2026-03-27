@@ -3,10 +3,8 @@ package io.github.oleksiybondar.api.http.routes.rest.health
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import munit.FunSuite
-import org.http4s.Method
-import org.http4s.Request
-import org.http4s.Status
-import org.http4s.implicits.*
+import org.http4s.implicits._
+import org.http4s.{Method, Request, Status}
 
 class HealthRoutesSpec extends FunSuite {
 

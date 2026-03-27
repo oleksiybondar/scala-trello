@@ -2,12 +2,12 @@ package io.github.oleksiybondar.api.testkit.support
 
 import cats.effect.Ref
 import cats.effect.kernel.Sync
-import cats.syntax.all.*
-import io.github.oleksiybondar.api.domain.user.*
+import cats.syntax.all._
+import io.github.oleksiybondar.api.domain.user._
 import io.github.oleksiybondar.api.infrastructure.db.user.UserRepo
 
 final class InMemoryUserRepo[F[_]: Sync] private (
-  state: Ref[F, Map[UserId, User]]
+    state: Ref[F, Map[UserId, User]]
 ) extends UserRepo[F] {
 
   override def create(user: User): F[Unit] =

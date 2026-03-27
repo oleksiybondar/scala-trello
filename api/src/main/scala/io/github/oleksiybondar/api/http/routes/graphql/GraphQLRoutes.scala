@@ -1,19 +1,13 @@
 package io.github.oleksiybondar.api.http.routes.graphql
 
 import cats.effect.IO
-import cats.syntax.all.*
-import io.circe.Decoder
-import io.circe.Json
-import org.http4s.EntityDecoder
-import org.http4s.HttpRoutes
-import org.http4s.Response
-import org.http4s.circe.CirceEntityCodec.*
+import io.circe.{Decoder, Json}
+import org.http4s.circe.CirceEntityCodec._
 import org.http4s.circe.jsonOf
 import org.http4s.dsl.Http4sDsl
-import sangria.execution.ErrorWithResolver
-import sangria.execution.Executor
-import sangria.execution.QueryAnalysisError
-import sangria.marshalling.circe.*
+import org.http4s.{EntityDecoder, HttpRoutes, Response}
+import sangria.execution.{ErrorWithResolver, Executor, QueryAnalysisError}
+import sangria.marshalling.circe._
 import sangria.parser.QueryParser
 
 import scala.concurrent.ExecutionContext
@@ -23,9 +17,9 @@ object GraphQLRoutes extends Http4sDsl[IO] {
   given ExecutionContext = ExecutionContext.global
 
   final case class GraphQLRequest(
-    query: String,
-    operationName: Option[String],
-    variables: Option[Json]
+      query: String,
+      operationName: Option[String],
+      variables: Option[Json]
   )
 
   given Decoder[GraphQLRequest] =
@@ -43,8 +37,8 @@ object GraphQLRoutes extends Http4sDsl[IO] {
     )
 
   private def executeQuery(
-    context: GraphQLContext,
-    request: GraphQLRequest
+      context: GraphQLContext,
+      request: GraphQLRequest
   ): IO[Response[IO]] =
     parseQuery(request.query).flatMap { queryAst =>
       val result =
@@ -58,7 +52,7 @@ object GraphQLRoutes extends Http4sDsl[IO] {
           )
           .recover {
             case error: QueryAnalysisError => error.resolveError
-            case error: ErrorWithResolver => error.resolveError
+            case error: ErrorWithResolver  => error.resolveError
           }
 
       IO.fromFuture(IO(result)).flatMap(Ok(_))

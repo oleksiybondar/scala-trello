@@ -1,0 +1,18 @@
+{
+  "reporters": ["consoleFull"],
+  "threshold": 2,
+  "minTokens": 80,
+  "absolute": false,
+  "ignore": [
+    "**/.idea/**",
+    "**/coverage/**",
+    "**/dist/**",
+    "**/node_modules/**",
+    "**/target/**"
+  ],
+  "formatsExts": {
+    "scala": ["scala"],
+    "typescript": ["ts", "tsx"],
+    "javascript": ["js", "jsx"]
+  }
+}

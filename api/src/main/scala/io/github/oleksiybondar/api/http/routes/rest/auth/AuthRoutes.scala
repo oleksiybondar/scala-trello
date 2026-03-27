@@ -1,16 +1,15 @@
 package io.github.oleksiybondar.api.http.routes.rest.auth
 
 import cats.effect.Async
-import cats.syntax.all.*
-import io.circe.generic.auto.*
-import io.github.oleksiybondar.api.domain.auth.*
-import io.github.oleksiybondar.api.http.routes.rest.auth.*
+import cats.syntax.all._
+import io.circe.generic.auto._
+import io.github.oleksiybondar.api.domain.auth._
+import io.github.oleksiybondar.api.http.routes.rest.auth._
 import org.http4s.HttpRoutes
-import sttp.tapir.*
-import sttp.tapir.generic.auto.*
-import sttp.tapir.json.circe.*
+import sttp.tapir._
+import sttp.tapir.generic.auto._
+import sttp.tapir.json.circe._
 import sttp.tapir.server.http4s.Http4sServerInterpreter
-
 
 object AuthRoutes {
 
@@ -76,8 +75,8 @@ object AuthRoutes {
   // ----- server logic -----
 
   private def loginLogic[F[_]: Async](
-                                       authService: AuthService[F]
-                                     )(request: LoginRequest): F[Either[ErrorResponse, AuthTokensResponse]] =
+      authService: AuthService[F]
+  )(request: LoginRequest): F[Either[ErrorResponse, AuthTokensResponse]] =
     authService
       .login(toLoginCommand(request))
       .map {
@@ -86,8 +85,8 @@ object AuthRoutes {
       }
 
   private def refreshLogic[F[_]: Async](
-                                         authService: AuthService[F]
-                                       )(request: RefreshRequest): F[Either[ErrorResponse, AuthTokensResponse]] =
+      authService: AuthService[F]
+  )(request: RefreshRequest): F[Either[ErrorResponse, AuthTokensResponse]] =
     authService
       .refresh(toRefreshCommand(request))
       .map {
@@ -96,8 +95,8 @@ object AuthRoutes {
       }
 
   private def logoutLogic[F[_]: Async](
-                                        authService: AuthService[F]
-                                      )(request: LogoutRequest): F[Either[ErrorResponse, Unit]] =
+      authService: AuthService[F]
+  )(request: LogoutRequest): F[Either[ErrorResponse, Unit]] =
     authService
       .logout(toLogoutCommand(request))
       .as(Right(()))

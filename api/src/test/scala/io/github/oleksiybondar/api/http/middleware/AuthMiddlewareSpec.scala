@@ -5,13 +5,10 @@ import cats.effect.unsafe.implicits.global
 import io.github.oleksiybondar.api.domain.auth.{AccessToken, AuthService}
 import io.github.oleksiybondar.api.testkit.support.{InMemoryAuthRepo, InMemoryUserRepo}
 import munit.FunSuite
-import org.http4s.Method
-import org.http4s.Request
-import org.http4s.Status
-import org.http4s.dsl.io.*
+import org.http4s.dsl.io._
 import org.http4s.headers.Authorization
-import org.http4s.implicits.*
-import org.http4s.{AuthScheme, Credentials, HttpRoutes}
+import org.http4s.implicits._
+import org.http4s.{AuthScheme, Credentials, HttpRoutes, Method, Request, Status}
 
 class AuthMiddlewareSpec extends FunSuite {
 
@@ -51,19 +48,19 @@ class AuthMiddlewareSpec extends FunSuite {
   test("middleware allows the request when the bearer token is valid") {
     val response = withProtectedRoutes { protectedRoutes =>
       for {
-        _ <- protectedRoutes.authRepo.saveAccessToken(
-          AccessToken("valid-token"),
-          io.github.oleksiybondar.api.testkit.fixtures.UserFixtures.sampleUser.id
-        )
+        _        <- protectedRoutes.authRepo.saveAccessToken(
+                      AccessToken("valid-token"),
+                      io.github.oleksiybondar.api.testkit.fixtures.UserFixtures.sampleUser.id
+                    )
         response <- AuthMiddleware
-          .middleware[IO](protectedRoutes.authService)(protectedRoutes.routes)
-          .orNotFound
-          .run(
-            Request[IO](method = Method.GET, uri = uri"/protected")
-              .putHeaders(
-                Authorization(Credentials.Token(AuthScheme.Bearer, "valid-token"))
-              )
-          )
+                      .middleware[IO](protectedRoutes.authService)(protectedRoutes.routes)
+                      .orNotFound
+                      .run(
+                        Request[IO](method = Method.GET, uri = uri"/protected")
+                          .putHeaders(
+                            Authorization(Credentials.Token(AuthScheme.Bearer, "valid-token"))
+                          )
+                      )
       } yield response
     }
 
@@ -74,24 +71,24 @@ class AuthMiddlewareSpec extends FunSuite {
   }
 
   private final case class ProtectedRoutesContext(
-    authRepo: InMemoryAuthRepo[IO],
-    authService: AuthService[IO],
-    routes: HttpRoutes[IO]
+      authRepo: InMemoryAuthRepo[IO],
+      authService: AuthService[IO],
+      routes: HttpRoutes[IO]
   )
 
   private def withProtectedRoutes[A](run: ProtectedRoutesContext => IO[A]): A =
     (
       for {
-        authRepo <- InMemoryAuthRepo.create[IO]()
-        userRepo <- InMemoryUserRepo.create[IO]()
+        authRepo   <- InMemoryAuthRepo.create[IO]()
+        userRepo   <- InMemoryUserRepo.create[IO]()
         authService = io.github.oleksiybondar.api.domain.auth.AuthServiceLive[IO](
-          userRepo,
-          authRepo
-        )
-        routes = HttpRoutes.of[IO] {
-          case GET -> Root / "protected" => Ok("protected content")
-        }
-        result <- run(ProtectedRoutesContext(authRepo, authService, routes))
+                        userRepo,
+                        authRepo
+                      )
+        routes      = HttpRoutes.of[IO] {
+                        case GET -> Root / "protected" => Ok("protected content")
+                      }
+        result     <- run(ProtectedRoutesContext(authRepo, authService, routes))
       } yield result
     ).unsafeRunSync()
 }

@@ -1,6 +1,6 @@
 package io.github.oleksiybondar.api.testkit.fixtures
 
-import io.github.oleksiybondar.api.domain.user.*
+import io.github.oleksiybondar.api.domain.user._
 
 import java.time.Instant
 import java.util.UUID
@@ -20,14 +20,14 @@ object UserFixtures {
     )
 
   def user(
-    id: UserId = sampleUser.id,
-    username: Option[Username] = sampleUser.username,
-    email: Option[Email] = sampleUser.email,
-    passwordHash: PasswordHash = sampleUser.passwordHash,
-    firstName: FirstName = sampleUser.firstName,
-    lastName: LastName = sampleUser.lastName,
-    avatarUrl: Option[AvatarUrl] = sampleUser.avatarUrl,
-    createdAt: Instant = sampleUser.createdAt
+      id: UserId = sampleUser.id,
+      username: Option[Username] = sampleUser.username,
+      email: Option[Email] = sampleUser.email,
+      passwordHash: PasswordHash = sampleUser.passwordHash,
+      firstName: FirstName = sampleUser.firstName,
+      lastName: LastName = sampleUser.lastName,
+      avatarUrl: Option[AvatarUrl] = sampleUser.avatarUrl,
+      createdAt: Instant = sampleUser.createdAt
   ): User =
     User(
       id = id,

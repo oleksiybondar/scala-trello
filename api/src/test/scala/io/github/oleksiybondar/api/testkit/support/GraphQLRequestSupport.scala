@@ -2,12 +2,10 @@ package io.github.oleksiybondar.api.testkit.support
 
 import cats.effect.IO
 import io.circe.Json
-import org.http4s.Method
-import org.http4s.Request
-import org.http4s.circe.CirceEntityCodec.*
+import org.http4s.circe.CirceEntityCodec._
 import org.http4s.headers.Authorization
-import org.http4s.implicits.*
-import org.http4s.{AuthScheme, Credentials}
+import org.http4s.implicits._
+import org.http4s.{AuthScheme, Credentials, Method, Request}
 
 object GraphQLRequestSupport {
 
@@ -25,7 +23,7 @@ object GraphQLRequestSupport {
         baseRequest.putHeaders(
           Authorization(Credentials.Token(AuthScheme.Bearer, token))
         )
-      case None =>
+      case None        =>
         baseRequest
     }
   }

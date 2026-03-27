@@ -2,16 +2,13 @@ package io.github.oleksiybondar.api.http.routes.rest.auth
 
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
-import io.circe.generic.auto.*
-import io.circe.syntax.*
+import io.circe.generic.auto._
 import io.github.oleksiybondar.api.testkit.fixtures.AuthServiceFixtures.withAuthService
 import io.github.oleksiybondar.api.testkit.fixtures.UserFixtures
 import munit.FunSuite
-import org.http4s.Method
-import org.http4s.Request
-import org.http4s.Status
-import org.http4s.circe.CirceEntityCodec.*
-import org.http4s.implicits.*
+import org.http4s.circe.CirceEntityCodec._
+import org.http4s.implicits._
+import org.http4s.{Method, Request, Status}
 
 class AuthRoutesSpec extends FunSuite {
 
@@ -53,21 +50,21 @@ class AuthRoutesSpec extends FunSuite {
   test("POST /auth/refresh returns new tokens for a valid refresh token") {
     val response = withAuthService(List(UserFixtures.sampleUser)) { ctx =>
       for {
-        loginResponse <- AuthRoutes
-          .routes[IO](ctx.authService)
-          .orNotFound
-          .run(
-            Request[IO](method = Method.POST, uri = uri"/auth/login")
-              .withEntity(LoginRequest("alice@example.com", "secret"))
-          )
-        loginTokens <- loginResponse.as[AuthTokensResponse]
+        loginResponse   <- AuthRoutes
+                             .routes[IO](ctx.authService)
+                             .orNotFound
+                             .run(
+                               Request[IO](method = Method.POST, uri = uri"/auth/login")
+                                 .withEntity(LoginRequest("alice@example.com", "secret"))
+                             )
+        loginTokens     <- loginResponse.as[AuthTokensResponse]
         refreshResponse <- AuthRoutes
-          .routes[IO](ctx.authService)
-          .orNotFound
-          .run(
-            Request[IO](method = Method.POST, uri = uri"/auth/refresh")
-              .withEntity(RefreshRequest(loginTokens.refreshToken))
-          )
+                             .routes[IO](ctx.authService)
+                             .orNotFound
+                             .run(
+                               Request[IO](method = Method.POST, uri = uri"/auth/refresh")
+                                 .withEntity(RefreshRequest(loginTokens.refreshToken))
+                             )
       } yield refreshResponse
     }
 
@@ -98,29 +95,29 @@ class AuthRoutesSpec extends FunSuite {
   test("POST /auth/logout invalidates the provided refresh token") {
     val result = withAuthService(List(UserFixtures.sampleUser)) { ctx =>
       for {
-        loginResponse <- AuthRoutes
-          .routes[IO](ctx.authService)
-          .orNotFound
-          .run(
-            Request[IO](method = Method.POST, uri = uri"/auth/login")
-              .withEntity(LoginRequest("alice", "secret"))
-          )
-        loginTokens <- loginResponse.as[AuthTokensResponse]
-        logoutResponse <- AuthRoutes
-          .routes[IO](ctx.authService)
-          .orNotFound
-          .run(
-            Request[IO](method = Method.POST, uri = uri"/auth/logout")
-              .withEntity(LogoutRequest(loginTokens.refreshToken))
-          )
+        loginResponse   <- AuthRoutes
+                             .routes[IO](ctx.authService)
+                             .orNotFound
+                             .run(
+                               Request[IO](method = Method.POST, uri = uri"/auth/login")
+                                 .withEntity(LoginRequest("alice", "secret"))
+                             )
+        loginTokens     <- loginResponse.as[AuthTokensResponse]
+        logoutResponse  <- AuthRoutes
+                             .routes[IO](ctx.authService)
+                             .orNotFound
+                             .run(
+                               Request[IO](method = Method.POST, uri = uri"/auth/logout")
+                                 .withEntity(LogoutRequest(loginTokens.refreshToken))
+                             )
         refreshResponse <- AuthRoutes
-          .routes[IO](ctx.authService)
-          .orNotFound
-          .run(
-            Request[IO](method = Method.POST, uri = uri"/auth/refresh")
-              .withEntity(RefreshRequest(loginTokens.refreshToken))
-          )
-        refreshBody <- refreshResponse.as[ErrorResponse]
+                             .routes[IO](ctx.authService)
+                             .orNotFound
+                             .run(
+                               Request[IO](method = Method.POST, uri = uri"/auth/refresh")
+                                 .withEntity(RefreshRequest(loginTokens.refreshToken))
+                             )
+        refreshBody     <- refreshResponse.as[ErrorResponse]
       } yield (logoutResponse, refreshResponse, refreshBody)
     }
 

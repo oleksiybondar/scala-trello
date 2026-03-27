@@ -3,8 +3,8 @@ package io.github.oleksiybondar.api.domain.user
 import io.github.oleksiybondar.api.infrastructure.db.user.UserRepo
 
 final class UserServiceLive[F[_]](
-                                   userRepo: UserRepo[F]
-                                 ) extends UserService[F] {
+    userRepo: UserRepo[F]
+) extends UserService[F] {
 
   override def createUser(user: User): F[Unit] =
     userRepo.create(user)

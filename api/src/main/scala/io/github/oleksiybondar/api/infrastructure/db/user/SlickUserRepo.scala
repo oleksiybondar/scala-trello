@@ -1,38 +1,37 @@
 package io.github.oleksiybondar.api.infrastructure.db.user
 
-import cats.syntax.all.*
 import cats.effect.Async
-import io.github.oleksiybondar.api.domain.user.*
-import slick.jdbc.PostgresProfile.api.*
+import cats.syntax.all._
+import io.github.oleksiybondar.api.domain.user._
+import slick.jdbc.PostgresProfile.api._
 
 import java.time.Instant
 import java.util.UUID
-import scala.concurrent.ExecutionContext
 
 final class SlickUserRepo[F[_]: Async](
-                                        db: Database
-                                      )(implicit ec: ExecutionContext) extends UserRepo[F] {
+    db: Database
+) extends UserRepo[F] {
 
   private final case class UserRow(
-                                    id: UUID,
-                                    username: Option[String],
-                                    email: Option[String],
-                                    passwordHash: String,
-                                    firstName: String,
-                                    lastName: String,
-                                    avatarUrl: Option[String],
-                                    createdAt: Instant
-                                  )
+      id: UUID,
+      username: Option[String],
+      email: Option[String],
+      passwordHash: String,
+      firstName: String,
+      lastName: String,
+      avatarUrl: Option[String],
+      createdAt: Instant
+  )
 
   private final class UsersTable(tag: Tag) extends Table[UserRow](tag, "users") {
-    def id = column[UUID]("id", O.PrimaryKey)
-    def username = column[Option[String]]("username")
-    def email = column[Option[String]]("email")
+    def id           = column[UUID]("id", O.PrimaryKey)
+    def username     = column[Option[String]]("username")
+    def email        = column[Option[String]]("email")
     def passwordHash = column[String]("password_hash")
-    def firstName = column[String]("first_name")
-    def lastName = column[String]("last_name")
-    def avatarUrl = column[Option[String]]("avatar_url")
-    def createdAt = column[Instant]("created_at")
+    def firstName    = column[String]("first_name")
+    def lastName     = column[String]("last_name")
+    def avatarUrl    = column[Option[String]]("avatar_url")
+    def createdAt    = column[Instant]("created_at")
 
     def * =
       (

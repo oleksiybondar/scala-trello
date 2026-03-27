@@ -4,12 +4,7 @@ import cats.effect.unsafe.implicits.global
 import io.github.oleksiybondar.api.domain.user.UserId
 import io.github.oleksiybondar.api.http.routes.graphql.GraphQLContext
 import sangria.execution.UserFacingError
-import sangria.schema.Argument
-import sangria.schema.Field
-import sangria.schema.ObjectType
-import sangria.schema.OptionType
-import sangria.schema.StringType
-import sangria.schema.fields
+import sangria.schema.{Argument, Field, ObjectType, OptionType, StringType, fields}
 
 import java.util.UUID
 import scala.util.Try

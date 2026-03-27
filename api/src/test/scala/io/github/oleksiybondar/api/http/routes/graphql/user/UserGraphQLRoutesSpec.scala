@@ -6,7 +6,7 @@ import io.github.oleksiybondar.api.testkit.fixtures.{GraphQLFixtures, UserFixtur
 import io.github.oleksiybondar.api.testkit.support.GraphQLRequestSupport.graphqlRequest
 import munit.FunSuite
 import org.http4s.Status
-import org.http4s.circe.CirceEntityCodec.*
+import org.http4s.circe.CirceEntityCodec._
 
 class UserGraphQLRoutesSpec extends FunSuite {
 
@@ -15,17 +15,17 @@ class UserGraphQLRoutesSpec extends FunSuite {
   test("POST /graphql returns the requested user for a valid user query") {
     val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
       for {
-        _ <- ctx.seedAccessToken("valid-token", UserFixtures.sampleUser.id)
+        _        <- ctx.seedAccessToken("valid-token", UserFixtures.sampleUser.id)
         response <- ctx.httpApp.run(
-          graphqlRequest(
-            userQuery(UserFixtures.sampleUser.id.value.toString),
-            accessToken = Some("valid-token")
-          )
-        )
+                      graphqlRequest(
+                        userQuery(UserFixtures.sampleUser.id.value.toString),
+                        accessToken = Some("valid-token")
+                      )
+                    )
       } yield response
     }
 
-    val body = response.as[Json].unsafeRunSync()
+    val body   = response.as[Json].unsafeRunSync()
     val cursor = body.hcursor.downField("data").downField("user")
 
     assertEquals(response.status, Status.Ok)
@@ -39,13 +39,13 @@ class UserGraphQLRoutesSpec extends FunSuite {
   test("POST /graphql returns null when the requested user does not exist") {
     val response = withGraphQLRoutes(Nil) { ctx =>
       for {
-        _ <- ctx.seedAccessToken("valid-token", UserFixtures.sampleUser.id)
+        _        <- ctx.seedAccessToken("valid-token", UserFixtures.sampleUser.id)
         response <- ctx.httpApp.run(
-          graphqlRequest(
-            userQuery(UserFixtures.sampleUser.id.value.toString),
-            accessToken = Some("valid-token")
-          )
-        )
+                      graphqlRequest(
+                        userQuery(UserFixtures.sampleUser.id.value.toString),
+                        accessToken = Some("valid-token")
+                      )
+                    )
       } yield response
     }
 
@@ -61,17 +61,17 @@ class UserGraphQLRoutesSpec extends FunSuite {
   test("POST /graphql returns an error when the user id is not a valid UUID") {
     val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
       for {
-        _ <- ctx.seedAccessToken("valid-token", UserFixtures.sampleUser.id)
+        _        <- ctx.seedAccessToken("valid-token", UserFixtures.sampleUser.id)
         response <- ctx.httpApp.run(
-          graphqlRequest(
-            userQuery("not-a-uuid"),
-            accessToken = Some("valid-token")
-          )
-        )
+                      graphqlRequest(
+                        userQuery("not-a-uuid"),
+                        accessToken = Some("valid-token")
+                      )
+                    )
       } yield response
     }
 
-    val body = response.as[Json].unsafeRunSync()
+    val body   = response.as[Json].unsafeRunSync()
     val errors =
       body.hcursor
         .downField("errors")

@@ -1,17 +1,17 @@
 package io.github.oleksiybondar.api.http.middleware
 
 import cats.effect.Async
-import cats.syntax.all.*
+import cats.syntax.all._
 import io.github.oleksiybondar.api.domain.auth.{AccessToken, AuthService}
-import org.http4s.{AuthScheme, Credentials, HttpRoutes, Request, Response, Status}
 import org.http4s.dsl.Http4sDsl
 import org.http4s.headers.Authorization
+import org.http4s.{AuthScheme, Credentials, HttpRoutes, Request, Response, Status}
 
 object AuthMiddleware {
 
   def middleware[F[_]: Async](
-                               authService: AuthService[F]
-                             )(routes: HttpRoutes[F]): HttpRoutes[F] = {
+      authService: AuthService[F]
+  )(routes: HttpRoutes[F]): HttpRoutes[F] = {
     val dsl = new Http4sDsl[F] {}
     import dsl.*
 

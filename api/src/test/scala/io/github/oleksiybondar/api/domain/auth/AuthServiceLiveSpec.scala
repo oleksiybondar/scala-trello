@@ -32,10 +32,10 @@ class AuthServiceLiveSpec extends FunSuite {
 
     val result = withAuthService(List(user)) { ctx =>
       for {
-        loginTokens <- ctx.authService.login(LoginCommand("alice@example.com", "secret"))
+        loginTokens     <- ctx.authService.login(LoginCommand("alice@example.com", "secret"))
         refreshedTokens <- ctx.authService.refresh(
-          RefreshTokenCommand(loginTokens.get.refreshToken)
-        )
+                             RefreshTokenCommand(loginTokens.get.refreshToken)
+                           )
       } yield (loginTokens, refreshedTokens)
     }
 
@@ -51,13 +51,13 @@ class AuthServiceLiveSpec extends FunSuite {
 
     val result = withAuthService(List(user)) { ctx =>
       for {
-        loginTokens <- ctx.authService.login(LoginCommand("alice@example.com", "secret"))
-        _ <- ctx.authService.refresh(
-          RefreshTokenCommand(loginTokens.get.refreshToken)
-        )
+        loginTokens    <- ctx.authService.login(LoginCommand("alice@example.com", "secret"))
+        _              <- ctx.authService.refresh(
+                            RefreshTokenCommand(loginTokens.get.refreshToken)
+                          )
         reusedOldToken <- ctx.authService.refresh(
-          RefreshTokenCommand(loginTokens.get.refreshToken)
-        )
+                            RefreshTokenCommand(loginTokens.get.refreshToken)
+                          )
       } yield reusedOldToken
     }
 
@@ -70,7 +70,7 @@ class AuthServiceLiveSpec extends FunSuite {
     val result = withAuthService(List(user)) { ctx =>
       for {
         loginTokens <- ctx.authService.login(LoginCommand("alice@example.com", "secret"))
-        userId <- ctx.authService.verifyAccessToken(loginTokens.get.accessToken)
+        userId      <- ctx.authService.verifyAccessToken(loginTokens.get.accessToken)
       } yield userId
     }
 

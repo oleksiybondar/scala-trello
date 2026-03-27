@@ -1,15 +1,15 @@
 package io.github.oleksiybondar.api.domain.auth
 
 import cats.effect.kernel.Sync
-import cats.syntax.all.*
-import io.github.oleksiybondar.api.domain.user.{Email, Username, UserId}
+import cats.syntax.all._
+import io.github.oleksiybondar.api.domain.user.{Email, UserId, Username}
 import io.github.oleksiybondar.api.infrastructure.db.user.UserRepo
 
 import java.util.UUID
 
 final class AuthServiceLive[F[_]: Sync](
-  userRepo: UserRepo[F],
-  tokenRepo: TokenRepo[F]
+    userRepo: UserRepo[F],
+    tokenRepo: TokenRepo[F]
 ) extends AuthService[F] {
 
   override def login(command: LoginCommand): F[Option[AuthTokens]] = {
@@ -25,10 +25,10 @@ final class AuthServiceLive[F[_]: Sync](
 
       case Some(user) =>
         for {
-          accessToken <- generateAccessToken
+          accessToken  <- generateAccessToken
           refreshToken <- generateRefreshToken
-          _ <- tokenRepo.saveAccessToken(accessToken, user.id)
-          _ <- tokenRepo.saveRefreshToken(refreshToken, user.id)
+          _            <- tokenRepo.saveAccessToken(accessToken, user.id)
+          _            <- tokenRepo.saveRefreshToken(refreshToken, user.id)
         } yield AuthTokens(accessToken, refreshToken).some
     }
   }
@@ -40,10 +40,10 @@ final class AuthServiceLive[F[_]: Sync](
 
       case Some(userId) =>
         for {
-          accessToken <- generateAccessToken
+          accessToken     <- generateAccessToken
           newRefreshToken <- generateRefreshToken
-          _ <- tokenRepo.saveAccessToken(accessToken, userId)
-          _ <- tokenRepo.rotateRefreshToken(command.refreshToken, newRefreshToken, userId)
+          _               <- tokenRepo.saveAccessToken(accessToken, userId)
+          _               <- tokenRepo.rotateRefreshToken(command.refreshToken, newRefreshToken, userId)
         } yield AuthTokens(accessToken, newRefreshToken).some
     }
 

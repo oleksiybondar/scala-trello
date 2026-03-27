@@ -1,11 +1,11 @@
 package io.github.oleksiybondar.api.testkit.fixtures
 
-import cats.effect.{IO, Resource}
 import cats.effect.unsafe.implicits.global
+import cats.effect.{IO, Resource}
 import io.github.oleksiybondar.api.config.ConfigLoader
-import io.github.oleksiybondar.api.infrastructure.db.{DatabaseResource, MigrationRunner}
 import io.github.oleksiybondar.api.infrastructure.db.user.SlickUserRepo
-import slick.jdbc.PostgresProfile.api.*
+import io.github.oleksiybondar.api.infrastructure.db.{DatabaseResource, MigrationRunner}
+import slick.jdbc.PostgresProfile.api._
 
 import scala.concurrent.ExecutionContext
 
@@ -30,7 +30,7 @@ object SlickUserRepoFixtures {
     repoResource
       .use { case (db, repo) =>
         for {
-          _ <- clearDatabase(db)
+          _      <- clearDatabase(db)
           result <- run(repo)
         } yield result
       }
@@ -40,7 +40,7 @@ object SlickUserRepoFixtures {
     databaseResource
       .use { db =>
         for {
-          _ <- clearDatabase(db)
+          _      <- clearDatabase(db)
           result <- run(db)
         } yield result
       }
