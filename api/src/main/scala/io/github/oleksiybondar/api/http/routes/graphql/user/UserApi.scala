@@ -1,15 +1,13 @@
 package io.github.oleksiybondar.api.http.routes.graphql.user
 
-import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import io.github.oleksiybondar.api.domain.user.UserId
-import io.github.oleksiybondar.api.infrastructure.db.user.UserRepo
+import io.github.oleksiybondar.api.http.routes.graphql.GraphQLContext
 import sangria.execution.UserFacingError
 import sangria.schema.Argument
 import sangria.schema.Field
 import sangria.schema.ObjectType
 import sangria.schema.OptionType
-import sangria.schema.Schema
 import sangria.schema.StringType
 import sangria.schema.fields
 
@@ -38,24 +36,18 @@ object UserApi {
 
   private val IdArg = Argument("id", StringType)
 
-  val QueryType: ObjectType[UserRepo[IO], Unit] =
-    ObjectType(
-      name = "Queries",
-      fields[UserRepo[IO], Unit](
-        Field(
-          name = "user",
-          fieldType = OptionType(UserType),
-          arguments = IdArg :: Nil,
-          resolve = ctx => {
-            val userId = parseUserId(ctx.arg(IdArg))
-            ctx.ctx.findById(userId).map(_.map(toView)).unsafeToFuture()
-          }
-        )
+  val queryFields: List[Field[GraphQLContext, Unit]] =
+    List(
+      Field(
+        name = "user",
+        fieldType = OptionType(UserType),
+        arguments = IdArg :: Nil,
+        resolve = ctx => {
+          val userId = parseUserId(ctx.arg(IdArg))
+          ctx.ctx.userRepo.findById(userId).map(_.map(toView)).unsafeToFuture()
+        }
       )
     )
-
-  val schema: Schema[UserRepo[IO], Unit] =
-    Schema(query = QueryType)
 
   private def parseUserId(rawId: String): UserId =
     UserId(

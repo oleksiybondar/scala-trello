@@ -9,6 +9,7 @@ import io.github.oleksiybondar.api.http.HttpApi
 import io.github.oleksiybondar.api.http.docs.graphql.GraphiQLRoutes
 import io.github.oleksiybondar.api.http.docs.rest.OpenAPI
 import io.github.oleksiybondar.api.http.middleware.AuthMiddleware
+import io.github.oleksiybondar.api.http.routes.graphql.GraphQLContext
 import io.github.oleksiybondar.api.http.routes.graphql.GraphQLRoutes
 import io.github.oleksiybondar.api.http.routes.rest.health.HealthRoutes
 import io.github.oleksiybondar.api.infrastructure.db.user.SlickUserRepo
@@ -80,6 +81,7 @@ object Main extends IOApp.Simple {
       )
 
       userRepo = new SlickUserRepo[IO](db)
+      graphQLContext = GraphQLContext(userRepo = userRepo)
 
       accessTokenStore <- Ref.of[IO, Map[AccessToken, UserId]](Map.empty)
       refreshTokenStore <- Ref.of[IO, Map[RefreshToken, UserId]](Map.empty)
@@ -92,7 +94,7 @@ object Main extends IOApp.Simple {
 
       healthRoutes = HealthRoutes.routes[IO]
       swaggerRoutes = OpenAPI.routes[IO]
-      graphqlRoutes <- GraphQLRoutes.routes(userRepo)
+      graphqlRoutes <- GraphQLRoutes.routes(graphQLContext)
       graphiqlRoutes = GraphiQLRoutes.routes[IO]
 
       authenticatedGraphqlRoutes =

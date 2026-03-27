@@ -4,8 +4,6 @@ import cats.effect.IO
 import cats.syntax.all.*
 import io.circe.Decoder
 import io.circe.Json
-import io.github.oleksiybondar.api.http.routes.graphql.user.UserApi
-import io.github.oleksiybondar.api.infrastructure.db.user.UserRepo
 import org.http4s.EntityDecoder
 import org.http4s.HttpRoutes
 import org.http4s.Response
@@ -35,26 +33,26 @@ object GraphQLRoutes extends Http4sDsl[IO] {
 
   private given EntityDecoder[IO, GraphQLRequest] = jsonOf[IO, GraphQLRequest]
 
-  def routes(userRepo: UserRepo[IO]): IO[HttpRoutes[IO]] =
+  def routes(context: GraphQLContext): IO[HttpRoutes[IO]] =
     IO.pure(
       HttpRoutes.of[IO] { case request @ POST -> Root =>
         request
           .as[GraphQLRequest]
-          .flatMap(executeQuery(userRepo, _))
+          .flatMap(executeQuery(context, _))
       }
     )
 
   private def executeQuery(
-    userRepo: UserRepo[IO],
+    context: GraphQLContext,
     request: GraphQLRequest
   ): IO[Response[IO]] =
     parseQuery(request.query).flatMap { queryAst =>
       val result =
         Executor
           .execute(
-            schema = UserApi.schema,
+            schema = GraphQLSchema.schema,
             queryAst = queryAst,
-            userContext = userRepo,
+            userContext = context,
             variables = request.variables.getOrElse(Json.obj()),
             operationName = request.operationName
           )
