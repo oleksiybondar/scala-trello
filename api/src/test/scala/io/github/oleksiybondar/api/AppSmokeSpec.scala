@@ -16,16 +16,18 @@ class AppSmokeSpec extends FunSuite {
       response  <- Main.buildApp(testConfig).flatMap(Main.buildServer(testConfig, _)).use { server =>
                      IO.blocking {
                        val connection =
-                         URI
-                           .create(s"http://127.0.0.1:${server.address.getPort}/health")
-                           .toURL
-                           .openConnection()
+                         Option(
+                           URI
+                             .create(s"http://127.0.0.1:${server.address.getPort}/health")
+                             .toURL
+                             .openConnection()
+                         ).collect { case http: java.net.HttpURLConnection => http }
+                           .getOrElse(sys.error("Expected HttpURLConnection"))
 
                        connection.setRequestProperty("Connection", "close")
 
                        try {
-                         val statusCode =
-                           connection.asInstanceOf[java.net.HttpURLConnection].getResponseCode
+                         val statusCode = connection.getResponseCode
                          val source     = scala.io.Source.fromInputStream(connection.getInputStream)
                          val body       =
                            try source.mkString
@@ -33,7 +35,7 @@ class AppSmokeSpec extends FunSuite {
 
                          (statusCode, body)
                        } finally {
-                         connection.asInstanceOf[java.net.HttpURLConnection].disconnect()
+                         connection.disconnect()
                        }
                      }
                    }

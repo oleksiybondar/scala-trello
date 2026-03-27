@@ -8,10 +8,11 @@ The repository uses shared Git hooks at the monorepo root. Git only supports one
 - `api/` blocks commits on Scala-native formatting and linting
 - `app/` will use the same root hook once `app/package.json` exists, but with app-native scripts only
 - duplication and coverage thresholds are enforced in CI on pull requests, not on local commits
+- `api/` also enforces explicit public/protected result types and bans mutable/exception-style syntax such as `var`, `throw`, `return`, `while`, `asInstanceOf`, and `isInstanceOf`
 
 ### Tooling
 
-- `api/`: `scalafmt`, `scalafix`, compiler warning linting, `scapegoat`, `scoverage`
+- `api/`: `scalafmt`, `scalafix` (`ExplicitResultTypes`, `DisableSyntax`, `OrganizeImports`, `RedundantSyntax`), compiler warning linting, `scapegoat`, `scoverage`
 - `app/`: reserved for standard TypeScript-native tools such as `eslint` and the app test runner once the app exists
 - CI only: `jscpd` for duplication
 

@@ -47,7 +47,13 @@ object AuthRoutes {
       .name("logout")
       .description("Logout user and invalidate refresh token")
 
-  val all =
+  val all: List[Endpoint[
+    Unit,
+    ? >: LoginRequest & RefreshRequest & LogoutRequest <: LoginRequest | RefreshRequest | LogoutRequest,
+    ErrorResponse,
+    ? >: AuthTokensResponse & Unit <: AuthTokensResponse | Unit,
+    Any
+  ]] =
     List(loginEndpoint, refreshEndpoint, logoutEndpoint)
 
   // ----- routes -----

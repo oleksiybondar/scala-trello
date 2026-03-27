@@ -15,7 +15,7 @@ object GraphiQLRoutes {
       .description("GraphiQL IDE page")
       .tag("graphql")
 
-  val all =
+  val all: List[PublicEndpoint[Unit, Unit, String, Any]] =
     List(graphiqlEndpoint)
 
   def routes[F[_]: Async]: HttpRoutes[F] =
@@ -29,12 +29,15 @@ object GraphiQLRoutes {
     }
 
   private def loadResource[F[_]: Async](path: String): F[String] =
-    Async[F].blocking {
-      val stream =
-        Option(getClass.getClassLoader.getResourceAsStream(path))
-          .getOrElse(throw new RuntimeException(s"Resource not found: $path"))
-
-      try scala.io.Source.fromInputStream(stream, "UTF-8").mkString
-      finally stream.close()
+    Async[F].flatMap(
+      Async[F].fromOption(
+        Option(getClass.getClassLoader.getResourceAsStream(path)),
+        new RuntimeException(s"Resource not found: $path")
+      )
+    ) { stream =>
+      Async[F].blocking {
+        try scala.io.Source.fromInputStream(stream, "UTF-8").mkString
+        finally stream.close()
+      }
     }
 }

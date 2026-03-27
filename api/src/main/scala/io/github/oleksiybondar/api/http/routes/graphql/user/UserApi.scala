@@ -1,5 +1,6 @@
 package io.github.oleksiybondar.api.http.routes.graphql.user
 
+import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import io.github.oleksiybondar.api.domain.user.UserId
 import io.github.oleksiybondar.api.http.routes.graphql.GraphQLContext
@@ -38,17 +39,20 @@ object UserApi {
         fieldType = OptionType(UserType),
         arguments = IdArg :: Nil,
         resolve = ctx => {
-          val userId = parseUserId(ctx.arg(IdArg))
-          ctx.ctx.userRepo.findById(userId).map(_.map(toView)).unsafeToFuture()
+          IO
+            .fromEither(parseUserId(ctx.arg(IdArg)))
+            .flatMap(userId => ctx.ctx.userRepo.findById(userId).map(_.map(toView)))
+            .unsafeToFuture()
         }
       )
     )
 
-  private def parseUserId(rawId: String): UserId =
-    UserId(
-      Try(UUID.fromString(rawId))
-        .getOrElse(throw InvalidUserInput(s"Invalid UUID: $rawId"))
-    )
+  private def parseUserId(rawId: String): Either[InvalidUserInput, UserId] =
+    Try(UUID.fromString(rawId))
+      .toEither
+      .left
+      .map(_ => InvalidUserInput(s"Invalid UUID: $rawId"))
+      .map(UserId(_))
 
   private def toView(user: io.github.oleksiybondar.api.domain.user.User): UserView =
     UserView(

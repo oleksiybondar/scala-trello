@@ -13,12 +13,11 @@ object SlickUserRepoFixtures {
 
   given ExecutionContext = ExecutionContext.global
 
-  private lazy val config =
-    ConfigLoader.load().fold(throw _, identity)
-
   private val databaseResource: Resource[IO, Database] =
-    Resource.eval(IO.blocking(MigrationRunner.migrate(config.database))).flatMap { _ =>
-      DatabaseResource.make(config.database)
+    Resource.eval(IO.fromEither(ConfigLoader.load())).flatMap { config =>
+      Resource.eval(IO.blocking(MigrationRunner.migrate(config.database))).flatMap { _ =>
+        DatabaseResource.make(config.database)
+      }
     }
 
   private val repoResource: Resource[IO, (Database, SlickUserRepo[IO])] =

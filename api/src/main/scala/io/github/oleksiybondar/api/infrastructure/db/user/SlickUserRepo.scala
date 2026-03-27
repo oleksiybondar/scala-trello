@@ -4,6 +4,7 @@ import cats.effect.Async
 import cats.syntax.all._
 import io.github.oleksiybondar.api.domain.user._
 import slick.jdbc.PostgresProfile.api._
+import slick.lifted.ProvenShape
 
 import java.time.Instant
 import java.util.UUID
@@ -24,16 +25,16 @@ final class SlickUserRepo[F[_]: Async](
   )
 
   private final class UsersTable(tag: Tag) extends Table[UserRow](tag, "users") {
-    def id           = column[UUID]("id", O.PrimaryKey)
-    def username     = column[Option[String]]("username")
-    def email        = column[Option[String]]("email")
-    def passwordHash = column[String]("password_hash")
-    def firstName    = column[String]("first_name")
-    def lastName     = column[String]("last_name")
-    def avatarUrl    = column[Option[String]]("avatar_url")
-    def createdAt    = column[Instant]("created_at")
+    def id: Rep[UUID]                  = column[UUID]("id", O.PrimaryKey)
+    def username: Rep[Option[String]]  = column[Option[String]]("username")
+    def email: Rep[Option[String]]     = column[Option[String]]("email")
+    def passwordHash: Rep[String]      = column[String]("password_hash")
+    def firstName: Rep[String]         = column[String]("first_name")
+    def lastName: Rep[String]          = column[String]("last_name")
+    def avatarUrl: Rep[Option[String]] = column[Option[String]]("avatar_url")
+    def createdAt: Rep[Instant]        = column[Instant]("created_at")
 
-    def * =
+    def * : ProvenShape[UserRow] =
       (
         id,
         username,

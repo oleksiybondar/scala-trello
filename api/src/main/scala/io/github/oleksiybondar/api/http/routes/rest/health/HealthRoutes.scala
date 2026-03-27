@@ -15,7 +15,7 @@ object HealthRoutes {
       .description("Health check endpoint")
       .tag("health")
 
-  val all =
+  val all: List[PublicEndpoint[Unit, Unit, String, Any]] =
     List(healthEndpoint)
 
   def routes[F[_]: Async]: HttpRoutes[F] =

@@ -5,6 +5,7 @@ import cats.syntax.all._
 import io.github.oleksiybondar.api.domain.auth.{AccessToken, RefreshToken, TokenRepo, TokenType}
 import io.github.oleksiybondar.api.domain.user.UserId
 import slick.jdbc.PostgresProfile.api._
+import slick.lifted.{ForeignKeyQuery, ProvenShape}
 
 import java.time.Instant
 import java.util.UUID
@@ -22,22 +23,22 @@ final class SlickTokenRepo[F[_]: Async](
   )
 
   private final class AuthTokensTable(tag: Tag) extends Table[TokenRow](tag, "auth_tokens") {
-    def token     = column[String]("token", O.PrimaryKey)
-    def userId    = column[UUID]("user_id")
-    def tokenType = column[String]("token_type")
-    def createdAt = column[Instant]("created_at")
+    def token: Rep[String]      = column[String]("token", O.PrimaryKey)
+    def userId: Rep[UUID]       = column[UUID]("user_id")
+    def tokenType: Rep[String]  = column[String]("token_type")
+    def createdAt: Rep[Instant] = column[Instant]("created_at")
 
-    def userFk =
+    def userFk: ForeignKeyQuery[UsersTable, (UUID, String)] =
       foreignKey("auth_tokens_user_id_fk", userId, users)(_.id, onDelete = ForeignKeyAction.Cascade)
 
-    def * = (token, userId, tokenType, createdAt).mapTo[TokenRow]
+    def * : ProvenShape[TokenRow] = (token, userId, tokenType, createdAt).mapTo[TokenRow]
   }
 
   private final class UsersTable(tag: Tag) extends Table[(UUID, String)](tag, "users") {
-    def id           = column[UUID]("id", O.PrimaryKey)
-    def passwordHash = column[String]("password_hash")
+    def id: Rep[UUID]             = column[UUID]("id", O.PrimaryKey)
+    def passwordHash: Rep[String] = column[String]("password_hash")
 
-    def * = (id, passwordHash)
+    def * : ProvenShape[(UUID, String)] = (id, passwordHash)
   }
 
   private val users      = TableQuery[UsersTable]
