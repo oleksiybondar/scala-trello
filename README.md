@@ -1,35 +1,82 @@
-# introduction_into_scala
-Scala + React full stack application to onboard to Scala and functional programming
+# Introduction Into Scala
 
-## Quality gates
+Practice monorepo for learning Scala, functional programming, Cats, Cats Effect, and a TypeScript frontend stack.
 
-The repository uses shared Git hooks at the monorepo root. Git only supports one hook entrypoint per repository, so the root hook dispatches checks per subproject using path filters:
+The long-term product is a small Trello-like task board:
 
-- `api/` blocks commits on Scala-native formatting and linting
-- `app/` will use the same root hook once `app/package.json` exists, but with app-native scripts only
-- duplication and coverage thresholds are enforced in CI on pull requests, not on local commits
-- `api/` also enforces explicit public/protected result types and bans mutable/exception-style syntax such as `var`, `throw`, `return`, `while`, `asInstanceOf`, and `isInstanceOf`
+- tickets move through `new -> in progress -> in review -> complete`
+- each ticket has a lightweight comment thread
+- the board is available only to authenticated users
+- authentication is intended to support local email/password and Google OIDC
+- users remain local application users regardless of registration method
+- backend uses REST for auth, health/docs, Swagger, and GraphiQL
+- backend uses GraphQL for business/domain features
+- frontend uses Vite, React, TypeScript, and MUI for fast UI bootstrap
 
-### Tooling
+This repository is intentionally a monorepo because it is a training project. In a production-oriented setup, the backend and frontend would likely live in separate repositories.
 
-- `api/`: `scalafmt`, `scalafix` (`ExplicitResultTypes`, `DisableSyntax`, `OrganizeImports`, `RedundantSyntax`), compiler warning linting, `scapegoat`, `scoverage`
-- `app/`: TypeScript-native `eslint` + `tsc --noEmit`, with framework-specific rules to be layered in once the UI scaffold exists
-- CI only: `jscpd` for duplication
+## Repository layout
 
-### Setup
+```text
+.
+├── api/      Scala 3 backend
+├── app/      Vite + React + TypeScript frontend
+└── scripts/  shared monorepo tooling
+```
 
-Install hooks from the repository root:
+Project-specific documentation:
+
+- [`api/README.md`](./api/README.md)
+- [`app/README.md`](./app/README.md)
+
+## Running the project
+
+Prerequisites:
+
+- JDK 17+ and `sbt`
+- Node.js and `npm`
+- Docker or a local PostgreSQL instance
+
+Install shared Git hooks from the repository root:
 
 ```bash
 sh ./scripts/install-hooks.sh
 ```
 
-Local workstation requirements stay project-native:
+Start PostgreSQL for the backend:
 
-- `api/`: JDK + `sbt`
-- `app/`: Node.js once dependencies are installed
+```bash
+cd api
+docker compose up -d
+```
 
-### Manual runs
+Run backend migration and server:
+
+```bash
+cd api
+sbt migrate
+sbt app
+```
+
+Run frontend checks:
+
+```bash
+cd app
+npm run lint
+npm run typecheck
+```
+
+## Quality gates
+
+The monorepo uses shared root hooks that dispatch checks by changed paths:
+
+- `api/`: `scalafmt`, `scalafix`, compile-time linting, `scapegoat`, and coverage rules
+- `app/`: `eslint` and `tsc --noEmit`
+- CI only: `jscpd` duplication checks
+
+The backend also enforces explicit public/protected result types and bans mutable or exception-style syntax such as `var`, `throw`, `return`, `while`, `asInstanceOf`, and `isInstanceOf`.
+
+Manual runs:
 
 ```bash
 sh ./scripts/run-api-checks.sh pre-commit
@@ -37,30 +84,10 @@ sh ./scripts/run-api-checks.sh build
 sh ./scripts/run-api-checks.sh migrate
 sh ./scripts/run-api-checks.sh coverage
 sh ./scripts/run-app-checks.sh pre-commit
+sh ./scripts/run-app-checks.sh build
 ```
 
-### App integration
+## Notes
 
-When `app` is bootstrapped, add standard scripts to `app/package.json` so the shared hook and CI can execute them:
-
-```json
-{
-  "scripts": {
-    "lint": "eslint . --max-warnings=0",
-    "typecheck": "tsc --noEmit --project tsconfig.json",
-    "build": "your-app-build-command",
-    "test:coverage": "your-app-coverage-command"
-  }
-}
-```
-
-## CI sequence
-
-The GitHub Actions pipeline is organized around the same policy:
-
-1. Static analysis, including duplication
-2. Build
-3. Database migration for `api`
-4. Tests with coverage
-
-Deploy is intentionally out of scope for this training project.
+- The IDE in this workspace is opened at `api/`, but the Git repository root is the parent directory.
+- This is a learning-first project. Clear structure, incremental delivery, and explicit tradeoffs matter more here than shipping features quickly.
