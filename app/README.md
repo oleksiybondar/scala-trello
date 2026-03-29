@@ -77,6 +77,8 @@ The shared monorepo script can also run frontend checks from the repository root
 
 ```bash
 sh ./scripts/run-app-checks.sh pre-commit
+sh ./scripts/run-app-checks.sh build
+sh ./scripts/run-app-checks.sh test
 ```
 
 ## Testing layout

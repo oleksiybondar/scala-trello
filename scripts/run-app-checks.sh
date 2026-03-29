@@ -51,6 +51,16 @@ case "$mode" in
     echo "Skipping app build: no build script defined yet."
     exit 0
     ;;
+  test)
+    if has_script test:unit; then
+      exec npm run test:unit
+    fi
+    if has_script test; then
+      exec npm run test
+    fi
+    echo "app/package.json must define either 'test:unit' or 'test'." >&2
+    exit 1
+    ;;
   coverage)
     if has_script test:coverage; then
       exec npm run test:coverage
@@ -62,7 +72,7 @@ case "$mode" in
     exit 1
     ;;
   *)
-    echo "Usage: $0 {pre-commit|static|build|coverage}" >&2
+    echo "Usage: $0 {pre-commit|static|build|test|coverage}" >&2
     exit 1
     ;;
 esac

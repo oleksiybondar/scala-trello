@@ -71,7 +71,7 @@ npm run typecheck
 The monorepo uses shared root hooks that dispatch checks by changed paths:
 
 - `api/`: `scalafmt`, `scalafix`, compile-time linting, `scapegoat`, and coverage rules
-- `app/`: `eslint` and `tsc --noEmit`
+- `app/`: `eslint`, `tsc --noEmit`, production build, and unit tests
 - CI only: `jscpd` duplication checks
 
 The backend also enforces explicit public/protected result types and bans mutable or exception-style syntax such as `var`, `throw`, `return`, `while`, `asInstanceOf`, and `isInstanceOf`.
@@ -85,6 +85,7 @@ sh ./scripts/run-api-checks.sh migrate
 sh ./scripts/run-api-checks.sh coverage
 sh ./scripts/run-app-checks.sh pre-commit
 sh ./scripts/run-app-checks.sh build
+sh ./scripts/run-app-checks.sh test
 ```
 
 ## Notes
