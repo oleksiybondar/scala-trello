@@ -14,9 +14,10 @@
       "@hooks/*": ["src/hooks/*"],
       "@pages/*": ["src/pages/*"],
       "@routes/*": ["src/routes/*"],
+      "@tests/*": ["tests/*"],
       "@theme/*": ["src/theme/*"]
     },
-    "types": ["vite/client"],
+    "types": ["node", "vite/client", "vitest/globals"],
     "strict": true,
     "noEmit": true,
     "noFallthroughCasesInSwitch": true,
@@ -29,5 +30,13 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.d.ts",
+    "tests/**/*.ts",
+    "tests/**/*.tsx",
+    "playwright.config.ts",
+    "vitest.config.ts"
+  ]
 }

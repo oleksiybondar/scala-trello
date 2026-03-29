@@ -33,6 +33,8 @@ Run available checks:
 npm run lint
 npm run typecheck
 npm run build
+npm run test:unit
+npm run test:e2e
 ```
 
 Start the dev server:
@@ -76,3 +78,21 @@ The shared monorepo script can also run frontend checks from the repository root
 ```bash
 sh ./scripts/run-app-checks.sh pre-commit
 ```
+
+## Testing layout
+
+Tests live in a dedicated top-level `tests/` directory:
+
+```text
+tests/
+  e2e/
+    pageObjects/
+    support/
+  setup/
+  unit/
+```
+
+- `tests/unit` holds Vitest and React Testing Library tests
+- `tests/e2e` holds Playwright specs and page objects
+- `tests/e2e/support` is the place for browser-level helpers such as API mocking
+- `tests/setup` holds shared test bootstrapping utilities
