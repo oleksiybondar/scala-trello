@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy Pipeline
 
 on:
   workflow_dispatch:
@@ -9,4 +9,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Placeholder
-        run: echo "Deploy workflow is intentionally stubbed and not implemented yet."
+        run: echo "Deploy pipeline is intentionally stubbed and not implemented yet."
