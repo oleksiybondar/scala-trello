@@ -4,6 +4,7 @@ import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
+import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
@@ -29,20 +30,24 @@ export const AppNavBar = (): ReactElement => {
 
   return (
     <AppBar color="transparent" elevation={0} position="static">
-      <Toolbar disableGutters sx={{ gap: 2, py: 2 }}>
-        <Typography
+      <Toolbar disableGutters>
+        <Stack alignItems="center" direction="row" flexGrow={1} spacing={2}>
+        <Link
           color="textPrimary"
           component={RouterLink}
-          sx={{ flexGrow: 1, fontWeight: 700, textDecoration: "none" }}
           to="/"
+          underline="none"
           variant="h6"
         >
           Intro Into Scala App
-        </Typography>
+        </Link>
 
         <Stack alignItems="center" direction="row" spacing={1}>
           <Button color="inherit" component={RouterLink} to="/home">
             Home
+          </Button>
+          <Button color="inherit" component={RouterLink} to="/settings/profile">
+            Settings
           </Button>
           {!isAuthenticated ? (
             <Button color="inherit" component={RouterLink} to="/login">
@@ -55,6 +60,7 @@ export const AppNavBar = (): ReactElement => {
             size="small"
             variant={isAuthenticated ? "filled" : "outlined"}
           />
+        </Stack>
         </Stack>
 
         <Box minWidth={{ sm: 220, xs: "auto" }}>

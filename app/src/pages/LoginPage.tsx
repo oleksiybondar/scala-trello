@@ -2,10 +2,10 @@ import type { ChangeEvent, ReactElement, SyntheticEvent } from "react";
 import { useEffect, useState } from "react";
 
 import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
 import Container from "@mui/material/Container";
-import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -75,47 +75,49 @@ export const LoginPage = (): ReactElement => {
       <Stack minHeight="100vh" py={4} spacing={4}>
         <AppNavBar />
 
-        <Box display="grid" flexGrow={1} sx={{ placeItems: "center" }}>
-          <Paper sx={{ p: 4, width: "100%" }}>
-            <Stack component="form" onSubmit={handleSubmit} spacing={3}>
-              <Stack spacing={1}>
-                <Typography variant="h3">Sign in</Typography>
+        <Stack alignItems="center" flexGrow={1} justifyContent="center">
+          <Card variant="outlined">
+            <CardContent>
+              <Stack component="form" onSubmit={handleSubmit} spacing={3}>
+                <Stack spacing={1}>
+                  <Typography variant="h3">Sign in</Typography>
+                </Stack>
+
+                {errorMessage !== null ? (
+                  <Alert severity="error">{errorMessage}</Alert>
+                ) : null}
+
+                <TextField
+                  autoComplete="username"
+                  disabled={isSubmitting}
+                  label="Login"
+                  onChange={handleChange("login")}
+                  required
+                  value={formState.login}
+                />
+
+                <TextField
+                  autoComplete="current-password"
+                  disabled={isSubmitting}
+                  label="Password"
+                  onChange={handleChange("password")}
+                  required
+                  type="password"
+                  value={formState.password}
+                />
+
+                <Button
+                  disabled={isSubmitting}
+                  size="large"
+                  type="submit"
+                  variant="contained"
+                >
+                  {isSubmitting ? "Signing in..." : "Sign in"}
+                </Button>
               </Stack>
-
-              {errorMessage !== null ? (
-                <Alert severity="error">{errorMessage}</Alert>
-              ) : null}
-
-              <TextField
-                autoComplete="username"
-                disabled={isSubmitting}
-                label="Login"
-                onChange={handleChange("login")}
-                required
-                value={formState.login}
-              />
-
-              <TextField
-                autoComplete="current-password"
-                disabled={isSubmitting}
-                label="Password"
-                onChange={handleChange("password")}
-                required
-                type="password"
-                value={formState.password}
-              />
-
-              <Button
-                disabled={isSubmitting}
-                size="large"
-                type="submit"
-                variant="contained"
-              >
-                {isSubmitting ? "Signing in..." : "Sign in"}
-              </Button>
-            </Stack>
-          </Paper>
-        </Box>
+            </CardContent>
+          </Card>
+        </Stack>
       </Stack>
     </Container>
   );

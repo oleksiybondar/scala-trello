@@ -2,6 +2,8 @@ import type { PropsWithChildren, ReactElement } from "react";
 
 import { AppThemeProvider } from "@providers/AppThemeProvider";
 import { AuthProvider } from "@providers/AuthProvider";
+import { CurrentUserProvider } from "@providers/CurrentUserProvider";
+import { QueryProvider } from "@providers/QueryProvider";
 import { ThemeManagerProvider } from "@providers/ThemeManagerProvider";
 
 export const AppProviders = ({
@@ -9,9 +11,13 @@ export const AppProviders = ({
 }: PropsWithChildren): ReactElement => {
   return (
     <ThemeManagerProvider>
-      <AuthProvider>
-        <AppThemeProvider>{children}</AppThemeProvider>
-      </AuthProvider>
+      <QueryProvider>
+        <AuthProvider>
+          <CurrentUserProvider>
+            <AppThemeProvider>{children}</AppThemeProvider>
+          </CurrentUserProvider>
+        </AuthProvider>
+      </QueryProvider>
     </ThemeManagerProvider>
   );
 };

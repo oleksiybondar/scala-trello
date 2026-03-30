@@ -45,6 +45,13 @@ export const HomePage = (): ReactElement => {
                 <Button component={RouterLink} to="/home" variant="outlined">
                   /home
                 </Button>
+                <Button
+                  component={RouterLink}
+                  to="/settings/profile"
+                  variant="outlined"
+                >
+                  /settings/profile
+                </Button>
                 {!isAuthenticated ? (
                   <Button component={RouterLink} to="/login" variant="outlined">
                     /login
