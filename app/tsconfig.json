@@ -10,9 +10,11 @@
       "@app/*": ["src/app/*"],
       "@components/*": ["src/components/*"],
       "@contexts/*": ["src/contexts/*"],
+      "@features/*": ["src/features/*"],
       "@helpers/*": ["src/helpers/*"],
       "@hooks/*": ["src/hooks/*"],
       "@pages/*": ["src/pages/*"],
+      "@providers/*": ["src/providers/*"],
       "@routes/*": ["src/routes/*"],
       "@tests/*": ["tests/*"],
       "@theme/*": ["src/theme/*"]

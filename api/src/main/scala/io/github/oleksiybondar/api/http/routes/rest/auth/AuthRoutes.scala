@@ -34,7 +34,9 @@ object AuthRoutes {
       .errorOut(unauthorizedOutput)
       .out(jsonBody[AuthTokensResponse])
       .name("login")
-      .description("Creates an authenticated session and returns access and refresh tokens")
+      .description(
+        "Bootstrap login: finds a user by username or email and returns access and refresh tokens. The password field is not verified yet."
+      )
       .tag("auth")
 
   val refreshEndpoint: PublicEndpoint[RefreshRequest, ErrorResponse, AuthTokensResponse, Any] =
@@ -44,7 +46,7 @@ object AuthRoutes {
       .errorOut(unauthorizedOutput)
       .out(jsonBody[AuthTokensResponse])
       .name("refresh")
-      .description("Rotates the refresh token and returns a new access token")
+      .description("Rotates the refresh token and returns a new access and refresh token pair")
       .tag("auth")
 
   val logoutEndpoint: PublicEndpoint[LogoutRequest, Unit, Unit, Any] =

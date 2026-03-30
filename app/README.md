@@ -43,6 +43,12 @@ Start the dev server:
 npm run dev
 ```
 
+During local development, Vite proxies backend-bound requests to
+`http://127.0.0.1:8080` for:
+
+- `/auth/*`
+- `/graphql`
+
 ## Source layout
 
 The initial bootstrap keeps shared code organized and leaves room for future
@@ -53,6 +59,8 @@ src/
   app/
   components/
   contexts/
+  features/
+  providers/
   helpers/
   hooks/
   pages/

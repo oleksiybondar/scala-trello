@@ -26,7 +26,9 @@ Current implementation:
 Important status note:
 
 - login currently looks up a user by username or email and issues tokens
-- password validation is not implemented yet
+- the `password` field is currently accepted but not verified yet
+- `POST /auth/refresh` rotates the refresh token and returns a new token pair
+- `POST /auth/logout` revokes the session tied to the provided refresh token
 - Google OIDC is not implemented yet
 - ticket board, workflow states, and comments are not implemented yet
 
@@ -93,6 +95,36 @@ Once the server is running:
 - Swagger UI: `http://localhost:8080/docs`
 
 GraphQL is wrapped in auth middleware, so domain queries require a valid access token.
+
+Current auth contract:
+
+- `POST /auth/login` accepts `{ "login": "...", "password": "..." }`
+- `login` can be either a username or an email address
+- if the user exists, the API returns `access_token`, `refresh_token`, `token_type`, and `expires_in`
+- the current bootstrap implementation does not verify the password value yet
+- use `Authorization: Bearer <access_token>` for protected GraphQL requests
+- use the returned `refresh_token` with `POST /auth/refresh` to rotate the session
+- use the returned `refresh_token` with `POST /auth/logout` to revoke the session
+
+Example login request:
+
+```json
+{
+  "login": "alice@example.com",
+  "password": "anything-for-now"
+}
+```
+
+Example token response:
+
+```json
+{
+  "access_token": "<jwt>",
+  "refresh_token": "11111111-1111-1111-1111-111111111111",
+  "token_type": "Bearer",
+  "expires_in": 900
+}
+```
 
 ## Quality
 

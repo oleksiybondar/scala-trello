@@ -11,9 +11,11 @@ export default defineConfig({
       "@app": path.resolve(dirname, "src/app"),
       "@components": path.resolve(dirname, "src/components"),
       "@contexts": path.resolve(dirname, "src/contexts"),
+      "@features": path.resolve(dirname, "src/features"),
       "@helpers": path.resolve(dirname, "src/helpers"),
       "@hooks": path.resolve(dirname, "src/hooks"),
       "@pages": path.resolve(dirname, "src/pages"),
+      "@providers": path.resolve(dirname, "src/providers"),
       "@routes": path.resolve(dirname, "src/routes"),
       "@tests": path.resolve(dirname, "tests"),
       "@theme": path.resolve(dirname, "src/theme")

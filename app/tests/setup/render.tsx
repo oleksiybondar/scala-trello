@@ -3,7 +3,7 @@ import type { PropsWithChildren, ReactElement } from "react";
 import { render } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
-import { AppProviders } from "@app/providers/AppProviders";
+import { AppProviders } from "@providers/AppProviders";
 
 const TestProviders = ({ children }: PropsWithChildren): ReactElement => {
   return (
