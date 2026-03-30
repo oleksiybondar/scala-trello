@@ -96,6 +96,51 @@ describe("AuthProvider", () => {
     );
   });
 
+  test("deduplicates concurrent login attempts", async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn<typeof fetch>();
+    let resolveLogin!: (value: Response) => void;
+
+    const pendingLoginResponse = new Promise<Response>(resolve => {
+      resolveLogin = resolve;
+    });
+
+    fetchMock.mockReturnValueOnce(pendingLoginResponse);
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <AuthProvider>
+        <AuthConsumer />
+      </AuthProvider>
+    );
+
+    const loginButton = screen.getByRole("button", { name: "Login" });
+
+    await Promise.all([
+      user.click(loginButton),
+      user.click(loginButton)
+    ]);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    resolveLogin(
+      new Response(
+        JSON.stringify({
+          access_token: "access-1",
+          refresh_token: "refresh-1",
+          token_type: "Bearer",
+          expires_in: 3600
+        }),
+        {
+          status: 200
+        }
+      )
+    );
+
+    expect(await screen.findByText("Status: authenticated")).toBeInTheDocument();
+  });
+
   test("refreshes the active session", async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn<typeof fetch>();

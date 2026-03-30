@@ -17,6 +17,7 @@ export const AuthProvider = ({
 }: PropsWithChildren): ReactElement => {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [status, setStatus] = useState<AuthStatus>("anonymous");
+  const loginPromiseRef = useRef<Promise<void> | null>(null);
   const refreshTimeoutIdRef = useRef<number | null>(null);
   const refreshPromiseRef = useRef<Promise<void> | null>(null);
 
@@ -29,6 +30,7 @@ export const AuthProvider = ({
   });
   const { login, logout, refreshSession } = useAuthService({
     authState,
+    loginPromiseRef,
     refreshPromiseRef
   });
 

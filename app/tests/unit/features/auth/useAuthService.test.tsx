@@ -43,6 +43,11 @@ const createAuthState = (
 };
 
 describe("useAuthService", () => {
+  const createPromiseRefs = () => ({
+    loginPromiseRef: { current: null as Promise<void> | null },
+    refreshPromiseRef: { current: null as Promise<void> | null }
+  });
+
   afterEach(() => {
     vi.clearAllMocks();
     vi.restoreAllMocks();
@@ -66,7 +71,7 @@ describe("useAuthService", () => {
     const { result } = renderHook(() =>
       useAuthService({
         authState,
-        refreshPromiseRef: { current: null }
+        ...createPromiseRefs()
       })
     );
 
@@ -91,7 +96,7 @@ describe("useAuthService", () => {
   test("deduplicates concurrent refresh calls", async () => {
     let resolveRefresh!: (value: AuthTokenResponse) => void;
     const authState = createAuthState();
-    const refreshPromiseRef = { current: null as Promise<void> | null };
+    const { loginPromiseRef, refreshPromiseRef } = createPromiseRefs();
 
     vi.mocked(refreshRequest).mockReturnValue(
       new Promise<AuthTokenResponse>(resolve => {
@@ -102,6 +107,7 @@ describe("useAuthService", () => {
     const { result } = renderHook(() =>
       useAuthService({
         authState,
+        loginPromiseRef,
         refreshPromiseRef
       })
     );
@@ -130,7 +136,7 @@ describe("useAuthService", () => {
     const { result } = renderHook(() =>
       useAuthService({
         authState,
-        refreshPromiseRef: { current: null }
+        ...createPromiseRefs()
       })
     );
 
@@ -146,7 +152,7 @@ describe("useAuthService", () => {
     const { result } = renderHook(() =>
       useAuthService({
         authState,
-        refreshPromiseRef: { current: null }
+        ...createPromiseRefs()
       })
     );
 
@@ -171,7 +177,7 @@ describe("useAuthService", () => {
     renderHook(() =>
       useAuthService({
         authState,
-        refreshPromiseRef: { current: null }
+        ...createPromiseRefs()
       })
     );
 

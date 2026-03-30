@@ -13,6 +13,8 @@ import type { AuthStateApi } from "@features/auth/useAuthState";
 interface UseAuthServiceParameters {
   /** State accessors and mutation helpers supplied by the auth provider. */
   authState: AuthStateApi;
+  /** Reference used to deduplicate in-flight login requests. */
+  loginPromiseRef: RefObject<Promise<void> | null>;
   /** Reference used to deduplicate in-flight refresh requests. */
   refreshPromiseRef: RefObject<Promise<void> | null>;
 }
@@ -37,6 +39,7 @@ interface AuthServiceApi {
  */
 export const useAuthService = ({
   authState,
+  loginPromiseRef,
   refreshPromiseRef
 }: UseAuthServiceParameters): AuthServiceApi => {
   const refreshWithToken = async (refreshToken: string): Promise<void> => {
@@ -93,16 +96,32 @@ export const useAuthService = ({
   }, [authState]);
 
   const login = async (credentials: LoginCredentials): Promise<void> => {
+    if (authState.session !== null) {
+      return;
+    }
+
+    if (loginPromiseRef.current !== null) {
+      return loginPromiseRef.current;
+    }
+
     authState.setStatus("authenticating");
 
-    try {
-      const tokenResponse = await loginRequest(credentials);
+    const loginPromise = (async () => {
+      try {
+        const tokenResponse = await loginRequest(credentials);
 
-      authState.applySession(tokenResponse);
-    } catch (error) {
-      authState.clearSession();
-      throw error;
-    }
+        authState.applySession(tokenResponse);
+      } catch (error) {
+        authState.clearSession();
+        throw error;
+      } finally {
+        loginPromiseRef.current = null;
+      }
+    })();
+
+    loginPromiseRef.current = loginPromise;
+
+    return loginPromise;
   };
 
   const refreshSession = async (): Promise<void> => {
