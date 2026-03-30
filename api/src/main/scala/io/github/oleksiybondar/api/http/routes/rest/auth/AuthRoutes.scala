@@ -1,62 +1,63 @@
 package io.github.oleksiybondar.api.http.routes.rest.auth
 
 import cats.effect.Async
-import cats.syntax.all._
-import io.circe.generic.auto._
-import io.github.oleksiybondar.api.domain.auth._
-import io.github.oleksiybondar.api.http.routes.rest.auth._
+import io.github.oleksiybondar.api.domain.auth.{AuthError, AuthService, AuthTokens, RefreshToken}
 import org.http4s.HttpRoutes
-import sttp.tapir._
+import sttp.model.StatusCode
 import sttp.tapir.generic.auto._
 import sttp.tapir.json.circe._
 import sttp.tapir.server.http4s.Http4sServerInterpreter
+import sttp.tapir.{
+  AnyEndpoint,
+  PublicEndpoint,
+  endpoint,
+  oneOf,
+  oneOfVariant,
+  statusCode,
+  stringToPath
+}
 
 object AuthRoutes {
 
-  // ----- endpoint descriptions -----
-
-  private val base =
-    endpoint
-      .in("auth")
-      .tag("auth")
+  private val unauthorizedOutput =
+    oneOf[ErrorResponse](
+      oneOfVariant(
+        statusCode(StatusCode.Unauthorized)
+          .and(jsonBody[ErrorResponse])
+      )
+    )
 
   val loginEndpoint: PublicEndpoint[LoginRequest, ErrorResponse, AuthTokensResponse, Any] =
-    base.post
-      .in("login")
+    endpoint.post
+      .in("auth" / "login")
       .in(jsonBody[LoginRequest])
-      .errorOut(jsonBody[ErrorResponse])
+      .errorOut(unauthorizedOutput)
       .out(jsonBody[AuthTokensResponse])
       .name("login")
-      .description("Authenticate user with username/email and password")
+      .description("Creates an authenticated session and returns access and refresh tokens")
+      .tag("auth")
 
   val refreshEndpoint: PublicEndpoint[RefreshRequest, ErrorResponse, AuthTokensResponse, Any] =
-    base.post
-      .in("refresh")
+    endpoint.post
+      .in("auth" / "refresh")
       .in(jsonBody[RefreshRequest])
-      .errorOut(jsonBody[ErrorResponse])
+      .errorOut(unauthorizedOutput)
       .out(jsonBody[AuthTokensResponse])
       .name("refresh")
-      .description("Refresh access token using refresh token")
+      .description("Rotates the refresh token and returns a new access token")
+      .tag("auth")
 
-  val logoutEndpoint: PublicEndpoint[LogoutRequest, ErrorResponse, Unit, Any] =
-    base.post
-      .in("logout")
+  val logoutEndpoint: PublicEndpoint[LogoutRequest, Unit, Unit, Any] =
+    endpoint.post
+      .in("auth" / "logout")
       .in(jsonBody[LogoutRequest])
-      .errorOut(jsonBody[ErrorResponse])
-      .out(emptyOutput)
+      .out(statusCode(StatusCode.NoContent))
       .name("logout")
-      .description("Logout user and invalidate refresh token")
+      .description("Revokes the session associated with the refresh token")
+      .tag("auth")
 
-  val all: List[Endpoint[
-    Unit,
-    ? >: LoginRequest & RefreshRequest & LogoutRequest <: LoginRequest | RefreshRequest | LogoutRequest,
-    ErrorResponse,
-    ? >: AuthTokensResponse & Unit <: AuthTokensResponse | Unit,
-    Any
-  ]] =
+  val all: List[AnyEndpoint] =
     List(loginEndpoint, refreshEndpoint, logoutEndpoint)
-
-  // ----- routes -----
 
   def routes[F[_]: Async](authService: AuthService[F]): HttpRoutes[F] =
     Http4sServerInterpreter[F]().toRoutes(
@@ -67,67 +68,40 @@ object AuthRoutes {
       )
     )
 
-  // ----- server endpoints -----
-
   private def loginServerEndpoint[F[_]: Async](authService: AuthService[F]) =
-    loginEndpoint.serverLogic(loginLogic(authService))
+    loginEndpoint.serverLogic[F](request =>
+      authService
+        .login(request.login, request.password)
+        .map(tokens => authTokensToResponse(tokens))
+        .leftMap(toErrorResponse)
+        .value
+    )
 
   private def refreshServerEndpoint[F[_]: Async](authService: AuthService[F]) =
-    refreshEndpoint.serverLogic(refreshLogic(authService))
+    refreshEndpoint.serverLogic[F](request =>
+      authService
+        .refresh(RefreshToken(request.refresh_token))
+        .map(tokens => authTokensToResponse(tokens))
+        .leftMap(toErrorResponse)
+        .value
+    )
 
   private def logoutServerEndpoint[F[_]: Async](authService: AuthService[F]) =
-    logoutEndpoint.serverLogic(logoutLogic(authService))
-
-  // ----- server logic -----
-
-  private def loginLogic[F[_]: Async](
-      authService: AuthService[F]
-  )(request: LoginRequest): F[Either[ErrorResponse, AuthTokensResponse]] =
-    authService
-      .login(toLoginCommand(request))
-      .map {
-        case Some(tokens) => Right(toResponse(tokens))
-        case None         => Left(ErrorResponse("Invalid credentials"))
-      }
-
-  private def refreshLogic[F[_]: Async](
-      authService: AuthService[F]
-  )(request: RefreshRequest): F[Either[ErrorResponse, AuthTokensResponse]] =
-    authService
-      .refresh(toRefreshCommand(request))
-      .map {
-        case Some(tokens) => Right(toResponse(tokens))
-        case None         => Left(ErrorResponse("Invalid refresh token"))
-      }
-
-  private def logoutLogic[F[_]: Async](
-      authService: AuthService[F]
-  )(request: LogoutRequest): F[Either[ErrorResponse, Unit]] =
-    authService
-      .logout(toLogoutCommand(request))
-      .as(Right(()))
-
-  // ----- transport <-> domain mapping -----
-
-  private def toLoginCommand(request: LoginRequest): LoginCommand =
-    LoginCommand(
-      login = request.login,
-      password = request.password
+    logoutEndpoint.serverLogicSuccess[F](request =>
+      authService.logout(RefreshToken(request.refresh_token))
     )
 
-  private def toRefreshCommand(request: RefreshRequest): RefreshTokenCommand =
-    RefreshTokenCommand(
-      refreshToken = RefreshToken(request.refreshToken)
-    )
+  private def toErrorResponse(error: AuthError): ErrorResponse =
+    error match {
+      case AuthError.InvalidCredentials  => ErrorResponse("Authentication failed")
+      case AuthError.InvalidRefreshToken => ErrorResponse("Authentication failed")
+    }
 
-  private def toLogoutCommand(request: LogoutRequest): LogoutCommand =
-    LogoutCommand(
-      refreshToken = RefreshToken(request.refreshToken)
-    )
-
-  private def toResponse(tokens: AuthTokens): AuthTokensResponse =
+  private def authTokensToResponse(tokens: AuthTokens): AuthTokensResponse =
     AuthTokensResponse(
-      accessToken = tokens.accessToken.value,
-      refreshToken = tokens.refreshToken.value
+      access_token = tokens.accessToken.value,
+      refresh_token = tokens.refreshToken.value.toString,
+      token_type = tokens.tokenType,
+      expires_in = tokens.expiresIn
     )
 }

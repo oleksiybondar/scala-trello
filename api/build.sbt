@@ -7,6 +7,7 @@ ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 lazy val root = (project in file("."))
   .settings(
     name := "api",
+    Test / parallelExecution := false,
 
     scalacOptions ++= Seq(
       "-deprecation",
@@ -37,6 +38,7 @@ lazy val root = (project in file("."))
       "io.circe" %% "circe-core" % "0.14.15",
       "io.circe" %% "circe-generic" % "0.14.15",
       "io.circe" %% "circe-parser" % "0.14.15",
+      "com.github.jwt-scala" %% "jwt-circe" % "11.0.3",
 
       // Config
       "com.github.pureconfig" %% "pureconfig-core" % "0.17.9",

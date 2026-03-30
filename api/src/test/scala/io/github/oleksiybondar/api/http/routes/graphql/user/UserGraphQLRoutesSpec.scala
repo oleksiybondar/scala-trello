@@ -15,11 +15,11 @@ class UserGraphQLRoutesSpec extends FunSuite {
   test("POST /graphql returns the requested user for a valid user query") {
     val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
       for {
-        _        <- ctx.seedAccessToken("valid-token", UserFixtures.sampleUser.id)
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
         response <- ctx.httpApp.run(
                       graphqlRequest(
                         userQuery(UserFixtures.sampleUser.id.value.toString),
-                        accessToken = Some("valid-token")
+                        accessToken = Some(token)
                       )
                     )
       } yield response
@@ -39,11 +39,11 @@ class UserGraphQLRoutesSpec extends FunSuite {
   test("POST /graphql returns null when the requested user does not exist") {
     val response = withGraphQLRoutes(Nil) { ctx =>
       for {
-        _        <- ctx.seedAccessToken("valid-token", UserFixtures.sampleUser.id)
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
         response <- ctx.httpApp.run(
                       graphqlRequest(
                         userQuery(UserFixtures.sampleUser.id.value.toString),
-                        accessToken = Some("valid-token")
+                        accessToken = Some(token)
                       )
                     )
       } yield response
@@ -61,11 +61,11 @@ class UserGraphQLRoutesSpec extends FunSuite {
   test("POST /graphql returns an error when the user id is not a valid UUID") {
     val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
       for {
-        _        <- ctx.seedAccessToken("valid-token", UserFixtures.sampleUser.id)
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
         response <- ctx.httpApp.run(
                       graphqlRequest(
                         userQuery("not-a-uuid"),
-                        accessToken = Some("valid-token")
+                        accessToken = Some(token)
                       )
                     )
       } yield response

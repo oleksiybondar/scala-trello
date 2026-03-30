@@ -26,11 +26,11 @@ class GraphQLRoutesSpec extends FunSuite {
   test("POST /graphql serves the schema for an authorized request") {
     val response = withGraphQLRoutes() { ctx =>
       for {
-        _        <- ctx.seedAccessToken("valid-token", UserFixtures.sampleUser.id)
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
         response <- ctx.httpApp.run(
                       graphqlRequest(
                         introspectionQuery,
-                        accessToken = Some("valid-token")
+                        accessToken = Some(token)
                       )
                     )
       } yield response
@@ -47,11 +47,11 @@ class GraphQLRoutesSpec extends FunSuite {
   test("POST /graphql returns GraphQL errors for an invalid schema query") {
     val response = withGraphQLRoutes() { ctx =>
       for {
-        _        <- ctx.seedAccessToken("valid-token", UserFixtures.sampleUser.id)
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
         response <- ctx.httpApp.run(
                       graphqlRequest(
                         invalidSchemaQuery,
-                        accessToken = Some("valid-token")
+                        accessToken = Some(token)
                       )
                     )
       } yield response

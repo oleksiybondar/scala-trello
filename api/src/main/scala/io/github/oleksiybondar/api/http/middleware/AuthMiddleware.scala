@@ -3,6 +3,7 @@ package io.github.oleksiybondar.api.http.middleware
 import cats.effect.Async
 import cats.syntax.all._
 import io.github.oleksiybondar.api.domain.auth.{AccessToken, AuthService}
+import io.github.oleksiybondar.api.domain.user.UserId
 import org.http4s.dsl.Http4sDsl
 import org.http4s.headers.Authorization
 import org.http4s.{AuthScheme, Credentials, HttpRoutes, Request, Response, Status}
@@ -15,19 +16,20 @@ object AuthMiddleware {
     val dsl = new Http4sDsl[F] {}
     import dsl.*
 
+    def unauthorized(message: String): F[Response[F]] =
+      Response[F](status = Status.Unauthorized)
+        .withEntity(message)
+        .pure[F]
+
     HttpRoutes.of[F] { req =>
       extractAccessToken(req) match {
         case None =>
-          Response[F](status = Status.Unauthorized)
-            .withEntity("Missing or invalid Authorization header")
-            .pure[F]
+          unauthorized("Missing or invalid Authorization header")
 
         case Some(accessToken) =>
-          authService.verifyAccessToken(accessToken).flatMap {
+          authenticate(authService, accessToken).flatMap {
             case None =>
-              Response[F](status = Status.Unauthorized)
-                .withEntity("Invalid access token")
-                .pure[F]
+              unauthorized("Invalid access token")
 
             case Some(_) =>
               routes(req).getOrElseF(NotFound())
@@ -41,4 +43,10 @@ object AuthMiddleware {
       case Authorization(Credentials.Token(AuthScheme.Bearer, token)) =>
         AccessToken(token)
     }
+
+  private def authenticate[F[_]](
+      authService: AuthService[F],
+      accessToken: AccessToken
+  ): F[Option[UserId]] =
+    authService.verifyToken(accessToken)
 }

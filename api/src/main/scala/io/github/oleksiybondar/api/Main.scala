@@ -3,7 +3,6 @@ package io.github.oleksiybondar.api
 import cats.effect.{IO, IOApp, Resource}
 import com.comcast.ip4s.{Host, Port}
 import io.github.oleksiybondar.api.config.{AppConfig, ConfigLoader}
-import io.github.oleksiybondar.api.domain.auth.TokenRepo
 import io.github.oleksiybondar.api.http.HttpApi
 import io.github.oleksiybondar.api.http.docs.graphql.GraphiQLRoutes
 import io.github.oleksiybondar.api.http.docs.rest.OpenAPI
@@ -11,7 +10,7 @@ import io.github.oleksiybondar.api.http.middleware.AuthMiddleware
 import io.github.oleksiybondar.api.http.routes.graphql.{GraphQLContext, GraphQLRoutes}
 import io.github.oleksiybondar.api.http.routes.rest.health.HealthRoutes
 import io.github.oleksiybondar.api.infrastructure.db.DatabaseResource
-import io.github.oleksiybondar.api.infrastructure.db.auth.SlickTokenRepo
+import io.github.oleksiybondar.api.infrastructure.db.auth.{AuthSessionRepo, AuthSessionRepoSlick}
 import io.github.oleksiybondar.api.infrastructure.db.user.{SlickUserRepo, UserRepo}
 import io.github.oleksiybondar.api.modules.AuthModule
 import org.http4s.ember.server.EmberServerBuilder
@@ -64,12 +63,12 @@ object Main extends IOApp.Simple {
       config: AppConfig
   ): Resource[IO, HttpApp[IO]] =
     for {
-      db            <- databaseResource(config)
-      userRepo       = buildUserRepo(db)
-      tokenRepo      = buildTokenRepo(db)
-      graphqlRoutes <- graphqlRoutesResource(userRepo)
+      db             <- databaseResource(config)
+      userRepo        = buildUserRepo(db)
+      authSessionRepo = buildAuthSessionRepo(db)
+      graphqlRoutes  <- graphqlRoutesResource(userRepo)
     } yield {
-      val authModule = buildAuthModule(userRepo, tokenRepo)
+      val authModule = buildAuthModule(config, userRepo, authSessionRepo)
       buildHttpApp(authModule, graphqlRoutes)
     }
 
@@ -82,16 +81,18 @@ object Main extends IOApp.Simple {
   def buildUserRepo(db: Database): UserRepo[IO] =
     new SlickUserRepo[IO](db)
 
-  def buildTokenRepo(db: Database): TokenRepo[IO] =
-    new SlickTokenRepo[IO](db)
+  def buildAuthSessionRepo(db: Database): AuthSessionRepo[IO] =
+    new AuthSessionRepoSlick[IO](db)
 
   def buildAuthModule(
+      config: AppConfig,
       userRepo: UserRepo[IO],
-      tokenRepo: TokenRepo[IO]
+      authSessionRepo: AuthSessionRepo[IO]
   ): AuthModule[IO] =
     AuthModule.make[IO](
+      config.auth,
       userRepo,
-      tokenRepo
+      authSessionRepo
     )
 
   def buildHttpApp(

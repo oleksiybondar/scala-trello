@@ -20,7 +20,7 @@ Current implementation:
 - `POST /graphql`
 - Swagger UI for REST endpoints
 - GraphiQL page
-- Flyway migrations for `users` and `auth_tokens`
+- Flyway migrations for `users` and `auth_sessions`
 - user repository and a basic authenticated GraphQL user query
 
 Important status note:

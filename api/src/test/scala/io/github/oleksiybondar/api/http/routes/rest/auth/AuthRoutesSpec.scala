@@ -2,7 +2,6 @@ package io.github.oleksiybondar.api.http.routes.rest.auth
 
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
-import io.circe.generic.auto._
 import io.github.oleksiybondar.api.testkit.fixtures.AuthServiceFixtures.withAuthService
 import io.github.oleksiybondar.api.testkit.fixtures.UserFixtures
 import munit.FunSuite
@@ -26,11 +25,13 @@ class AuthRoutesSpec extends FunSuite {
     val body = response.as[AuthTokensResponse].unsafeRunSync()
 
     assertEquals(response.status, Status.Ok)
-    assertNotEquals(body.accessToken, "")
-    assertNotEquals(body.refreshToken, "")
+    assertNotEquals(body.access_token, "")
+    assertNotEquals(body.refresh_token, "")
+    assertEquals(body.token_type, "Bearer")
+    assertEquals(body.expires_in, 900L)
   }
 
-  test("POST /auth/login returns bad request for invalid credentials") {
+  test("POST /auth/login returns unauthorized for invalid credentials") {
     val response = withAuthService(Nil) { ctx =>
       AuthRoutes
         .routes[IO](ctx.authService)
@@ -43,8 +44,8 @@ class AuthRoutesSpec extends FunSuite {
 
     val body = response.as[ErrorResponse].unsafeRunSync()
 
-    assertEquals(response.status, Status.BadRequest)
-    assertEquals(body, ErrorResponse("Invalid credentials"))
+    assertEquals(response.status, Status.Unauthorized)
+    assertEquals(body, ErrorResponse("Authentication failed"))
   }
 
   test("POST /auth/refresh returns new tokens for a valid refresh token") {
@@ -58,41 +59,46 @@ class AuthRoutesSpec extends FunSuite {
                                  .withEntity(LoginRequest("alice@example.com", "secret"))
                              )
         loginTokens     <- loginResponse.as[AuthTokensResponse]
-        refreshResponse <- AuthRoutes
-                             .routes[IO](ctx.authService)
-                             .orNotFound
-                             .run(
-                               Request[IO](method = Method.POST, uri = uri"/auth/refresh")
-                                 .withEntity(RefreshRequest(loginTokens.refreshToken))
-                             )
+        refreshResponse <-
+          AuthRoutes
+            .routes[IO](ctx.authService)
+            .orNotFound
+            .run(
+              Request[IO](method = Method.POST, uri = uri"/auth/refresh")
+                .withEntity(
+                  RefreshRequest(java.util.UUID.fromString(loginTokens.refresh_token))
+                )
+            )
       } yield refreshResponse
     }
 
     val body = response.as[AuthTokensResponse].unsafeRunSync()
 
     assertEquals(response.status, Status.Ok)
-    assertNotEquals(body.accessToken, "")
-    assertNotEquals(body.refreshToken, "")
+    assertNotEquals(body.access_token, "")
+    assertNotEquals(body.refresh_token, "")
+    assertEquals(body.token_type, "Bearer")
+    assertEquals(body.expires_in, 900L)
   }
 
-  test("POST /auth/refresh returns bad request for an invalid refresh token") {
+  test("POST /auth/refresh returns unauthorized for an invalid refresh token") {
     val response = withAuthService(List(UserFixtures.sampleUser)) { ctx =>
       AuthRoutes
         .routes[IO](ctx.authService)
         .orNotFound
         .run(
           Request[IO](method = Method.POST, uri = uri"/auth/refresh")
-            .withEntity(RefreshRequest("missing-refresh-token"))
+            .withEntity(RefreshRequest(java.util.UUID.randomUUID()))
         )
     }
 
     val body = response.as[ErrorResponse].unsafeRunSync()
 
-    assertEquals(response.status, Status.BadRequest)
-    assertEquals(body, ErrorResponse("Invalid refresh token"))
+    assertEquals(response.status, Status.Unauthorized)
+    assertEquals(body, ErrorResponse("Authentication failed"))
   }
 
-  test("POST /auth/logout invalidates the provided refresh token") {
+  test("POST /auth/logout invalidates the provided refresh token and returns no content") {
     val result = withAuthService(List(UserFixtures.sampleUser)) { ctx =>
       for {
         loginResponse   <- AuthRoutes
@@ -103,28 +109,34 @@ class AuthRoutesSpec extends FunSuite {
                                  .withEntity(LoginRequest("alice", "secret"))
                              )
         loginTokens     <- loginResponse.as[AuthTokensResponse]
-        logoutResponse  <- AuthRoutes
-                             .routes[IO](ctx.authService)
-                             .orNotFound
-                             .run(
-                               Request[IO](method = Method.POST, uri = uri"/auth/logout")
-                                 .withEntity(LogoutRequest(loginTokens.refreshToken))
-                             )
-        refreshResponse <- AuthRoutes
-                             .routes[IO](ctx.authService)
-                             .orNotFound
-                             .run(
-                               Request[IO](method = Method.POST, uri = uri"/auth/refresh")
-                                 .withEntity(RefreshRequest(loginTokens.refreshToken))
-                             )
+        logoutResponse  <-
+          AuthRoutes
+            .routes[IO](ctx.authService)
+            .orNotFound
+            .run(
+              Request[IO](method = Method.POST, uri = uri"/auth/logout")
+                .withEntity(
+                  LogoutRequest(java.util.UUID.fromString(loginTokens.refresh_token))
+                )
+            )
+        refreshResponse <-
+          AuthRoutes
+            .routes[IO](ctx.authService)
+            .orNotFound
+            .run(
+              Request[IO](method = Method.POST, uri = uri"/auth/refresh")
+                .withEntity(
+                  RefreshRequest(java.util.UUID.fromString(loginTokens.refresh_token))
+                )
+            )
         refreshBody     <- refreshResponse.as[ErrorResponse]
       } yield (logoutResponse, refreshResponse, refreshBody)
     }
 
     val (logoutResponse, refreshResponse, refreshBody) = result
 
-    assertEquals(logoutResponse.status, Status.Ok)
-    assertEquals(refreshResponse.status, Status.BadRequest)
-    assertEquals(refreshBody, ErrorResponse("Invalid refresh token"))
+    assertEquals(logoutResponse.status, Status.NoContent)
+    assertEquals(refreshResponse.status, Status.Unauthorized)
+    assertEquals(refreshBody, ErrorResponse("Authentication failed"))
   }
 }

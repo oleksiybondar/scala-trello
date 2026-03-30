@@ -1,23 +1,11 @@
 package io.github.oleksiybondar.api.domain.auth
 
+import cats.data.EitherT
 import io.github.oleksiybondar.api.domain.user.UserId
 
 trait AuthService[F[_]] {
-  def login(command: LoginCommand): F[Option[AuthTokens]]
-  def refresh(command: RefreshTokenCommand): F[Option[AuthTokens]]
-  def logout(command: LogoutCommand): F[Unit]
-  def verifyAccessToken(accessToken: AccessToken): F[Option[UserId]]
+  def login(login: String, password: String): EitherT[F, AuthError, AuthTokens]
+  def refresh(refreshToken: RefreshToken): EitherT[F, AuthError, AuthTokens]
+  def logout(refreshToken: RefreshToken): F[Unit]
+  def verifyToken(accessToken: AccessToken): F[Option[UserId]]
 }
-
-final case class LoginCommand(
-    login: String,
-    password: String
-)
-
-final case class RefreshTokenCommand(
-    refreshToken: RefreshToken
-)
-
-final case class LogoutCommand(
-    refreshToken: RefreshToken
-)

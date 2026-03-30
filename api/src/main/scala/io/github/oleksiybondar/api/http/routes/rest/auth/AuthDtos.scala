@@ -1,23 +1,22 @@
 package io.github.oleksiybondar.api.http.routes.rest.auth
 
-final case class LoginRequest(
-    login: String,
-    password: String
-)
+import io.circe.Codec
 
-final case class RefreshRequest(
-    refreshToken: String
-)
+import java.util.UUID
 
-final case class LogoutRequest(
-    refreshToken: String
-)
-
+final case class LoginRequest(login: String, password: String)
+final case class RefreshRequest(refresh_token: UUID)
+final case class LogoutRequest(refresh_token: UUID)
 final case class AuthTokensResponse(
-    accessToken: String,
-    refreshToken: String
+    access_token: String,
+    refresh_token: String,
+    token_type: String,
+    expires_in: Long
 )
+final case class ErrorResponse(message: String)
 
-final case class ErrorResponse(
-    message: String
-)
+given Codec.AsObject[LoginRequest]       = io.circe.generic.semiauto.deriveCodec
+given Codec.AsObject[RefreshRequest]     = io.circe.generic.semiauto.deriveCodec
+given Codec.AsObject[LogoutRequest]      = io.circe.generic.semiauto.deriveCodec
+given Codec.AsObject[AuthTokensResponse] = io.circe.generic.semiauto.deriveCodec
+given Codec.AsObject[ErrorResponse]      = io.circe.generic.semiauto.deriveCodec
