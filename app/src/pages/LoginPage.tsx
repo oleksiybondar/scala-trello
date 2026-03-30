@@ -79,13 +79,7 @@ export const LoginPage = (): ReactElement => {
           <Paper sx={{ p: 4, width: "100%" }}>
             <Stack component="form" onSubmit={handleSubmit} spacing={3}>
               <Stack spacing={1}>
-                <Typography color="primary" variant="overline">
-                  Authentication
-                </Typography>
                 <Typography variant="h3">Sign in</Typography>
-                <Typography color="textSecondary" variant="body1">
-                  The form only allows one in-flight login request at a time.
-                </Typography>
               </Stack>
 
               {errorMessage !== null ? (
