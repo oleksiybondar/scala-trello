@@ -4,6 +4,7 @@ import io.github.oleksiybondar.api.testkit.fixtures.UserFixtures
 import io.github.oleksiybondar.api.testkit.fixtures.UserServiceFixtures.withUserService
 import munit.FunSuite
 
+import java.time.Instant
 import java.util.UUID
 
 class UserServiceLiveSpec extends FunSuite {
@@ -74,6 +75,36 @@ class UserServiceLiveSpec extends FunSuite {
       result.sortBy(_.id.value.toString),
       List(firstUser, secondUser).sortBy(_.id.value.toString)
     )
+  }
+
+  test("listUsersPage returns the requested page of users") {
+    val firstUser  =
+      UserFixtures.user(
+        id = UserId(UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")),
+        username = Some(Username("alice")),
+        email = Some(Email("alice@example.com")),
+        createdAt = Instant.parse("2026-03-31T08:00:00Z")
+      )
+    val secondUser =
+      UserFixtures.user(
+        id = UserId(UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")),
+        username = Some(Username("bob")),
+        email = Some(Email("bob@example.com")),
+        createdAt = Instant.parse("2026-03-31T09:00:00Z")
+      )
+    val thirdUser  =
+      UserFixtures.user(
+        id = UserId(UUID.fromString("cccccccc-cccc-cccc-cccc-cccccccccccc")),
+        username = Some(Username("charlie")),
+        email = Some(Email("charlie@example.com")),
+        createdAt = Instant.parse("2026-03-31T10:00:00Z")
+      )
+
+    val result = withUserService(List(firstUser, secondUser, thirdUser)) { ctx =>
+      ctx.userService.listUsersPage(1, 1)
+    }
+
+    assertEquals(result, List(secondUser))
   }
 
   test("updateUser returns true and persists changes for an existing user") {
