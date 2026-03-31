@@ -23,7 +23,10 @@ final class InMemoryUserRepo[F[_]: Sync] private (
     state.get.map(_.values.find(_.email.contains(email)))
 
   override def list: F[List[User]] =
-    state.get.map(_.values.toList)
+    state.get.map(sortedUsers)
+
+  override def listPage(offset: Int, limit: Int): F[List[User]] =
+    state.get.map(users => sortedUsers(users).slice(offset, offset + limit))
 
   override def update(user: User): F[Boolean] =
     state.modify { current =>
@@ -40,6 +43,9 @@ final class InMemoryUserRepo[F[_]: Sync] private (
       else
         (current, false)
     }
+
+  private def sortedUsers(users: Map[UserId, User]): List[User] =
+    users.values.toList.sortBy(_.createdAt.toEpochMilli)(Ordering.Long.reverse)
 }
 
 object InMemoryUserRepo {

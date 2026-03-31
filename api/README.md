@@ -14,21 +14,26 @@ Architecture target:
 Current implementation:
 
 - `GET /health`
+- `POST /auth/register`
 - `POST /auth/login`
 - `POST /auth/refresh`
 - `POST /auth/logout`
+- `GET /auth/me`
 - `POST /graphql`
 - Swagger UI for REST endpoints
 - GraphiQL page
-- Flyway migrations for `users` and `auth_sessions`
-- user repository and a basic authenticated GraphQL user query
+- Flyway migrations for `users`, `auth_sessions`, and `password_history`
+- user repository plus authenticated GraphQL user queries and mutations
 
 Important status note:
 
-- login currently looks up a user by username or email and issues tokens
-- the `password` field is currently accepted but not verified yet
+- registration creates a user, records the initial password in password history, and immediately issues tokens
+- login verifies the password hash for the matched username or email
 - `POST /auth/refresh` rotates the refresh token and returns a new token pair
 - `POST /auth/logout` revokes the session tied to the provided refresh token
+- `GET /auth/me` returns the current authenticated user for a valid access token
+- user profile, username, email, avatar, and password changes are available through authenticated GraphQL mutations
+- password changes enforce the configured strength rules and password-history checks
 - Google OIDC is not implemented yet
 - ticket board, workflow states, and comments are not implemented yet
 
@@ -98,10 +103,13 @@ GraphQL is wrapped in auth middleware, so domain queries require a valid access 
 
 Current auth contract:
 
+- `POST /auth/register` accepts `{ "email": "...", "password": "...", "first_name": "...", "last_name": "...", "username": "..." }`
 - `POST /auth/login` accepts `{ "login": "...", "password": "..." }`
 - `login` can be either a username or an email address
-- if the user exists, the API returns `access_token`, `refresh_token`, `token_type`, and `expires_in`
-- the current bootstrap implementation does not verify the password value yet
+- registration and login return `access_token`, `refresh_token`, `token_type`, and `expires_in`
+- registration requires a valid email and a password that satisfies the configured strength rules
+- login fails when the user does not exist or the password does not match
+- `GET /auth/me` requires `Authorization: Bearer <access_token>` and returns the current authenticated user
 - use `Authorization: Bearer <access_token>` for protected GraphQL requests
 - use the returned `refresh_token` with `POST /auth/refresh` to rotate the session
 - use the returned `refresh_token` with `POST /auth/logout` to revoke the session
@@ -111,7 +119,7 @@ Example login request:
 ```json
 {
   "login": "alice@example.com",
-  "password": "anything-for-now"
+  "password": "secret123"
 }
 ```
 

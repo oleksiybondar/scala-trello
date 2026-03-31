@@ -12,7 +12,7 @@ object UserFixtures {
       id = UserId(UUID.fromString("11111111-1111-1111-1111-111111111111")),
       username = Some(Username("alice")),
       email = Some(Email("alice@example.com")),
-      passwordHash = PasswordHash("hashed-password"),
+      passwordHash = PasswordHash("hash:secret"),
       firstName = FirstName("Alice"),
       lastName = LastName("Example"),
       avatarUrl = None,

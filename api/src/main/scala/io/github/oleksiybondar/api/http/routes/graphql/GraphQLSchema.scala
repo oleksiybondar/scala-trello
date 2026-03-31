@@ -14,6 +14,14 @@ object GraphQLSchema {
       )
     )
 
+  private val MutationType: ObjectType[GraphQLContext, Unit] =
+    ObjectType(
+      name = "Mutations",
+      fields = fields[GraphQLContext, Unit](
+        UserApi.mutationFields*
+      )
+    )
+
   val schema: Schema[GraphQLContext, Unit] =
-    Schema(query = QueryType)
+    Schema(query = QueryType, mutation = Some(MutationType))
 }

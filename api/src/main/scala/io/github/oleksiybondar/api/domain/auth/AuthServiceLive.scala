@@ -4,8 +4,20 @@ import cats.data.EitherT
 import cats.effect.Clock
 import cats.effect.kernel.Sync
 import cats.syntax.all._
-import io.github.oleksiybondar.api.domain.auth.AuthError.{InvalidCredentials, InvalidRefreshToken}
-import io.github.oleksiybondar.api.domain.user.{Email, User, Username}
+import io.github.oleksiybondar.api.domain.auth.AuthError.{
+  EmailAlreadyUsed,
+  EmailRequired,
+  InvalidCredentials,
+  InvalidEmail,
+  InvalidRefreshToken,
+  WeakPassword
+}
+import io.github.oleksiybondar.api.domain.auth.password.{
+  PasswordHasher,
+  PasswordHistory,
+  PasswordStrengthValidator
+}
+import io.github.oleksiybondar.api.domain.user.{Email, FirstName, LastName, User, UserId, Username}
 import io.github.oleksiybondar.api.infrastructure.db.auth.AuthSessionRepo
 import io.github.oleksiybondar.api.infrastructure.db.user.UserRepo
 
@@ -17,13 +29,53 @@ final class AuthServiceLive[F[_]: Sync: Clock](
     userRepo: UserRepo[F],
     authSessionRepo: AuthSessionRepo[F],
     jwtService: JwtService[F],
+    passwordHasher: PasswordHasher[F],
+    passwordStrengthValidator: PasswordStrengthValidator,
+    passwordHistory: PasswordHistory[F],
     accessTokenTtlSeconds: Long,
     sessionTtlDays: Long
 ) extends AuthService[F] {
 
+  // In this project registration intentionally acts as a registration + login shortcut.
+  override def register(command: RegisterUserCommand): EitherT[F, AuthError, AuthTokens] =
+    for {
+      normalizedEmail <- EitherT.fromEither[F](normalizeEmail(command.email))
+      _               <- EitherT(
+                           userRepo
+                             .findByEmail(normalizedEmail)
+                             .map(_.fold[Either[AuthError, Unit]](Right(()))(_ =>
+                               Left(EmailAlreadyUsed)
+                             ))
+                         )
+      _               <- EitherT.fromEither[F](
+                           passwordStrengthValidator
+                             .validate(command.password)
+                             .leftMap(errors => WeakPassword(errors.toChain.toList))
+                             .toEither
+                         )
+      passwordHash    <- EitherT.liftF(passwordHasher.hash(command.password))
+      now             <- EitherT.liftF(currentTime)
+      userId          <- EitherT.liftF(randomUserId)
+      user             = User(
+                           id = userId,
+                           username = command.username,
+                           email = Some(normalizedEmail),
+                           passwordHash = passwordHash,
+                           firstName = FirstName(command.firstName),
+                           lastName = LastName(command.lastName),
+                           avatarUrl = None,
+                           createdAt = now
+                         )
+      _               <- EitherT.liftF(userRepo.create(user))
+      _               <- EitherT.liftF(passwordHistory.record(user.id, passwordHash))
+      tokens          <- EitherT.liftF(issueTokens(user))
+    } yield tokens
+
   override def login(login: String, password: String): EitherT[F, AuthError, AuthTokens] =
     for {
-      user   <- EitherT.fromOptionF(findUser(login, password), InvalidCredentials)
+      user   <- EitherT.fromOptionF(findUser(login), InvalidCredentials)
+      valid  <- EitherT.liftF(passwordHasher.verify(password, user.passwordHash))
+      _      <- EitherT.cond[F](valid, (), InvalidCredentials)
       tokens <- EitherT.liftF(issueTokens(user))
     } yield tokens
 
@@ -52,14 +104,27 @@ final class AuthServiceLive[F[_]: Sync: Clock](
       : F[Option[io.github.oleksiybondar.api.domain.user.UserId]] =
     jwtService.verify(accessToken).map(_.map(_.userId))
 
-  private def findUser(login: String, password: String): F[Option[User]] = {
-    val _ = password
+  private def findUser(login: String): F[Option[User]] =
     if (login.contains("@")) {
-      userRepo.findByEmail(Email(login))
+      userRepo.findByEmail(Email(login.trim.toLowerCase))
     } else {
-      userRepo.findByUsername(Username(login))
+      userRepo.findByUsername(Username(login.trim))
+    }
+
+  private def normalizeEmail(rawEmail: String): Either[AuthError, Email] = {
+    val normalized = rawEmail.trim.toLowerCase
+
+    if (normalized.isEmpty) {
+      Left(EmailRequired)
+    } else if (!isValidEmail(normalized)) {
+      Left(InvalidEmail)
+    } else {
+      Right(Email(normalized))
     }
   }
+
+  private def isValidEmail(email: String): Boolean =
+    email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
 
   private def issueTokens(user: User): F[AuthTokens] =
     for {
@@ -111,4 +176,7 @@ final class AuthServiceLive[F[_]: Sync: Clock](
 
   private def randomRefreshToken: F[RefreshToken] =
     Sync[F].delay(RefreshToken(UUID.randomUUID()))
+
+  private def randomUserId: F[UserId] =
+    Sync[F].delay(UserId(UUID.randomUUID()))
 }

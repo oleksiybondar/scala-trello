@@ -61,8 +61,18 @@ class ConfigLoaderSpec extends FunSuite {
   test("ConfigLoader maps the auth configuration") {
     val config = ConfigLoader.load().toOption.get
 
-    assertEquals(config.auth.jwtSecret, "development-jwt-secret-change-me")
+    assertEquals(config.auth.jwtSecret, "development-jwt-secret")
     assertEquals(config.auth.accessTokenTtlSeconds, 900L)
     assertEquals(config.auth.sessionTtlDays, 30L)
+  }
+
+  test("ConfigLoader maps the password configuration") {
+    val config = ConfigLoader.load().toOption.get
+
+    assertEquals(config.password.pepper, "development-password-pepper")
+    assertEquals(config.password.historySize, 5)
+    assertEquals(config.password.strength.minLength, 8)
+    assertEquals(config.password.strength.requireDigit, false)
+    assertEquals(config.password.strength.requireSpecialChar, false)
   }
 }

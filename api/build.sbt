@@ -39,6 +39,7 @@ lazy val root = (project in file("."))
       "io.circe" %% "circe-generic" % "0.14.15",
       "io.circe" %% "circe-parser" % "0.14.15",
       "com.github.jwt-scala" %% "jwt-circe" % "11.0.3",
+      "com.password4j" % "password4j" % "1.8.4",
 
       // Config
       "com.github.pureconfig" %% "pureconfig-core" % "0.17.9",

@@ -2,7 +2,9 @@ package io.github.oleksiybondar.api
 
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
+import io.circe.parser.decode
 import io.github.oleksiybondar.api.config.HttpConfig
+import io.github.oleksiybondar.api.http.routes.rest.health.HealthRoutes.HealthResponse
 import munit.FunSuite
 
 import java.net.URI
@@ -42,6 +44,9 @@ class AppSmokeSpec extends FunSuite {
     } yield response).unsafeRunSync()
 
     assertEquals(response._1, 200)
-    assertEquals(response._2, "ok")
+    val body = decode[HealthResponse](response._2).fold(error => fail(error.getMessage), identity)
+    assertEquals(body.status, "ok")
+    assertEquals(body.service, "api")
+    assertEquals(body.version, "0.1.0-SNAPSHOT")
   }
 }

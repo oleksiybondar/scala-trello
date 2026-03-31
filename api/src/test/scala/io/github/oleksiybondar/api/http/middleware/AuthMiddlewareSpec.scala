@@ -8,7 +8,8 @@ import io.github.oleksiybondar.api.domain.auth.{
   AuthError,
   AuthService,
   AuthTokens,
-  RefreshToken
+  RefreshToken,
+  RegisterUserCommand
 }
 import io.github.oleksiybondar.api.domain.user.UserId
 import munit.FunSuite
@@ -74,6 +75,9 @@ class AuthMiddlewareSpec extends FunSuite {
   private final case class TestAuthService(
       verify: AccessToken => IO[Option[UserId]]
   ) extends AuthService[IO] {
+    override def register(command: RegisterUserCommand): EitherT[IO, AuthError, AuthTokens] =
+      EitherT.leftT(AuthError.InvalidCredentials)
+
     override def login(login: String, password: String): EitherT[IO, AuthError, AuthTokens] =
       EitherT.leftT(AuthError.InvalidCredentials)
 

@@ -90,6 +90,15 @@ final class SlickUserRepo[F[_]: Async](
   override def list: F[List[User]] =
     run(users.result).map(_.toList.map(toDomain))
 
+  override def listPage(offset: Int, limit: Int): F[List[User]] =
+    run(
+      users
+        .sortBy(_.createdAt.desc)
+        .drop(offset)
+        .take(limit)
+        .result
+    ).map(_.toList.map(toDomain))
+
   override def update(user: User): F[Boolean] =
     run(
       users

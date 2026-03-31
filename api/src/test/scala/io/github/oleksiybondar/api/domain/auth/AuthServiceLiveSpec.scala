@@ -1,10 +1,111 @@
 package io.github.oleksiybondar.api.domain.auth
 
+import io.github.oleksiybondar.api.domain.auth.password.PasswordStrengthError.PasswordTooShort
+import io.github.oleksiybondar.api.domain.user.{Email, Username}
 import io.github.oleksiybondar.api.testkit.fixtures.AuthServiceFixtures.withAuthService
 import io.github.oleksiybondar.api.testkit.fixtures.UserFixtures
 import munit.FunSuite
 
 class AuthServiceLiveSpec extends FunSuite {
+
+  test("register creates tokens for a newly created user") {
+    val result = withAuthService(Nil) { ctx =>
+      ctx.authService
+        .register(
+          RegisterUserCommand(
+            email = "  Alice@Example.com ",
+            password = "secret123",
+            firstName = "Alice",
+            lastName = "Example",
+            username = Some(Username("alice"))
+          )
+        )
+        .value
+    }
+
+    val tokens = result.toOption.get
+    assertNotEquals(tokens.accessToken.value, "")
+    assertNotEquals(tokens.refreshToken.value.toString, "")
+  }
+
+  test("register rejects an empty email") {
+    val result = withAuthService(Nil) { ctx =>
+      ctx.authService
+        .register(
+          RegisterUserCommand(
+            email = "   ",
+            password = "secret123",
+            firstName = "Alice",
+            lastName = "Example",
+            username = None
+          )
+        )
+        .value
+    }
+
+    assertEquals(result, Left(AuthError.EmailRequired))
+  }
+
+  test("register returns WeakPassword with strength errors for a weak password") {
+    val result = withAuthService(Nil) { ctx =>
+      ctx.authService
+        .register(
+          RegisterUserCommand(
+            email = "alice@example.com",
+            password = "short",
+            firstName = "Alice",
+            lastName = "Example",
+            username = Some(Username("alice"))
+          )
+        )
+        .value
+    }
+
+    result match {
+      case Left(AuthError.WeakPassword(errors)) => assertEquals(errors, List(PasswordTooShort(8)))
+      case other                                => fail(s"Expected WeakPassword, got: $other")
+    }
+  }
+
+  test("register rejects a duplicate email") {
+    val result = withAuthService(List(UserFixtures.sampleUser)) { ctx =>
+      ctx.authService
+        .register(
+          RegisterUserCommand(
+            email = "alice@example.com",
+            password = "secret123",
+            firstName = "Alice",
+            lastName = "Example",
+            username = None
+          )
+        )
+        .value
+    }
+
+    assertEquals(result, Left(AuthError.EmailAlreadyUsed))
+  }
+
+  test("register records the initial password in password history") {
+    val result = withAuthService(Nil) { ctx =>
+      for {
+        _       <- ctx.authService
+                     .register(
+                       RegisterUserCommand(
+                         email = "alice@example.com",
+                         password = "secret123",
+                         firstName = "Alice",
+                         lastName = "Example",
+                         username = None
+                       )
+                     )
+                     .value
+        user    <- ctx.userRepo.findByEmail(Email("alice@example.com"))
+        wasUsed <- ctx.passwordHistory.wasUsedBefore(user.get.id, "secret123")
+      } yield wasUsed
+    }
+
+    assertEquals(result, true)
+  }
 
   test("login returns tokens when a user exists for the given username") {
     val user = UserFixtures.sampleUser
@@ -21,6 +122,14 @@ class AuthServiceLiveSpec extends FunSuite {
   test("login returns invalid credentials when a user does not exist") {
     val result = withAuthService(Nil) { ctx =>
       ctx.authService.login("missing-user", "secret").value
+    }
+
+    assertEquals(result, Left(AuthError.InvalidCredentials))
+  }
+
+  test("login returns invalid credentials when the password does not match") {
+    val result = withAuthService(List(UserFixtures.sampleUser)) { ctx =>
+      ctx.authService.login("alice", "wrong-password").value
     }
 
     assertEquals(result, Left(AuthError.InvalidCredentials))

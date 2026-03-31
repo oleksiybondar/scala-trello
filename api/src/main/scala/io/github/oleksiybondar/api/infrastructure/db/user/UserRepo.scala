@@ -11,6 +11,7 @@ trait UserRepo[F[_]] {
   def findByEmail(email: Email): F[Option[User]]
 
   def list: F[List[User]]
+  def listPage(offset: Int, limit: Int): F[List[User]]
 
   def update(user: User): F[Boolean]
   def delete(id: UserId): F[Boolean]
