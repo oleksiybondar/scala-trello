@@ -32,6 +32,26 @@ export interface AuthTokenResponse {
 }
 
 /**
+ * Raw current-user payload returned by the backend `GET /auth/me` endpoint.
+ */
+export interface AuthCurrentUserResponse {
+  /** Stable user identifier. */
+  id: string;
+  /** Public username when one is assigned. */
+  username: string | null;
+  /** Primary email address when available. */
+  email: string | null;
+  /** Current first name. */
+  first_name: string;
+  /** Current last name. */
+  last_name: string;
+  /** Public avatar URL when configured. */
+  avatar_url: string | null;
+  /** ISO-8601 creation timestamp. */
+  created_at: string;
+}
+
+/**
  * Normalized client-side representation of the active auth session.
  */
 export interface AuthSession {

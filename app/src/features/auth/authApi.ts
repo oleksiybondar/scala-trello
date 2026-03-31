@@ -1,7 +1,12 @@
-import type { AuthTokenResponse, LoginCredentials } from "@features/auth/types";
+import type {
+  AuthCurrentUserResponse,
+  AuthTokenResponse,
+  LoginCredentials
+} from "@features/auth/types";
 
 const AUTH_LOGIN_PATH = "/auth/login";
 const AUTH_LOGOUT_PATH = "/auth/logout";
+const AUTH_ME_PATH = "/auth/me";
 const AUTH_REFRESH_PATH = "/auth/refresh";
 
 /**
@@ -57,6 +62,34 @@ const postRequiredJson = async <TResponse>(
   }
 
   return response;
+};
+
+/**
+ * Loads the currently authenticated user from the backend.
+ *
+ * @param accessToken Access token used for bearer authorization.
+ * @param tokenType Backend-declared token type, typically `Bearer`.
+ * @returns The current authenticated user payload.
+ */
+export const meRequest = async (
+  accessToken: string,
+  tokenType: string
+): Promise<AuthCurrentUserResponse> => {
+  const response = await fetch(AUTH_ME_PATH, {
+    credentials: "include",
+    headers: {
+      Authorization: `${tokenType} ${accessToken}`
+    },
+    method: "GET"
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Request to ${AUTH_ME_PATH} failed with status ${String(response.status)}.`
+    );
+  }
+
+  return (await response.json()) as AuthCurrentUserResponse;
 };
 
 /**

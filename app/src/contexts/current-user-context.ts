@@ -1,7 +1,13 @@
-import { createContext } from "react";
+import { createContext } from 'react';
 
 interface CurrentUser {
   userId: string;
+  username: string | null;
+  email: string | null;
+  firstName: string;
+  lastName: string;
+  avatarUrl: string | null;
+  createdAt: string;
 }
 
 export interface CurrentUserContextValue {

@@ -1,55 +1,58 @@
 import type { PropsWithChildren, ReactElement } from "react";
+import { useEffect, useState } from "react";
 
 import { CurrentUserContext } from "@contexts/current-user-context";
+import type { CurrentUserContextValue } from "@contexts/current-user-context";
+import { meRequest } from "@features/auth/authApi";
 import { useAuth } from "@hooks/useAuth";
-
-const normalizeBase64Url = (value: string): string => {
-  const normalizedValue = value.replace(/-/g, "+").replace(/_/g, "/");
-  const requiredPadding = (4 - (normalizedValue.length % 4)) % 4;
-
-  return normalizedValue.padEnd(normalizedValue.length + requiredPadding, "=");
-};
-
-interface JwtPayload {
-  sub?: unknown;
-}
-
-const getUserIdFromAccessToken = (accessToken: string | null): string | null => {
-  if (accessToken === null) {
-    return null;
-  }
-
-  const tokenParts = accessToken.split(".");
-
-  if (tokenParts.length !== 3) {
-    return null;
-  }
-
-  const [, payload] = tokenParts;
-
-  if (payload === undefined || payload.length === 0) {
-    return null;
-  }
-
-  try {
-    const decodedPayload = window.atob(normalizeBase64Url(payload));
-    const parsedPayload = JSON.parse(decodedPayload) as JwtPayload;
-
-    return typeof parsedPayload.sub === "string" && parsedPayload.sub.length > 0
-      ? parsedPayload.sub
-      : null;
-  } catch {
-    return null;
-  }
-};
 
 export const CurrentUserProvider = ({
   children
 }: PropsWithChildren): ReactElement => {
-  const { accessToken, isAuthenticated } = useAuth();
+  const { accessToken, session } = useAuth();
+  const [currentUser, setCurrentUser] = useState<CurrentUserContextValue["currentUser"]>(
+    null
+  );
 
-  const userId = isAuthenticated ? getUserIdFromAccessToken(accessToken) : null;
-  const currentUser = userId === null ? null : { userId };
+  useEffect(() => {
+    if (accessToken === null || session === null) {
+      setCurrentUser(null);
+
+      return;
+    }
+
+    let isActive = true;
+
+    void meRequest(accessToken, session.tokenType)
+      .then(response => {
+        if (!isActive) {
+          return;
+        }
+
+        setCurrentUser({
+          avatarUrl: response.avatar_url,
+          createdAt: response.created_at,
+          email: response.email,
+          firstName: response.first_name,
+          lastName: response.last_name,
+          userId: response.id,
+          username: response.username
+        });
+      })
+      .catch(() => {
+        if (!isActive) {
+          return;
+        }
+
+        setCurrentUser(null);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [accessToken, session]);
+
+  const userId = currentUser?.userId ?? null;
 
   return (
     <CurrentUserContext.Provider
