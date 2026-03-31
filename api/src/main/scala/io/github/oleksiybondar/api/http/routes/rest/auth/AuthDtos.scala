@@ -20,11 +20,21 @@ final case class AuthTokensResponse(
     token_type: String,
     expires_in: Long
 )
+final case class CurrentUserResponse(
+    id: String,
+    username: Option[String],
+    email: Option[String],
+    first_name: String,
+    last_name: String,
+    avatar_url: Option[String],
+    created_at: String
+)
 final case class ErrorResponse(message: String)
 
-given Codec.AsObject[RegisterRequest]    = io.circe.generic.semiauto.deriveCodec
-given Codec.AsObject[LoginRequest]       = io.circe.generic.semiauto.deriveCodec
-given Codec.AsObject[RefreshRequest]     = io.circe.generic.semiauto.deriveCodec
-given Codec.AsObject[LogoutRequest]      = io.circe.generic.semiauto.deriveCodec
-given Codec.AsObject[AuthTokensResponse] = io.circe.generic.semiauto.deriveCodec
-given Codec.AsObject[ErrorResponse]      = io.circe.generic.semiauto.deriveCodec
+given Codec.AsObject[RegisterRequest]     = io.circe.generic.semiauto.deriveCodec
+given Codec.AsObject[LoginRequest]        = io.circe.generic.semiauto.deriveCodec
+given Codec.AsObject[RefreshRequest]      = io.circe.generic.semiauto.deriveCodec
+given Codec.AsObject[LogoutRequest]       = io.circe.generic.semiauto.deriveCodec
+given Codec.AsObject[AuthTokensResponse]  = io.circe.generic.semiauto.deriveCodec
+given Codec.AsObject[CurrentUserResponse] = io.circe.generic.semiauto.deriveCodec
+given Codec.AsObject[ErrorResponse]       = io.circe.generic.semiauto.deriveCodec

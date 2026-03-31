@@ -1,5 +1,6 @@
 package io.github.oleksiybondar.api.domain.auth
 
+import io.github.oleksiybondar.api.domain.auth.password.PasswordStrengthError.PasswordTooShort
 import io.github.oleksiybondar.api.domain.user.{Email, Username}
 import io.github.oleksiybondar.api.testkit.fixtures.AuthServiceFixtures.withAuthService
 import io.github.oleksiybondar.api.testkit.fixtures.UserFixtures
@@ -43,6 +44,27 @@ class AuthServiceLiveSpec extends FunSuite {
     }
 
     assertEquals(result, Left(AuthError.EmailRequired))
+  }
+
+  test("register returns WeakPassword with strength errors for a weak password") {
+    val result = withAuthService(Nil) { ctx =>
+      ctx.authService
+        .register(
+          RegisterUserCommand(
+            email = "alice@example.com",
+            password = "short",
+            firstName = "Alice",
+            lastName = "Example",
+            username = Some(Username("alice"))
+          )
+        )
+        .value
+    }
+
+    result match {
+      case Left(AuthError.WeakPassword(errors)) => assertEquals(errors, List(PasswordTooShort(8)))
+      case other                                => fail(s"Expected WeakPassword, got: $other")
+    }
   }
 
   test("register rejects a duplicate email") {

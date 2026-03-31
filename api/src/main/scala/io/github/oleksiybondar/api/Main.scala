@@ -9,6 +9,7 @@ import io.github.oleksiybondar.api.http.docs.graphql.GraphiQLRoutes
 import io.github.oleksiybondar.api.http.docs.rest.OpenAPI
 import io.github.oleksiybondar.api.http.middleware.AuthMiddleware
 import io.github.oleksiybondar.api.http.routes.graphql.{GraphQLContext, GraphQLRoutes}
+import io.github.oleksiybondar.api.http.routes.rest.auth.AuthRoutes
 import io.github.oleksiybondar.api.http.routes.rest.health.HealthRoutes
 import io.github.oleksiybondar.api.infrastructure.auth.password.{
   PasswordHistoryLive,
@@ -81,7 +82,7 @@ object Main extends IOApp.Simple {
       authModule          = buildAuthModule(config, userRepo, authSessionRepo, passwordHistoryRepo)
       graphqlRoutes      <- graphqlRoutesResource(userService, authModule.authService)
     } yield {
-      buildHttpApp(authModule, graphqlRoutes)
+      buildHttpApp(authModule, userService, graphqlRoutes)
     }
 
   def databaseResource(config: AppConfig): Resource[IO, Database] =
@@ -140,6 +141,7 @@ object Main extends IOApp.Simple {
 
   def buildHttpApp(
       authModule: AuthModule[IO],
+      userService: UserService[IO],
       graphqlRoutes: HttpRoutes[IO]
   ): HttpApp[IO] = {
     val authenticatedGraphqlRoutes =
@@ -147,7 +149,7 @@ object Main extends IOApp.Simple {
 
     HttpApi.make[IO](
       HealthRoutes.routes[IO],
-      authModule.authRoutes,
+      AuthRoutes.routes[IO](authModule.authService, userService),
       authenticatedGraphqlRoutes,
       OpenAPI.routes[IO],
       GraphiQLRoutes.routes[IO]

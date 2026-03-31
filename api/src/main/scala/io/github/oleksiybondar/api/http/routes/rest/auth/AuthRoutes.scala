@@ -1,6 +1,7 @@
 package io.github.oleksiybondar.api.http.routes.rest.auth
 
 import cats.effect.Async
+import cats.syntax.all._
 import io.github.oleksiybondar.api.domain.auth.{
   AuthError,
   AuthService,
@@ -8,14 +9,18 @@ import io.github.oleksiybondar.api.domain.auth.{
   RefreshToken,
   RegisterUserCommand
 }
-import io.github.oleksiybondar.api.domain.user.Username
-import org.http4s.HttpRoutes
+import io.github.oleksiybondar.api.domain.user.{User, UserService, Username}
+import io.github.oleksiybondar.api.http.middleware.AuthMiddleware
+import org.http4s.circe.CirceEntityCodec._
+import org.http4s.dsl.Http4sDsl
+import org.http4s.{HttpRoutes, Response, Status}
 import sttp.model.StatusCode
 import sttp.tapir.generic.auto._
 import sttp.tapir.json.circe._
 import sttp.tapir.server.http4s.Http4sServerInterpreter
 import sttp.tapir.{
   AnyEndpoint,
+  Endpoint,
   PublicEndpoint,
   endpoint,
   oneOf,
@@ -79,10 +84,23 @@ object AuthRoutes {
       .description("Revokes the session associated with the refresh token")
       .tag("auth")
 
-  val all: List[AnyEndpoint] =
-    List(registerEndpoint, loginEndpoint, refreshEndpoint, logoutEndpoint)
+  val currentUserEndpoint: Endpoint[String, Unit, ErrorResponse, CurrentUserResponse, Any] =
+    endpoint.get
+      .in("auth" / "me")
+      .securityIn(
+        sttp.tapir.auth.bearer[String]()
+          .description("Access token for the current authenticated user")
+      )
+      .errorOut(jsonBody[ErrorResponse])
+      .out(jsonBody[CurrentUserResponse])
+      .name("currentUser")
+      .description("Returns the current authenticated user")
+      .tag("auth")
 
-  def routes[F[_]: Async](authService: AuthService[F]): HttpRoutes[F] =
+  val all: List[AnyEndpoint] =
+    List(registerEndpoint, loginEndpoint, refreshEndpoint, logoutEndpoint, currentUserEndpoint)
+
+  def publicRoutes[F[_]: Async](authService: AuthService[F]): HttpRoutes[F] =
     Http4sServerInterpreter[F]().toRoutes(
       List(
         registerServerEndpoint(authService),
@@ -91,6 +109,35 @@ object AuthRoutes {
         logoutServerEndpoint(authService)
       )
     )
+
+  def privateRoutes[F[_]: Async](
+      authService: AuthService[F],
+      userService: UserService[F]
+  ): HttpRoutes[F] = {
+    val dsl = new Http4sDsl[F] {}
+    import dsl._
+
+    HttpRoutes.of[F] { case req @ GET -> Root / "auth" / "me" =>
+      AuthMiddleware.middleware[F](authService) {
+        HttpRoutes.of[F] { case authedReq @ GET -> Root / "auth" / "me" =>
+          AuthMiddleware.extractAuthenticatedUserId(authedReq) match {
+            case Some(userId) =>
+              userService.getUser(userId).flatMap {
+                case Some(user) => Ok(currentUserToResponse(user))
+                case None       => NotFound(ErrorResponse("Current user was not found"))
+              }
+            case None         =>
+              Response(status = Status.Unauthorized)
+                .withEntity(ErrorResponse("Authentication context is missing"))
+                .pure[F]
+          }
+        }
+      }.orNotFound(req)
+    }
+  }
+
+  def routes[F[_]: Async](authService: AuthService[F], userService: UserService[F]): HttpRoutes[F] =
+    publicRoutes(authService) <+> privateRoutes(authService, userService)
 
   private def registerServerEndpoint[F[_]: Async](authService: AuthService[F]) =
     registerEndpoint.serverLogic[F](request =>
@@ -155,5 +202,16 @@ object AuthRoutes {
       refresh_token = tokens.refreshToken.value.toString,
       token_type = tokens.tokenType,
       expires_in = tokens.expiresIn
+    )
+
+  private def currentUserToResponse(user: User): CurrentUserResponse =
+    CurrentUserResponse(
+      id = user.id.value.toString,
+      username = user.username.map(_.value),
+      email = user.email.map(_.value),
+      first_name = user.firstName.value,
+      last_name = user.lastName.value,
+      avatar_url = user.avatarUrl.map(_.value),
+      created_at = user.createdAt.toString
     )
 }

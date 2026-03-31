@@ -44,7 +44,7 @@ object AuthModule {
 
     AuthModule(
       authService = authService,
-      authRoutes = AuthRoutes.routes[F](authService)
+      authRoutes = AuthRoutes.publicRoutes[F](authService)
     )
   }
 }
