@@ -10,6 +10,10 @@ import io.github.oleksiybondar.api.http.middleware.AuthMiddleware
 import io.github.oleksiybondar.api.http.routes.graphql.{GraphQLContext, GraphQLRoutes}
 import io.github.oleksiybondar.api.http.routes.rest.health.HealthRoutes
 import io.github.oleksiybondar.api.infrastructure.db.DatabaseResource
+import io.github.oleksiybondar.api.infrastructure.db.auth.password.{
+  PasswordHistoryRepo,
+  PasswordHistoryRepoSlick
+}
 import io.github.oleksiybondar.api.infrastructure.db.auth.{AuthSessionRepo, AuthSessionRepoSlick}
 import io.github.oleksiybondar.api.infrastructure.db.user.{SlickUserRepo, UserRepo}
 import io.github.oleksiybondar.api.modules.AuthModule
@@ -63,12 +67,13 @@ object Main extends IOApp.Simple {
       config: AppConfig
   ): Resource[IO, HttpApp[IO]] =
     for {
-      db             <- databaseResource(config)
-      userRepo        = buildUserRepo(db)
-      authSessionRepo = buildAuthSessionRepo(db)
-      graphqlRoutes  <- graphqlRoutesResource(userRepo)
+      db                 <- databaseResource(config)
+      userRepo            = buildUserRepo(db)
+      authSessionRepo     = buildAuthSessionRepo(db)
+      passwordHistoryRepo = buildPasswordHistoryRepo(db)
+      graphqlRoutes      <- graphqlRoutesResource(userRepo)
     } yield {
-      val authModule = buildAuthModule(config, userRepo, authSessionRepo)
+      val authModule = buildAuthModule(config, userRepo, authSessionRepo, passwordHistoryRepo)
       buildHttpApp(authModule, graphqlRoutes)
     }
 
@@ -84,15 +89,21 @@ object Main extends IOApp.Simple {
   def buildAuthSessionRepo(db: Database): AuthSessionRepo[IO] =
     new AuthSessionRepoSlick[IO](db)
 
+  def buildPasswordHistoryRepo(db: Database): PasswordHistoryRepo[IO] =
+    new PasswordHistoryRepoSlick[IO](db)
+
   def buildAuthModule(
       config: AppConfig,
       userRepo: UserRepo[IO],
-      authSessionRepo: AuthSessionRepo[IO]
+      authSessionRepo: AuthSessionRepo[IO],
+      passwordHistoryRepo: PasswordHistoryRepo[IO]
   ): AuthModule[IO] =
     AuthModule.make[IO](
       config.auth,
+      config.password,
       userRepo,
-      authSessionRepo
+      authSessionRepo,
+      passwordHistoryRepo
     )
 
   def buildHttpApp(

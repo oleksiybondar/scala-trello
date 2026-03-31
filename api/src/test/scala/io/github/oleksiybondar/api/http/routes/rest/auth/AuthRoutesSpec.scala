@@ -11,6 +11,59 @@ import org.http4s.{Method, Request, Status}
 
 class AuthRoutesSpec extends FunSuite {
 
+  test("POST /auth/register creates tokens for the new user") {
+    val response = withAuthService(Nil) { ctx =>
+      AuthRoutes
+        .routes[IO](ctx.authService)
+        .orNotFound
+        .run(
+          Request[IO](method = Method.POST, uri = uri"/auth/register")
+            .withEntity(
+              RegisterRequest(
+                email = "alice@example.com",
+                password = "secret123",
+                first_name = "Alice",
+                last_name = "Example",
+                username = Some("alice")
+              )
+            )
+        )
+    }
+
+    val body = response.as[AuthTokensResponse].unsafeRunSync()
+
+    assertEquals(response.status, Status.Created)
+    assertNotEquals(body.access_token, "")
+    assertNotEquals(body.refresh_token, "")
+    assertEquals(body.token_type, "Bearer")
+    assertEquals(body.expires_in, 900L)
+  }
+
+  test("POST /auth/register returns conflict when the email is already used") {
+    val response = withAuthService(List(UserFixtures.sampleUser)) { ctx =>
+      AuthRoutes
+        .routes[IO](ctx.authService)
+        .orNotFound
+        .run(
+          Request[IO](method = Method.POST, uri = uri"/auth/register")
+            .withEntity(
+              RegisterRequest(
+                email = "alice@example.com",
+                password = "secret123",
+                first_name = "Alice",
+                last_name = "Example",
+                username = Some("alice")
+              )
+            )
+        )
+    }
+
+    val body = response.as[ErrorResponse].unsafeRunSync()
+
+    assertEquals(response.status, Status.Conflict)
+    assertEquals(body, ErrorResponse("Email is already in use"))
+  }
+
   test("POST /auth/login returns tokens for valid credentials") {
     val response = withAuthService(List(UserFixtures.sampleUser)) { ctx =>
       AuthRoutes

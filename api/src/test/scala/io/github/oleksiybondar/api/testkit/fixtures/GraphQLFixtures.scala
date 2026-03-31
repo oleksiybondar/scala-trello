@@ -45,6 +45,15 @@ object GraphQLFixtures {
                                  userRepo,
                                  authRepo,
                                  jwtService,
+                                 AuthServiceFixtures.fakePasswordHasher,
+                                 new io.github.oleksiybondar.api.infrastructure.auth.password.PasswordStrengthValidatorLive(
+                                   io.github.oleksiybondar.api.config.PasswordStrengthConfig(
+                                     minLength = 8,
+                                     requireDigit = false,
+                                     requireSpecialChar = false
+                                   )
+                                 ),
+                                 AuthServiceFixtures.unsafeEmptyPasswordHistory,
                                  accessTokenTtlSeconds =
                                    AuthServiceFixtures.testAuthConfig.accessTokenTtlSeconds,
                                  sessionTtlDays = AuthServiceFixtures.testAuthConfig.sessionTtlDays

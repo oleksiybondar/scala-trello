@@ -32,10 +32,3 @@ final case class AuthTokens(
     tokenType: String,
     expiresIn: Long
 )
-
-sealed trait AuthError extends Product with Serializable
-
-object AuthError {
-  case object InvalidCredentials  extends AuthError
-  case object InvalidRefreshToken extends AuthError
-}
