@@ -1,8 +1,14 @@
-package io.github.oleksiybondar.api.domain.auth
+package io.github.oleksiybondar.api.infrastructure.auth
 
 import cats.effect.kernel.Sync
 import io.circe.syntax._
 import io.circe.{Decoder, Encoder}
+import io.github.oleksiybondar.api.domain.auth.{
+  AccessToken,
+  AccessTokenClaims,
+  JwtService,
+  SessionId
+}
 import io.github.oleksiybondar.api.domain.user.UserId
 import pdi.jwt.{JwtAlgorithm, JwtCirce}
 

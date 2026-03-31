@@ -5,5 +5,6 @@ import pureconfig.ConfigReader
 final case class AppConfig(
     http: HttpConfig,
     database: DatabaseConfig,
-    auth: AuthConfig
+    auth: AuthConfig,
+    password: PasswordConfig
 ) derives ConfigReader

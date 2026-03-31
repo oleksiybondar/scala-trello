@@ -3,13 +3,9 @@ package io.github.oleksiybondar.api.testkit.fixtures
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import io.github.oleksiybondar.api.config.AuthConfig
-import io.github.oleksiybondar.api.domain.auth.{
-  AuthService,
-  AuthServiceLive,
-  JwtService,
-  JwtServiceLive
-}
+import io.github.oleksiybondar.api.domain.auth.{AuthService, AuthServiceLive, JwtService}
 import io.github.oleksiybondar.api.domain.user.User
+import io.github.oleksiybondar.api.infrastructure.auth.JwtServiceLive
 import io.github.oleksiybondar.api.testkit.support.{InMemoryAuthRepo, InMemoryUserRepo}
 
 object AuthServiceFixtures {
