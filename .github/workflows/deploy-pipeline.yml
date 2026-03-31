@@ -1,0 +1,12 @@
+name: Deploy Pipeline
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-stub:
+    name: Deploy Stub
+    runs-on: ubuntu-latest
+    steps:
+      - name: Placeholder
+        run: echo "Deploy pipeline is intentionally stubbed and not implemented yet."

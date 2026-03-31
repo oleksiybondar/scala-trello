@@ -1,0 +1,19 @@
+package io.github.oleksiybondar.api.http.routes.graphql
+
+import io.github.oleksiybondar.api.http.routes.graphql.user.UserApi
+import sangria.schema.{ObjectType, Schema, fields}
+
+object GraphQLSchema {
+
+  // New GraphQL modules plug into the root schema here.
+  private val QueryType: ObjectType[GraphQLContext, Unit] =
+    ObjectType(
+      name = "Queries",
+      fields = fields[GraphQLContext, Unit](
+        UserApi.queryFields*
+      )
+    )
+
+  val schema: Schema[GraphQLContext, Unit] =
+    Schema(query = QueryType)
+}
