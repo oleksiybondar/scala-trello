@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import { HomePage } from "@pages/HomePage";
 import { LoginPage } from "@pages/LoginPage";
+import { RegisterPage } from "@pages/RegisterPage";
 import { UserProfileSettingsPage } from "@pages/UserProfileSettingsPage";
 import { UserSecuritySettingsPage } from "@pages/UserSecuritySettingsPage";
 import { UserUiPreferencesSettingsPage } from "@pages/UserUiPreferencesSettingsPage";
@@ -19,6 +20,10 @@ export const router = createBrowserRouter([
   {
     path: "/login",
     element: <LoginPage />
+  },
+  {
+    path: "/register",
+    element: <RegisterPage />
   },
   {
     path: "/settings",

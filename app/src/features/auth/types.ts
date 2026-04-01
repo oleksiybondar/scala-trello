@@ -18,6 +18,20 @@ export interface LoginCredentials {
 }
 
 /**
+ * User-provided registration payload accepted by the backend.
+ */
+export interface RegisterCredentials {
+  /** Email address used for account creation. */
+  email: string;
+  /** Current first name. */
+  first_name: string;
+  /** Current last name. */
+  last_name: string;
+  /** Plain-text password submitted during registration. */
+  password: string;
+}
+
+/**
  * Raw token payload returned by the backend auth endpoints.
  */
 export interface AuthTokenResponse {

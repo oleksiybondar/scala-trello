@@ -1,5 +1,6 @@
 import type {
   AuthCurrentUserResponse,
+  RegisterCredentials,
   AuthTokenResponse,
   LoginCredentials
 } from "@features/auth/types";
@@ -7,6 +8,7 @@ import type {
 const AUTH_LOGIN_PATH = "/auth/login";
 const AUTH_LOGOUT_PATH = "/auth/logout";
 const AUTH_ME_PATH = "/auth/me";
+const AUTH_REGISTER_PATH = "/auth/register";
 const AUTH_REFRESH_PATH = "/auth/refresh";
 
 /**
@@ -102,6 +104,18 @@ export const loginRequest = async (
   credentials: LoginCredentials
 ): Promise<AuthTokenResponse> => {
   return postRequiredJson<AuthTokenResponse>(AUTH_LOGIN_PATH, credentials);
+};
+
+/**
+ * Registers a new user and returns the initial authenticated session.
+ *
+ * @param credentials Registration payload entered by the user.
+ * @returns The token payload returned by the backend.
+ */
+export const registerRequest = async (
+  credentials: RegisterCredentials
+): Promise<AuthTokenResponse> => {
+  return postRequiredJson<AuthTokenResponse>(AUTH_REGISTER_PATH, credentials);
 };
 
 /**

@@ -4,10 +4,14 @@ import { useEffect } from "react";
 import {
   loginRequest,
   logoutRequest,
+  registerRequest,
   refreshRequest
 } from "@features/auth/authApi";
 import { getRefreshDelay } from "@features/auth/authHelpers";
-import type { LoginCredentials } from "@features/auth/types";
+import type {
+  LoginCredentials,
+  RegisterCredentials
+} from "@features/auth/types";
 import type { AuthStateApi } from "@features/auth/useAuthState";
 
 interface UseAuthServiceParameters {
@@ -25,6 +29,8 @@ interface UseAuthServiceParameters {
 interface AuthServiceApi {
   /** Authenticates the user and stores the resulting session. */
   login: (credentials: LoginCredentials) => Promise<void>;
+  /** Registers the user and stores the resulting session. */
+  register: (credentials: RegisterCredentials) => Promise<void>;
   /** Clears the local session and revokes it on the backend when possible. */
   logout: () => Promise<void>;
   /** Renews the current session using the active refresh token. */
@@ -132,6 +138,35 @@ export const useAuthService = ({
     await refreshWithToken(authState.session.refreshToken);
   };
 
+  const register = async (credentials: RegisterCredentials): Promise<void> => {
+    if (authState.session !== null) {
+      return;
+    }
+
+    if (loginPromiseRef.current !== null) {
+      return loginPromiseRef.current;
+    }
+
+    authState.setStatus("authenticating");
+
+    const registerPromise = (async () => {
+      try {
+        const tokenResponse = await registerRequest(credentials);
+
+        authState.applySession(tokenResponse);
+      } catch (error) {
+        authState.clearSession();
+        throw error;
+      } finally {
+        loginPromiseRef.current = null;
+      }
+    })();
+
+    loginPromiseRef.current = registerPromise;
+
+    return registerPromise;
+  };
+
   const logout = async (): Promise<void> => {
     const refreshToken = authState.session?.refreshToken ?? null;
 
@@ -151,6 +186,7 @@ export const useAuthService = ({
   return {
     login,
     logout,
+    register,
     refreshSession
   };
 };

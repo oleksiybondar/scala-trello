@@ -2,7 +2,8 @@ import { createContext } from "react";
 import type {
   AuthSession,
   AuthStatus,
-  LoginCredentials
+  LoginCredentials,
+  RegisterCredentials
 } from "@features/auth/types";
 
 /**
@@ -15,6 +16,8 @@ export interface AuthContextValue {
   isAuthenticated: boolean;
   /** Authenticates the user and creates a new local session. */
   login: (credentials: LoginCredentials) => Promise<void>;
+  /** Registers a new user and creates a new local session. */
+  register: (credentials: RegisterCredentials) => Promise<void>;
   /** Clears the local session and attempts to invalidate it on the backend. */
   logout: () => Promise<void>;
   /** Renews the current session using the active refresh token. */
@@ -36,6 +39,7 @@ export const AuthContext = createContext<AuthContextValue>({
   accessToken: null,
   isAuthenticated: false,
   login: missingAuthProvider,
+  register: missingAuthProvider,
   logout: missingAuthProvider,
   refreshSession: missingAuthProvider,
   session: null,

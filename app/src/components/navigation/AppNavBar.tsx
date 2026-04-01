@@ -54,6 +54,11 @@ export const AppNavBar = (): ReactElement => {
               Login
             </Button>
           ) : null}
+          {!isAuthenticated ? (
+            <Button color="inherit" component={RouterLink} to="/register">
+              Register
+            </Button>
+          ) : null}
           <Chip
             color={isAuthenticated ? "success" : "default"}
             label={getStatusLabel(status)}
