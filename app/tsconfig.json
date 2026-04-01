@@ -9,6 +9,7 @@
     "paths": {
       "@app/*": ["src/app/*"],
       "@components/*": ["src/components/*"],
+      "@configs/*": ["src/configs/*"],
       "@contexts/*": ["src/contexts/*"],
       "@features/*": ["src/features/*"],
       "@helpers/*": ["src/helpers/*"],

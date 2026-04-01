@@ -13,18 +13,6 @@ import { useAuth } from "@hooks/useAuth";
 import { AuthProvider } from "@providers/AuthProvider";
 import { CurrentUserProvider } from "@providers/CurrentUserProvider";
 
-const createJwt = (payload: object): string => {
-  const encode = (value: string): string => {
-    return btoa(value).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/u, "");
-  };
-
-  return [
-    encode(JSON.stringify({ alg: "none", typ: "JWT" })),
-    encode(JSON.stringify(payload)),
-    "signature"
-  ].join(".");
-};
-
 const QueryConsumer = (): ReactElement => {
   const { login } = useAuth();
   const currentUserProfileQuery = useCurrentUserProfileQuery();
@@ -81,10 +69,26 @@ describe("useCurrentUserProfileQuery", () => {
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
-            access_token: createJwt({ sub: "user-123" }),
+            access_token: "access-1",
             refresh_token: "refresh-1",
             token_type: "Bearer",
             expires_in: 3600
+          }),
+          {
+            status: 200
+          }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: "user-123",
+            username: "demo",
+            email: "demo@example.com",
+            first_name: "Ada",
+            last_name: "Lovelace",
+            avatar_url: null,
+            created_at: "2026-03-25T10:15:30Z"
           }),
           {
             status: 200

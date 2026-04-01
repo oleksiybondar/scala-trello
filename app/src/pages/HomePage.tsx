@@ -1,4 +1,5 @@
-import type { ReactElement } from "react";
+import type { ChangeEvent, ReactElement } from "react";
+import { useState } from "react";
 
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
@@ -9,6 +10,7 @@ import Typography from "@mui/material/Typography";
 import { Link as RouterLink } from "react-router-dom";
 
 import { AppNavBar } from "@components/navigation/AppNavBar";
+import { PasswordInput } from "@components/forms/form-elements/PasswordInput";
 import { ThemeWidget } from "@components/theme/ThemeWidget";
 import { useAuth } from "@hooks/useAuth";
 import { useThemeManager } from "@hooks/useThemeManager";
@@ -17,6 +19,11 @@ export const HomePage = (): ReactElement => {
   const { isAuthenticated } = useAuth();
   const { mode, resolvedMode, resolvedTemplateName, source, templateName } =
     useThemeManager();
+  const [passwordValue, setPasswordValue] = useState("");
+
+  const handlePasswordChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    setPasswordValue(event.target.value);
+  };
 
   return (
     <Container>
@@ -86,6 +93,28 @@ export const HomePage = (): ReactElement => {
               <Link component={RouterLink} to="/login" variant="body2">
                 Go to the login page
               </Link>
+            </Stack>
+          </Paper>
+
+          <Paper>
+            <Stack spacing={3} p={4}>
+              <Stack spacing={1}>
+                <Typography color="primary" variant="overline">
+                  Form primitives
+                </Typography>
+                <Typography variant="h3">Password input prototype</Typography>
+                <Typography color="textSecondary" variant="body1">
+                  This is the first reusable password field with checklist-based
+                  policy feedback and a simple strength summary.
+                </Typography>
+              </Stack>
+
+              <PasswordInput
+                helperText="Testing sandbox for the shared password component."
+                label="Try a password"
+                onChange={handlePasswordChange}
+                value={passwordValue}
+              />
             </Stack>
           </Paper>
           <ThemeWidget />
