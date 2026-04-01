@@ -7,8 +7,15 @@ import { useAuth } from "@hooks/useAuth";
 import { AuthProvider } from "@providers/AuthProvider";
 
 const AuthConsumer = (): ReactElement => {
-  const { accessToken, isAuthenticated, login, logout, refreshSession, status } =
-    useAuth();
+  const {
+    accessToken,
+    isAuthenticated,
+    login,
+    logout,
+    refreshSession,
+    register,
+    status
+  } = useAuth();
 
   return (
     <div>
@@ -25,6 +32,19 @@ const AuthConsumer = (): ReactElement => {
         type="button"
       >
         Login
+      </button>
+      <button
+        onClick={() => {
+          void register({
+            email: "demo@example.com",
+            first_name: "Demo",
+            last_name: "User",
+            password: "StrongPass1!"
+          });
+        }}
+        type="button"
+      >
+        Register
       </button>
       <button
         onClick={() => {
@@ -89,6 +109,52 @@ describe("AuthProvider", () => {
         body: JSON.stringify({
           login: "demo",
           password: "secret"
+        }),
+        credentials: "include",
+        method: "POST"
+      })
+    );
+  });
+
+  test("registers a user and exposes the authenticated session", async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn<typeof fetch>();
+
+    fetchMock.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          access_token: "access-register-1",
+          refresh_token: "refresh-register-1",
+          token_type: "Bearer",
+          expires_in: 3600
+        }),
+        {
+          status: 200
+        }
+      )
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <AuthProvider>
+        <AuthConsumer />
+      </AuthProvider>
+    );
+
+    await user.click(screen.getByRole("button", { name: "Register" }));
+
+    expect(await screen.findByText("Status: authenticated")).toBeInTheDocument();
+    expect(screen.getByText("Access token: access-register-1")).toBeInTheDocument();
+    expect(screen.getByText("Authenticated: true")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/auth/register",
+      expect.objectContaining({
+        body: JSON.stringify({
+          email: "demo@example.com",
+          first_name: "Demo",
+          last_name: "User",
+          password: "StrongPass1!"
         }),
         credentials: "include",
         method: "POST"
