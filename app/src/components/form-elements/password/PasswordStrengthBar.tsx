@@ -34,28 +34,20 @@ export const PasswordStrengthBar = ({
   const color = strengthColors[strength.value];
 
   return (
-    <Stack spacing={0.75}>
-      <Stack alignItems="center" direction="row" spacing={1.5}>
-        <LinearProgress
-          aria-label="Password strength"
-          color={color}
-          sx={{
-            flexGrow: 1,
-            minWidth: 120
-          }}
-          value={strength.score}
-          variant="determinate"
-        />
-        <Typography color={color} variant="body2">
-          {strengthLabels[strength.value]}
-        </Typography>
-      </Stack>
-
-      {strength.firstUnmetRequirement === null ? null : (
-        <Typography color="textSecondary" variant="body2">
-          {strength.firstUnmetRequirement.label}
-        </Typography>
-      )}
+    <Stack alignItems="center" direction="row" spacing={1.5}>
+      <LinearProgress
+        aria-label="Password strength"
+        color={color}
+        sx={{
+          flexGrow: 1,
+          minWidth: 120
+        }}
+        value={strength.score}
+        variant="determinate"
+      />
+      <Typography color={color} variant="body2">
+        {strengthLabels[strength.value]}
+      </Typography>
     </Stack>
   );
 };

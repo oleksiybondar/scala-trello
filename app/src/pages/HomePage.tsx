@@ -10,19 +10,43 @@ import Typography from "@mui/material/Typography";
 import { Link as RouterLink } from "react-router-dom";
 
 import { AppNavBar } from "@components/navigation/AppNavBar";
-import { PasswordInput } from "@components/forms/form-elements/PasswordInput";
+import { EmailInput } from "@components/form-elements/email/EmailInput";
+import { PasswordInput } from "@components/form-elements/password/PasswordInput";
+import { PasswordInputWithConfirmation } from "@components/form-elements/password/PasswordInputWithConfirmation";
 import { ThemeWidget } from "@components/theme/ThemeWidget";
 import { useAuth } from "@hooks/useAuth";
 import { useThemeManager } from "@hooks/useThemeManager";
+
+type TextInputElement = HTMLInputElement | HTMLTextAreaElement;
 
 export const HomePage = (): ReactElement => {
   const { isAuthenticated } = useAuth();
   const { mode, resolvedMode, resolvedTemplateName, source, templateName } =
     useThemeManager();
+  const [emailValue, setEmailValue] = useState("");
   const [passwordValue, setPasswordValue] = useState("");
+  const [registrationPasswordValue, setRegistrationPasswordValue] = useState("");
+  const [registrationPasswordConfirmationValue, setRegistrationPasswordConfirmationValue] =
+    useState("");
 
-  const handlePasswordChange = (event: ChangeEvent<HTMLInputElement>): void => {
+  const handleEmailChange = (event: ChangeEvent<TextInputElement>): void => {
+    setEmailValue(event.target.value);
+  };
+
+  const handlePasswordChange = (event: ChangeEvent<TextInputElement>): void => {
     setPasswordValue(event.target.value);
+  };
+
+  const handleRegistrationPasswordChange = (
+    event: ChangeEvent<TextInputElement>
+  ): void => {
+    setRegistrationPasswordValue(event.target.value);
+  };
+
+  const handleRegistrationPasswordConfirmationChange = (
+    event: ChangeEvent<TextInputElement>
+  ): void => {
+    setRegistrationPasswordConfirmationValue(event.target.value);
   };
 
   return (
@@ -102,18 +126,36 @@ export const HomePage = (): ReactElement => {
                 <Typography color="primary" variant="overline">
                   Form primitives
                 </Typography>
-                <Typography variant="h3">Password input prototype</Typography>
+                <Typography variant="h3">Input prototypes</Typography>
                 <Typography color="textSecondary" variant="body1">
-                  This is the first reusable password field with checklist-based
-                  policy feedback and a simple strength summary.
+                  Temporary playground for reusable email and password field
+                  primitives before they are composed into the actual forms.
                 </Typography>
               </Stack>
+
+              <EmailInput
+                helperText="Client-side format validation for registration and account updates."
+                label="Try an email"
+                onChange={handleEmailChange}
+                required
+                value={emailValue}
+              />
 
               <PasswordInput
                 helperText="Testing sandbox for the shared password component."
                 label="Try a password"
                 onChange={handlePasswordChange}
+                required
                 value={passwordValue}
+              />
+
+              <PasswordInputWithConfirmation
+                confirmationValue={registrationPasswordConfirmationValue}
+                onConfirmationChange={handleRegistrationPasswordConfirmationChange}
+                onPasswordChange={handleRegistrationPasswordChange}
+                passwordLabel="Password with confirmation"
+                passwordValue={registrationPasswordValue}
+                required
               />
             </Stack>
           </Paper>
