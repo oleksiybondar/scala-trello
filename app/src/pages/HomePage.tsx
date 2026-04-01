@@ -1,4 +1,4 @@
-import type { ChangeEvent, ReactElement } from "react";
+import type { ReactElement } from "react";
 import { useState } from "react";
 
 import Button from "@mui/material/Button";
@@ -10,44 +10,16 @@ import Typography from "@mui/material/Typography";
 import { Link as RouterLink } from "react-router-dom";
 
 import { AppNavBar } from "@components/navigation/AppNavBar";
-import { EmailInput } from "@components/form-elements/email/EmailInput";
-import { PasswordInput } from "@components/form-elements/password/PasswordInput";
-import { PasswordInputWithConfirmation } from "@components/form-elements/password/PasswordInputWithConfirmation";
+import { AvatarInput } from "@components/form-elements/avatar/AvatarInput";
 import { ThemeWidget } from "@components/theme/ThemeWidget";
 import { useAuth } from "@hooks/useAuth";
 import { useThemeManager } from "@hooks/useThemeManager";
-
-type TextInputElement = HTMLInputElement | HTMLTextAreaElement;
 
 export const HomePage = (): ReactElement => {
   const { isAuthenticated } = useAuth();
   const { mode, resolvedMode, resolvedTemplateName, source, templateName } =
     useThemeManager();
-  const [emailValue, setEmailValue] = useState("");
-  const [passwordValue, setPasswordValue] = useState("");
-  const [registrationPasswordValue, setRegistrationPasswordValue] = useState("");
-  const [registrationPasswordConfirmationValue, setRegistrationPasswordConfirmationValue] =
-    useState("");
-
-  const handleEmailChange = (event: ChangeEvent<TextInputElement>): void => {
-    setEmailValue(event.target.value);
-  };
-
-  const handlePasswordChange = (event: ChangeEvent<TextInputElement>): void => {
-    setPasswordValue(event.target.value);
-  };
-
-  const handleRegistrationPasswordChange = (
-    event: ChangeEvent<TextInputElement>
-  ): void => {
-    setRegistrationPasswordValue(event.target.value);
-  };
-
-  const handleRegistrationPasswordConfirmationChange = (
-    event: ChangeEvent<TextInputElement>
-  ): void => {
-    setRegistrationPasswordConfirmationValue(event.target.value);
-  };
+  const [avatarValue, setAvatarValue] = useState("");
 
   return (
     <Container>
@@ -126,36 +98,18 @@ export const HomePage = (): ReactElement => {
                 <Typography color="primary" variant="overline">
                   Form primitives
                 </Typography>
-                <Typography variant="h3">Input prototypes</Typography>
+                <Typography variant="h3">Avatar input prototype</Typography>
                 <Typography color="textSecondary" variant="body1">
-                  Temporary playground for reusable email and password field
-                  primitives before they are composed into the actual forms.
+                  Temporary playground for the local-only avatar picker before
+                  it is composed into the actual change-avatar form.
                 </Typography>
               </Stack>
 
-              <EmailInput
-                helperText="Client-side format validation for registration and account updates."
-                label="Try an email"
-                onChange={handleEmailChange}
-                required
-                value={emailValue}
-              />
-
-              <PasswordInput
-                helperText="Testing sandbox for the shared password component."
-                label="Try a password"
-                onChange={handlePasswordChange}
-                required
-                value={passwordValue}
-              />
-
-              <PasswordInputWithConfirmation
-                confirmationValue={registrationPasswordConfirmationValue}
-                onConfirmationChange={handleRegistrationPasswordConfirmationChange}
-                onPasswordChange={handleRegistrationPasswordChange}
-                passwordLabel="Password with confirmation"
-                passwordValue={registrationPasswordValue}
-                required
+              <AvatarInput
+                helperText="Uses the native file picker, validates image type and size, and stores the result as a data URL."
+                label="Try an avatar"
+                onChange={setAvatarValue}
+                value={avatarValue}
               />
             </Stack>
           </Paper>
