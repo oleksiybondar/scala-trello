@@ -10,10 +10,12 @@ export default defineConfig({
     alias: {
       "@app": path.resolve(dirname, "src/app"),
       "@components": path.resolve(dirname, "src/components"),
+      "@configs": path.resolve(dirname, "src/configs"),
       "@contexts": path.resolve(dirname, "src/contexts"),
       "@features": path.resolve(dirname, "src/features"),
       "@helpers": path.resolve(dirname, "src/helpers"),
       "@hooks": path.resolve(dirname, "src/hooks"),
+      "@models": path.resolve(dirname, "src/models"),
       "@pages": path.resolve(dirname, "src/pages"),
       "@providers": path.resolve(dirname, "src/providers"),
       "@routes": path.resolve(dirname, "src/routes"),

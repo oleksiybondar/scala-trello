@@ -6,10 +6,11 @@ import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Container from "@mui/material/Container";
+import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { useNavigate } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 
 import { AppNavBar } from "@components/navigation/AppNavBar";
 import { useAuth } from "@hooks/useAuth";
@@ -114,6 +115,10 @@ export const LoginPage = (): ReactElement => {
                 >
                   {isSubmitting ? "Signing in..." : "Sign in"}
                 </Button>
+
+                <Link component={RouterLink} to="/register" variant="body2">
+                  Need an account? Register
+                </Link>
               </Stack>
             </CardContent>
           </Card>

@@ -8,7 +8,7 @@ export interface ThemeTemplate {
   light: ThemeOptions;
 }
 
-export type ThemeTemplateName = "default";
+export type ThemeTemplateName = "default" | "Material-UI";
 
 export type ThemeRegistry = Record<ThemeTemplateName, ThemeTemplate>;
 
@@ -28,6 +28,7 @@ export interface ThemeManagerContextValue extends ThemeSettings {
   resolvedMode: ThemeMode;
   resolvedTemplateName: ThemeTemplateName;
   setMode: (mode: ThemeMode) => void;
+  setSettings: (settings: ThemeSettings) => void;
   setSource: (source: ThemeSource) => void;
   setTemplateName: (themeName: ThemeTemplateName) => void;
 }

@@ -8,22 +8,15 @@ import { useCurrentUser } from "@hooks/useCurrentUser";
 import { AuthProvider } from "@providers/AuthProvider";
 import { CurrentUserProvider } from "@providers/CurrentUserProvider";
 
-const createJwt = (payload: object): string => {
-  const encode = (value: string): string => {
-    return btoa(value).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/u, "");
-  };
-
-  return [encode(JSON.stringify({ alg: "none", typ: "JWT" })), encode(JSON.stringify(payload)), "signature"].join(".");
-};
-
 const CurrentUserConsumer = (): ReactElement => {
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
   const { currentUser, userId } = useCurrentUser();
 
   return (
     <div>
       <div>User id: {userId ?? "none"}</div>
       <div>Current user: {currentUser?.userId ?? "none"}</div>
+      <div>First name: {currentUser?.firstName ?? "none"}</div>
       <button
         onClick={() => {
           void login({
@@ -35,6 +28,14 @@ const CurrentUserConsumer = (): ReactElement => {
       >
         Login
       </button>
+      <button
+        onClick={() => {
+          void logout();
+        }}
+        type="button"
+      >
+        Logout
+      </button>
     </div>
   );
 };
@@ -44,23 +45,40 @@ describe("CurrentUserProvider", () => {
     vi.unstubAllGlobals();
   });
 
-  test("derives the current user id from the authenticated access token", async () => {
+  test("loads the current user from auth/me after login", async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn<typeof fetch>();
 
-    fetchMock.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          access_token: createJwt({ sub: "user-123" }),
-          refresh_token: "refresh-1",
-          token_type: "Bearer",
-          expires_in: 3600
-        }),
-        {
-          status: 200
-        }
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            access_token: "access-1",
+            refresh_token: "refresh-1",
+            token_type: "Bearer",
+            expires_in: 3600
+          }),
+          {
+            status: 200
+          }
+        )
       )
-    );
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: "user-123",
+            username: "demo",
+            email: "demo@example.com",
+            first_name: "Demo",
+            last_name: "User",
+            avatar_url: null,
+            created_at: "2026-03-25T10:15:30Z"
+          }),
+          {
+            status: 200
+          }
+        )
+      );
 
     vi.stubGlobal("fetch", fetchMock);
 
@@ -76,25 +94,43 @@ describe("CurrentUserProvider", () => {
 
     await screen.findByText("User id: user-123");
     expect(screen.getByText("Current user: user-123")).toBeInTheDocument();
+    expect(screen.getByText("First name: Demo")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "/auth/me",
+      expect.objectContaining({
+        credentials: "include",
+        headers: {
+          Authorization: "Bearer access-1"
+        },
+        method: "GET"
+      })
+    );
   });
 
-  test("exposes no current user when the authenticated token cannot be decoded", async () => {
+  test("clears the current user when auth/me fails", async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn<typeof fetch>();
 
-    fetchMock.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          access_token: "invalid-token",
-          refresh_token: "refresh-1",
-          token_type: "Bearer",
-          expires_in: 3600
-        }),
-        {
-          status: 200
-        }
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            access_token: "access-1",
+            refresh_token: "refresh-1",
+            token_type: "Bearer",
+            expires_in: 3600
+          }),
+          {
+            status: 200
+          }
+        )
       )
-    );
+      .mockResolvedValueOnce(
+        new Response(null, {
+          status: 401
+        })
+      );
 
     vi.stubGlobal("fetch", fetchMock);
 
@@ -107,6 +143,66 @@ describe("CurrentUserProvider", () => {
     );
 
     await user.click(screen.getByRole("button", { name: "Login" }));
+
+    await screen.findByText("User id: none");
+    expect(screen.getByText("Current user: none")).toBeInTheDocument();
+    expect(screen.getByText("First name: none")).toBeInTheDocument();
+  });
+
+  test("clears the current user after logout removes the auth token", async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn<typeof fetch>();
+
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            access_token: "access-1",
+            refresh_token: "refresh-1",
+            token_type: "Bearer",
+            expires_in: 3600
+          }),
+          {
+            status: 200
+          }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: "user-123",
+            username: "demo",
+            email: "demo@example.com",
+            first_name: "Demo",
+            last_name: "User",
+            avatar_url: null,
+            created_at: "2026-03-25T10:15:30Z"
+          }),
+          {
+            status: 200
+          }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(null, {
+          status: 204
+        })
+      );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <AuthProvider>
+        <CurrentUserProvider>
+          <CurrentUserConsumer />
+        </CurrentUserProvider>
+      </AuthProvider>
+    );
+
+    await user.click(screen.getByRole("button", { name: "Login" }));
+    await screen.findByText("User id: user-123");
+
+    await user.click(screen.getByRole("button", { name: "Logout" }));
 
     await screen.findByText("User id: none");
     expect(screen.getByText("Current user: none")).toBeInTheDocument();

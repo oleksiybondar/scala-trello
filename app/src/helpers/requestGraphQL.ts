@@ -1,12 +1,21 @@
+/**
+ * GraphQL error entry returned by the backend when a request cannot be fulfilled.
+ */
 interface GraphQLErrorPayload {
   message?: string;
 }
 
+/**
+ * GraphQL transport envelope returned by the backend.
+ */
 interface GraphQLResponse<TData> {
   data?: TData;
   errors?: GraphQLErrorPayload[];
 }
 
+/**
+ * Request parameters accepted by the GraphQL helper.
+ */
 interface RequestGraphQLParams<TVariables extends object> {
   accessToken: string | null;
   document: string;
@@ -16,6 +25,16 @@ interface RequestGraphQLParams<TVariables extends object> {
 
 const GRAPHQL_ENDPOINT = "/graphql";
 
+/**
+ * Executes a GraphQL request and returns the typed `data` payload.
+ *
+ * @typeParam TData GraphQL `data` payload shape.
+ * @typeParam TVariables GraphQL variables object shape.
+ * @param params Request document, optional variables, and auth context.
+ * @returns Parsed GraphQL `data` payload.
+ * @throws Error When the HTTP request fails, the GraphQL response contains errors,
+ * or the response omits `data`.
+ */
 export const requestGraphQL = async <
   TData,
   TVariables extends object = Record<string, never>

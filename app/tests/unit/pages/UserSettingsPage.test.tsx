@@ -37,10 +37,12 @@ describe("UserSettingsPage", () => {
     expect(
       screen.getByRole("link", { name: "Profile" })
     ).toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("heading", { name: "Profile" })).toBeInTheDocument();
     expect(
-      screen.getByText("Sign in to load the current user profile.")
+      screen.getByRole("heading", { name: "Profile details" })
     ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Edit" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "First name" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Last name" })).toBeInTheDocument();
   });
 
   test("switches sections through route navigation from the sidebar", async () => {
@@ -55,13 +57,21 @@ describe("UserSettingsPage", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: "UI Preferences" })
-    ).toBeInTheDocument();
-    expect(
       screen.getByRole("link", {
         name: "UI Preferences"
       })
     ).toHaveAttribute("aria-current", "page");
-    expect(screen.getByLabelText("Preferred language")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Theme preferences" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("combobox", { name: "Theme source" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("switch", { name: "Light" })
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("combobox", { name: "Theme template" })
+    ).toHaveAttribute("aria-disabled", "true");
   });
 });

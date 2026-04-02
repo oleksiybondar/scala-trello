@@ -1,33 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import type { UseQueryResult } from "@tanstack/react-query";
 
-import { buildCurrentUserProfileQuery } from "@features/user/userQueries";
 import { useAuth } from "@hooks/useAuth";
 import { useCurrentUser } from "@hooks/useCurrentUser";
 import { requestGraphQL } from "@helpers/requestGraphQL";
-
-interface CurrentUserProfileResponse {
-  user: {
-    firstName: string | null;
-    lastName: string | null;
-  } | null;
-}
-
-interface CurrentUserProfileViewModel {
-  displayName: string;
-}
-
-const getDisplayName = (
-  firstName: string | null,
-  lastName: string | null
-): string => {
-  const fullName = [firstName, lastName]
-    .filter((part): part is string => part !== null && part.trim().length > 0)
-    .join(" ")
-    .trim();
-
-  return fullName.length > 0 ? fullName : "Unnamed user";
-};
+import { buildCurrentUserProfileQuery, getCurrentUserDisplayName } from "@models/user";
+import type {
+  CurrentUserProfileResponse,
+  CurrentUserProfileViewModel
+} from "@models/user";
 
 export const useCurrentUserProfileQuery = (): UseQueryResult<
   CurrentUserProfileViewModel
@@ -53,7 +34,7 @@ export const useCurrentUserProfileQuery = (): UseQueryResult<
       });
 
       return {
-        displayName: getDisplayName(
+        displayName: getCurrentUserDisplayName(
           response.user?.firstName ?? null,
           response.user?.lastName ?? null
         )

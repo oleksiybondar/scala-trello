@@ -28,7 +28,7 @@ export const AuthProvider = ({
     setStatus,
     status
   });
-  const { login, logout, refreshSession } = useAuthService({
+  const { login, logout, refreshSession, register } = useAuthService({
     authState,
     loginPromiseRef,
     refreshPromiseRef
@@ -41,6 +41,7 @@ export const AuthProvider = ({
         isAuthenticated: authState.isAuthenticated,
         login,
         logout,
+        register,
         refreshSession,
         session: authState.session,
         status: authState.status

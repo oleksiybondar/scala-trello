@@ -12,20 +12,42 @@ const formatThemeTemplateLabel = (templateName: ThemeTemplateName): string => {
   return templateName.slice(0, 1).toUpperCase() + templateName.slice(1);
 };
 
-export const ThemeTemplateSelector = (): ReactElement => {
+interface ThemeTemplateSelectorProps {
+  disabled?: boolean;
+  onChange?: (templateName: ThemeTemplateName) => void;
+  source?: "default" | "os" | "user";
+  value?: ThemeTemplateName;
+}
+
+export const ThemeTemplateSelector = ({
+  disabled,
+  onChange,
+  source: sourceOverride,
+  value
+}: ThemeTemplateSelectorProps): ReactElement => {
   const { availableTemplates, setTemplateName, source, templateName } =
     useThemeManager();
+  const selectedSource = sourceOverride ?? source;
+  const selectedValue = value ?? templateName;
+  const isDisabled = disabled ?? selectedSource !== "user";
 
   return (
-    <FormControl disabled={source !== "user"} fullWidth>
+    <FormControl disabled={isDisabled} fullWidth>
       <InputLabel id="theme-template-label">Theme template</InputLabel>
       <Select
         label="Theme template"
         labelId="theme-template-label"
         onChange={event => {
-          setTemplateName(event.target.value as ThemeTemplateName);
+          const nextValue: ThemeTemplateName = event.target.value;
+
+          if (onChange !== undefined) {
+            onChange(nextValue);
+            return;
+          }
+
+          setTemplateName(nextValue);
         }}
-        value={templateName}
+        value={selectedValue}
       >
         {availableTemplates.map(availableTemplate => {
           return (

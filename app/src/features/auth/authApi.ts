@@ -1,7 +1,14 @@
-import type { AuthTokenResponse, LoginCredentials } from "@features/auth/types";
+import type {
+  RegisterCredentials,
+  AuthTokenResponse,
+  LoginCredentials
+} from "@features/auth/types";
+import type { AuthCurrentUserResponse } from "@models/user";
 
 const AUTH_LOGIN_PATH = "/auth/login";
 const AUTH_LOGOUT_PATH = "/auth/logout";
+const AUTH_ME_PATH = "/auth/me";
+const AUTH_REGISTER_PATH = "/auth/register";
 const AUTH_REFRESH_PATH = "/auth/refresh";
 
 /**
@@ -60,6 +67,34 @@ const postRequiredJson = async <TResponse>(
 };
 
 /**
+ * Loads the currently authenticated user from the backend.
+ *
+ * @param accessToken Access token used for bearer authorization.
+ * @param tokenType Backend-declared token type, typically `Bearer`.
+ * @returns The current authenticated user payload.
+ */
+export const meRequest = async (
+  accessToken: string,
+  tokenType: string
+): Promise<AuthCurrentUserResponse> => {
+  const response = await fetch(AUTH_ME_PATH, {
+    credentials: "include",
+    headers: {
+      Authorization: `${tokenType} ${accessToken}`
+    },
+    method: "GET"
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Request to ${AUTH_ME_PATH} failed with status ${String(response.status)}.`
+    );
+  }
+
+  return (await response.json()) as AuthCurrentUserResponse;
+};
+
+/**
  * Exchanges user credentials for a new access and refresh token pair.
  *
  * @param credentials Login credentials entered by the user.
@@ -69,6 +104,18 @@ export const loginRequest = async (
   credentials: LoginCredentials
 ): Promise<AuthTokenResponse> => {
   return postRequiredJson<AuthTokenResponse>(AUTH_LOGIN_PATH, credentials);
+};
+
+/**
+ * Registers a new user and returns the initial authenticated session.
+ *
+ * @param credentials Registration payload entered by the user.
+ * @returns The token payload returned by the backend.
+ */
+export const registerRequest = async (
+  credentials: RegisterCredentials
+): Promise<AuthTokenResponse> => {
+  return postRequiredJson<AuthTokenResponse>(AUTH_REGISTER_PATH, credentials);
 };
 
 /**

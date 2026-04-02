@@ -4,10 +4,16 @@ import { useEffect } from "react";
 import {
   loginRequest,
   logoutRequest,
+  registerRequest,
   refreshRequest
 } from "@features/auth/authApi";
 import { getRefreshDelay } from "@features/auth/authHelpers";
-import type { LoginCredentials } from "@features/auth/types";
+import { createAsyncSubmitHandler } from "@helpers/createAsyncActionBuilder";
+import type {
+  AuthTokenResponse,
+  LoginCredentials,
+  RegisterCredentials
+} from "@features/auth/types";
 import type { AuthStateApi } from "@features/auth/useAuthState";
 
 interface UseAuthServiceParameters {
@@ -25,6 +31,8 @@ interface UseAuthServiceParameters {
 interface AuthServiceApi {
   /** Authenticates the user and stores the resulting session. */
   login: (credentials: LoginCredentials) => Promise<void>;
+  /** Registers the user and stores the resulting session. */
+  register: (credentials: RegisterCredentials) => Promise<void>;
   /** Clears the local session and revokes it on the backend when possible. */
   logout: () => Promise<void>;
   /** Renews the current session using the active refresh token. */
@@ -51,18 +59,23 @@ export const useAuthService = ({
       return currentStatus === "anonymous" ? currentStatus : "refreshing";
     });
 
-    const refreshPromise = (async () => {
-      try {
-        const nextTokens = await refreshRequest(refreshToken);
-
-        authState.applySession(nextTokens);
-      } catch (error) {
+    const refreshPromise = createAsyncSubmitHandler<
+      AuthTokenResponse,
+      AuthTokenResponse
+    >()
+      .request(() => {
+        return refreshRequest(refreshToken);
+      })
+      .onSuccess(authState.applySession)
+      .onError(error => {
         authState.clearSession();
         throw error;
-      } finally {
+      })
+      .onFinally(() => {
         refreshPromiseRef.current = null;
-      }
-    })();
+      })
+      .handle()
+      .then(() => undefined);
 
     refreshPromiseRef.current = refreshPromise;
 
@@ -106,18 +119,23 @@ export const useAuthService = ({
 
     authState.setStatus("authenticating");
 
-    const loginPromise = (async () => {
-      try {
-        const tokenResponse = await loginRequest(credentials);
-
-        authState.applySession(tokenResponse);
-      } catch (error) {
+    const loginPromise = createAsyncSubmitHandler<
+      AuthTokenResponse,
+      AuthTokenResponse
+    >()
+      .request(() => {
+        return loginRequest(credentials);
+      })
+      .onSuccess(authState.applySession)
+      .onError(error => {
         authState.clearSession();
         throw error;
-      } finally {
+      })
+      .onFinally(() => {
         loginPromiseRef.current = null;
-      }
-    })();
+      })
+      .handle()
+      .then(() => undefined);
 
     loginPromiseRef.current = loginPromise;
 
@@ -130,6 +148,40 @@ export const useAuthService = ({
     }
 
     await refreshWithToken(authState.session.refreshToken);
+  };
+
+  const register = async (credentials: RegisterCredentials): Promise<void> => {
+    if (authState.session !== null) {
+      return;
+    }
+
+    if (loginPromiseRef.current !== null) {
+      return loginPromiseRef.current;
+    }
+
+    authState.setStatus("authenticating");
+
+    const registerPromise = createAsyncSubmitHandler<
+      AuthTokenResponse,
+      AuthTokenResponse
+    >()
+      .request(() => {
+        return registerRequest(credentials);
+      })
+      .onSuccess(authState.applySession)
+      .onError(error => {
+        authState.clearSession();
+        throw error;
+      })
+      .onFinally(() => {
+        loginPromiseRef.current = null;
+      })
+      .handle()
+      .then(() => undefined);
+
+    loginPromiseRef.current = registerPromise;
+
+    return registerPromise;
   };
 
   const logout = async (): Promise<void> => {
@@ -151,6 +203,7 @@ export const useAuthService = ({
   return {
     login,
     logout,
+    register,
     refreshSession
   };
 };

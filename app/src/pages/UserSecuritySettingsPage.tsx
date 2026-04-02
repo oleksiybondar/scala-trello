@@ -1,13 +1,7 @@
 import type { ReactElement } from "react";
 
-import { UserSettingsPlaceholderPanel } from "@components/userSettings/UserSettingsPlaceholderPanel";
+import { UserSecuritySettingsPanel } from "@components/userSettings/UserSecuritySettingsPanel";
 
 export const UserSecuritySettingsPage = (): ReactElement => {
-  return (
-    <UserSettingsPlaceholderPanel
-      description="Keep password changes, active-session controls, and future account protection tools in one route-owned section."
-      helperText="Current password"
-      title="Security"
-    />
-  );
+  return <UserSecuritySettingsPanel />;
 };

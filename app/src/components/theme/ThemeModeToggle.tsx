@@ -6,10 +6,28 @@ import Switch from "@mui/material/Switch";
 import Typography from "@mui/material/Typography";
 
 import { useThemeManager } from "@hooks/useThemeManager";
+import type { ThemeMode, ThemeSource } from "@theme/index";
 
-export const ThemeModeToggle = (): ReactElement => {
-  const { resolvedMode, setMode, source } = useThemeManager();
-  const isDisabled = source !== "user";
+interface ThemeModeToggleProps {
+  mode?: ThemeMode;
+  onChange?: (mode: ThemeMode) => void;
+  source?: ThemeSource;
+}
+
+export const ThemeModeToggle = ({
+  mode,
+  onChange,
+  source
+}: ThemeModeToggleProps): ReactElement => {
+  const {
+    mode: currentMode,
+    resolvedMode,
+    setMode,
+    source: currentSource
+  } = useThemeManager();
+  const selectedSource = source ?? currentSource;
+  const selectedMode = mode ?? currentMode;
+  const isDisabled = selectedSource !== "user";
 
   return (
     <Stack spacing={1}>
@@ -17,18 +35,22 @@ export const ThemeModeToggle = (): ReactElement => {
       <FormControlLabel
         control={
           <Switch
-            checked={resolvedMode === "dark"}
+            checked={selectedMode === "dark"}
             disabled={isDisabled}
             onChange={event => {
-              setMode(event.target.checked ? "dark" : "light");
+              const nextMode = event.target.checked ? "dark" : "light";
+
+              if (onChange !== undefined) {
+                onChange(nextMode);
+                return;
+              }
+
+              setMode(nextMode);
             }}
           />
         }
-        label={resolvedMode === "dark" ? "Dark" : "Light"}
+        label={(mode ?? resolvedMode) === "dark" ? "Dark" : "Light"}
       />
-      <Typography color="textSecondary" variant="caption">
-        Switch on means dark mode. Available only for user-controlled theme.
-      </Typography>
     </Stack>
   );
 };

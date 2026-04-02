@@ -9,7 +9,6 @@ import Typography from "@mui/material/Typography";
 import { Link as RouterLink } from "react-router-dom";
 
 import { AppNavBar } from "@components/navigation/AppNavBar";
-import { ThemeWidget } from "@components/theme/ThemeWidget";
 import { useAuth } from "@hooks/useAuth";
 import { useThemeManager } from "@hooks/useThemeManager";
 
@@ -88,7 +87,22 @@ export const HomePage = (): ReactElement => {
               </Link>
             </Stack>
           </Paper>
-          <ThemeWidget />
+
+          <Paper>
+            <Stack spacing={3} p={4}>
+              <Stack spacing={1}>
+                <Typography color="primary" variant="overline">
+                  Form primitives
+                </Typography>
+                <Typography variant="h3">Avatar input prototype</Typography>
+                <Typography color="textSecondary" variant="body1">
+                  Temporary playground for the local-only avatar picker before
+                  it is composed into the actual change-avatar form.
+                </Typography>
+              </Stack>
+
+            </Stack>
+          </Paper>
         </Stack>
       </Stack>
     </Container>

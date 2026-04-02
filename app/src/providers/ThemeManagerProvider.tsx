@@ -1,13 +1,10 @@
 import type { PropsWithChildren, ReactElement } from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { useMediaQuery } from "@mui/material";
 
 import { ThemeManagerContext } from "@contexts/theme-manager-context";
-import {
-  loadThemeSettings,
-  saveThemeSettings
-} from "@theme/manager/storage";
+import { loadThemeSettings } from "@theme/manager/storage";
 import { resolveThemeSettings } from "@theme/manager/resolveThemeSettings";
 import { themeRegistry } from "@theme/registry";
 import type {
@@ -25,10 +22,6 @@ export const ThemeManagerProvider = ({
     return loadThemeSettings();
   });
 
-  useEffect(() => {
-    saveThemeSettings(settings);
-  }, [settings]);
-
   const osMode: ThemeMode = prefersDarkMode ? "dark" : "light";
   const resolvedThemeSettings = resolveThemeSettings(settings, osMode);
 
@@ -45,6 +38,7 @@ export const ThemeManagerProvider = ({
             mode
           }));
         },
+        setSettings,
         setSource: (source: ThemeSource) => {
           setSettings(currentSettings => ({
             ...currentSettings,
