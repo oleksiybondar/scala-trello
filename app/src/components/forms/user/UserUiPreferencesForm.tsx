@@ -17,6 +17,8 @@ import type { ThemeMode, ThemeSettings, ThemeSource, ThemeTemplateName } from "@
 export const UserUiPreferencesForm = (): ReactElement => {
   const {
     mode,
+    resolvedMode,
+    resolvedTemplateName,
     setSettings,
     setMode,
     setSource,
@@ -34,6 +36,9 @@ export const UserUiPreferencesForm = (): ReactElement => {
     source !== savedSettings.source ||
     mode !== savedSettings.mode ||
     templateName !== savedSettings.templateName;
+  const displayedMode = source === "user" ? mode : resolvedMode;
+  const displayedTemplateName =
+    source === "user" ? templateName : resolvedTemplateName;
 
   const handleSourceChange = (nextSource: ThemeSource): void => {
     setSource(nextSource);
@@ -80,12 +85,16 @@ export const UserUiPreferencesForm = (): ReactElement => {
           <ThemeSourceSelector onChange={handleSourceChange} value={source} />
 
           <ThemeTemplateSelector
-              onChange={handleTemplateChange}
-              source={source}
-              value={templateName}
+            onChange={handleTemplateChange}
+            source={source}
+            value={displayedTemplateName}
           />
 
-          <ThemeModeToggle mode={mode} onChange={handleModeChange} source={source} />
+          <ThemeModeToggle
+            mode={displayedMode}
+            onChange={handleModeChange}
+            source={source}
+          />
 
 
           {isChanged ? (
