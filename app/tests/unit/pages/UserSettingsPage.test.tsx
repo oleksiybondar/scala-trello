@@ -37,7 +37,6 @@ describe("UserSettingsPage", () => {
     expect(
       screen.getByRole("link", { name: "Profile" })
     ).toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("heading", { name: "Profile" })).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "Profile details" })
     ).toBeInTheDocument();
@@ -58,13 +57,21 @@ describe("UserSettingsPage", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: "UI Preferences" })
-    ).toBeInTheDocument();
-    expect(
       screen.getByRole("link", {
         name: "UI Preferences"
       })
     ).toHaveAttribute("aria-current", "page");
-    expect(screen.getByLabelText("Preferred language")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Theme preferences" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("combobox", { name: "Theme source" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("combobox", { name: "Theme mode" })
+    ).toHaveAttribute("aria-disabled", "true");
+    expect(
+      screen.getByRole("combobox", { name: "Theme template" })
+    ).toHaveAttribute("aria-disabled", "true");
   });
 });

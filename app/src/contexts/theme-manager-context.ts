@@ -7,11 +7,12 @@ const missingThemeManagerProvider = (): never => {
 };
 
 export const ThemeManagerContext = createContext<ThemeManagerContextValue>({
-  availableTemplates: ["default"],
+  availableTemplates: ["default", "Material-UI"],
   mode: "light",
   resolvedMode: "light",
   resolvedTemplateName: "default",
   setMode: missingThemeManagerProvider,
+  setSettings: missingThemeManagerProvider,
   setSource: missingThemeManagerProvider,
   setTemplateName: missingThemeManagerProvider,
   source: "default",

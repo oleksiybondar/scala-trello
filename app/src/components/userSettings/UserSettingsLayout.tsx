@@ -18,8 +18,7 @@ export const UserSettingsLayout = (): ReactElement => {
         <Stack spacing={1}>
           <Typography variant="h2">User settings</Typography>
           <Typography color="textSecondary" variant="body1">
-            Manage profile data, account security, and UI preferences from a
-            route-driven settings workspace.
+            Manage profile data, account security, and UI preferences.
           </Typography>
         </Stack>
 

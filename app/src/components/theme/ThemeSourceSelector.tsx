@@ -8,8 +8,17 @@ import Select from "@mui/material/Select";
 import { useThemeManager } from "@hooks/useThemeManager";
 import type { ThemeSource } from "@theme/index";
 
-export const ThemeSourceSelector = (): ReactElement => {
+interface ThemeSourceSelectorProps {
+  onChange?: (source: ThemeSource) => void;
+  value?: ThemeSource;
+}
+
+export const ThemeSourceSelector = ({
+  onChange,
+  value
+}: ThemeSourceSelectorProps): ReactElement => {
   const { setSource, source } = useThemeManager();
+  const selectedValue = value ?? source;
 
   return (
     <FormControl fullWidth>
@@ -18,9 +27,16 @@ export const ThemeSourceSelector = (): ReactElement => {
         label="Theme source"
         labelId="theme-source-label"
         onChange={event => {
-          setSource(event.target.value as ThemeSource);
+          const nextValue = event.target.value as ThemeSource;
+
+          if (onChange !== undefined) {
+            onChange(nextValue);
+            return;
+          }
+
+          setSource(nextValue);
         }}
-        value={source}
+        value={selectedValue}
       >
         <MenuItem value="default">Default</MenuItem>
         <MenuItem value="os">OS</MenuItem>

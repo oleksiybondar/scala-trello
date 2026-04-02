@@ -94,8 +94,7 @@ export const UserProfileForm = ({
         <Stack spacing={1}>
           <Typography variant="h5">Profile details</Typography>
           <Typography color="textSecondary" variant="body2">
-            Keep the public name fields complete before applying profile
-            changes.
+            Update your profile details.
           </Typography>
         </Stack>
 
