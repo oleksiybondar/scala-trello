@@ -22,11 +22,13 @@ interface PasswordInputWithConfirmationProps {
   confirmationName?: string;
   confirmationValue: string;
   disabled?: boolean;
+  helperText?: ReactElement | string;
   onConfirmationChange?: (event: ChangeEvent<TextInputElement>) => void;
   onValidationChange?: (
     validation: PasswordInputWithConfirmationValidation
   ) => void;
   onPasswordChange?: (event: ChangeEvent<TextInputElement>) => void;
+  passwordError?: boolean;
   passwordLabel?: string;
   passwordName?: string;
   passwordValue: string;
@@ -38,9 +40,11 @@ export const PasswordInputWithConfirmation = ({
   confirmationName = "confirmPassword",
   confirmationValue,
   disabled = false,
+  helperText,
   onConfirmationChange,
   onPasswordChange,
   onValidationChange,
+  passwordError = false,
   passwordLabel = "Password",
   passwordName = "password",
   passwordValue,
@@ -85,11 +89,17 @@ export const PasswordInputWithConfirmation = ({
     <Stack spacing={2}>
       <PasswordInput
         disabled={disabled}
+        error={passwordError}
         label={passwordLabel}
         name={passwordName}
         onValidationChange={setPasswordValidation}
         required={required}
         value={passwordValue}
+        {...(helperText === undefined
+          ? {}
+          : {
+              helperText
+            })}
         {...(onPasswordChange === undefined
           ? {}
           : {
