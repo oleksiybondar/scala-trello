@@ -1,6 +1,7 @@
 import type { ChangeEvent, ReactElement } from "react";
 import { useState } from "react";
 
+import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
@@ -10,13 +11,14 @@ import Typography from "@mui/material/Typography";
 
 import { PasswordInputWithConfirmation } from "@components/form-elements/password/PasswordInputWithConfirmation";
 import type { PasswordInputWithConfirmationValidation } from "@components/form-elements/password/PasswordInputWithConfirmation";
+import { useUserSettingsMutation } from "@features/user/useUserSettingsMutation";
+import { createAsyncSubmitHandler } from "@helpers/createAsyncActionBuilder";
+import { requestGraphQL } from "@helpers/requestGraphQL";
+import { buildChangePasswordMutation } from "@models/user";
+import type { ChangePasswordMutationResponse } from "@models/user";
 
 interface ChangePasswordFormProps {
   disabled?: boolean;
-  onSubmit?: (payload: {
-    currentPassword: string;
-    password: string;
-  }) => Promise<void> | void;
 }
 
 interface ChangePasswordFormState {
@@ -32,13 +34,15 @@ const initialFormState: ChangePasswordFormState = {
 };
 
 export const ChangePasswordForm = ({
-  disabled = false,
-  onSubmit
+  disabled = false
 }: ChangePasswordFormProps): ReactElement => {
+  const { getGraphQLAuthContext, refreshUserState } = useUserSettingsMutation();
   const [formState, setFormState] = useState(initialFormState);
   const [isTouched, setIsTouched] = useState(false);
   const [passwordValidation, setPasswordValidation] =
     useState<PasswordInputWithConfirmationValidation | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const trimmedCurrentPassword = formState.currentPassword.trim();
   const isSameAsCurrentPassword =
@@ -50,6 +54,7 @@ export const ChangePasswordForm = ({
   const nextPasswordErrorMessage = isSameAsCurrentPassword
     ? "New password must be different from the current password."
     : null;
+  const isDisabled = disabled || isSubmitting;
   const hasChanged =
     formState.currentPassword.length > 0 ||
     formState.password.length > 0 ||
@@ -68,30 +73,62 @@ export const ChangePasswordForm = ({
   const handleCancel = (): void => {
     setFormState(initialFormState);
     setIsTouched(false);
+    setErrorMessage(null);
   };
 
-  const handleApply = async (): Promise<void> => {
-    setIsTouched(true);
+  const handleApply = createAsyncSubmitHandler<
+    ChangePasswordMutationResponse,
+    ChangePasswordMutationResponse
+  >()
+    .when(() => {
+      setIsTouched(true);
 
-    if (
-      disabled ||
-      trimmedCurrentPassword.length === 0 ||
-      !isPasswordValid ||
-      isSameAsCurrentPassword
-    ) {
-      return;
-    }
+      return (
+        !isDisabled &&
+        trimmedCurrentPassword.length > 0 &&
+        isPasswordValid &&
+        !isSameAsCurrentPassword
+      );
+    })
+    .onStart(() => {
+      setErrorMessage(null);
+      setIsSubmitting(true);
+    })
+    .request(() =>
+      requestGraphQL<ChangePasswordMutationResponse>({
+        ...getGraphQLAuthContext(),
+        document: buildChangePasswordMutation(
+          formState.currentPassword,
+          formState.password
+        )
+      })
+    )
+    .verify((response: ChangePasswordMutationResponse) => {
+      if (!response.changePassword) {
+        throw new Error("Password update was rejected.");
+      }
 
-    await onSubmit?.({
-      currentPassword: formState.currentPassword,
-      password: formState.password
-    });
-  };
+      return response;
+    })
+    .onSuccess(async () => {
+      handleCancel();
+      await refreshUserState();
+    })
+    .onError((error: unknown) => {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Failed to update the password."
+      );
+    })
+    .onFinally(() => {
+      setIsSubmitting(false);
+    })
+    .handle;
 
   return (
     <Card variant="outlined">
       <CardContent>
         <Stack padding={3} spacing={3}>
+          {errorMessage !== null ? <Alert severity="error">{errorMessage}</Alert> : null}
           <Stack spacing={1}>
             <Typography variant="h5">Password</Typography>
             <Typography color="textSecondary" variant="body2">
@@ -100,7 +137,7 @@ export const ChangePasswordForm = ({
           </Stack>
 
           <TextField
-            disabled={disabled}
+            disabled={isDisabled}
             error={currentPasswordError}
             fullWidth
             helperText={currentPasswordError ? "Current password is required." : " "}
@@ -113,7 +150,7 @@ export const ChangePasswordForm = ({
 
           <PasswordInputWithConfirmation
             confirmationValue={formState.passwordConfirmation}
-            disabled={disabled}
+            disabled={isDisabled}
             onConfirmationChange={handleChange("passwordConfirmation")}
             onPasswordChange={handleChange("password")}
             onValidationChange={setPasswordValidation}
@@ -138,19 +175,17 @@ export const ChangePasswordForm = ({
               justifyContent="flex-end"
               spacing={1.5}
             >
-              <Button disabled={disabled} onClick={handleCancel} variant="outlined">
+              <Button disabled={isDisabled} onClick={handleCancel} variant="outlined">
                 Cancel
               </Button>
               <Button
                 disabled={
-                  disabled ||
+                  isDisabled ||
                   trimmedCurrentPassword.length === 0 ||
                   !isPasswordValid ||
                   isSameAsCurrentPassword
                 }
-                onClick={() => {
-                  void handleApply();
-                }}
+                onClick={handleApply}
                 variant="contained"
               >
                 Apply

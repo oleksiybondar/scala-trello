@@ -1,5 +1,5 @@
 import type { PropsWithChildren, ReactElement } from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { CurrentUserContext } from "@contexts/current-user-context";
 import type { CurrentUserContextValue } from "@contexts/current-user-context";
@@ -14,6 +14,17 @@ export const CurrentUserProvider = ({
   const [currentUser, setCurrentUser] = useState<CurrentUserContextValue["currentUser"]>(
     null
   );
+
+  const refreshCurrentUser = useCallback(async (): Promise<void> => {
+    if (accessToken === null || session === null) {
+      setCurrentUser(null);
+
+      return;
+    }
+
+    const response = await meRequest(accessToken, session.tokenType);
+    setCurrentUser(mapAuthCurrentUserResponseToCurrentUser(response));
+  }, [accessToken, session]);
 
   useEffect(() => {
     if (accessToken === null || session === null) {
@@ -43,7 +54,7 @@ export const CurrentUserProvider = ({
     return () => {
       isActive = false;
     };
-  }, [accessToken, session]);
+  }, [accessToken, refreshCurrentUser, session]);
 
   const userId = currentUser?.userId ?? null;
 
@@ -51,6 +62,8 @@ export const CurrentUserProvider = ({
     <CurrentUserContext.Provider
       value={{
         currentUser,
+        refreshCurrentUser,
+        setCurrentUser,
         userId
       }}
     >

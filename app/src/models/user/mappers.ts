@@ -1,4 +1,7 @@
-import type { AuthCurrentUserResponse } from "@models/user/dto";
+import type {
+  AuthCurrentUserResponse,
+  GraphQLCurrentUserResponse
+} from "@models/user/dto";
 import type { CurrentUser } from "@models/user/types";
 
 export const mapAuthCurrentUserResponseToCurrentUser = (
@@ -25,4 +28,18 @@ export const getCurrentUserDisplayName = (
     .trim();
 
   return fullName.length > 0 ? fullName : "Unnamed user";
+};
+
+export const mapGraphQLCurrentUserResponseToCurrentUser = (
+  response: GraphQLCurrentUserResponse
+): CurrentUser => {
+  return {
+    avatarUrl: response.avatarUrl,
+    createdAt: response.createdAt,
+    email: response.email,
+    firstName: response.firstName,
+    lastName: response.lastName,
+    userId: response.id,
+    username: response.username
+  };
 };

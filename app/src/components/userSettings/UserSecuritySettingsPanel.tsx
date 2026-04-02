@@ -1,5 +1,4 @@
 import type { ReactElement } from "react";
-
 import Stack from "@mui/material/Stack";
 
 import { ChangeEmailForm } from "@components/forms/user/ChangeEmailForm";
@@ -11,9 +10,9 @@ export const UserSecuritySettingsPanel = (): ReactElement => {
   return (
     <Stack spacing={3}>
       <ChangeEmailForm />
-        <Divider />
+      <Divider />
       <ChangeUsernameForm />
-        <Divider />
+      <Divider />
       <ChangePasswordForm />
     </Stack>
   );

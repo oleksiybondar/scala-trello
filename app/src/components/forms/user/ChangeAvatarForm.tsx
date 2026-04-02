@@ -1,49 +1,86 @@
 import type { ReactElement } from "react";
 import { useEffect, useState } from "react";
 
+import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 
 import { AvatarInput } from "@components/form-elements/avatar/AvatarInput";
+import { createAsyncSubmitHandler } from "@helpers/createAsyncActionBuilder";
+import { requestGraphQL } from "@helpers/requestGraphQL";
 import { useCurrentUser } from "@hooks/useCurrentUser";
-import {Card, CardContent } from "@mui/material";
+import { buildChangeAvatarMutation } from "@models/user";
+import type { GraphQLCurrentUserResponse, UserMutationResponse } from "@models/user";
+import { useUserSettingsMutation } from "@features/user/useUserSettingsMutation";
+import { Card, CardContent } from "@mui/material";
 import Typography from "@mui/material/Typography";
 
 interface ChangeAvatarFormProps {
   disabled?: boolean;
-  onSubmit?: (avatarUrl: string) => Promise<void> | void;
 }
 
 export const ChangeAvatarForm = ({
-  disabled = false,
-  onSubmit
+  disabled = false
 }: ChangeAvatarFormProps): ReactElement => {
   const { currentUser } = useCurrentUser();
+  const { applyUpdatedUser, getGraphQLAuthContext } = useUserSettingsMutation();
   const persistedAvatarUrl = currentUser?.avatarUrl ?? "";
   const [draftAvatarUrl, setDraftAvatarUrl] = useState(persistedAvatarUrl);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     setDraftAvatarUrl(persistedAvatarUrl);
   }, [persistedAvatarUrl]);
 
   const isChanged = draftAvatarUrl !== persistedAvatarUrl;
+  const isDisabled = disabled || isSubmitting;
 
   const handleCancel = (): void => {
     setDraftAvatarUrl(persistedAvatarUrl);
+    setErrorMessage(null);
   };
 
-  const handleApply = async (): Promise<void> => {
-    if (!isChanged || disabled) {
-      return;
-    }
+  const handleApply = createAsyncSubmitHandler<
+    UserMutationResponse,
+    GraphQLCurrentUserResponse
+  >()
+    .when(() => isChanged && !isDisabled)
+    .onStart(() => {
+      setErrorMessage(null);
+      setIsSubmitting(true);
+    })
+    .request(() =>
+      requestGraphQL<UserMutationResponse>({
+        ...getGraphQLAuthContext(),
+        document: buildChangeAvatarMutation(
+          draftAvatarUrl.trim().length === 0 ? null : draftAvatarUrl
+        )
+      })
+    )
+    .verify((response: UserMutationResponse) => {
+      if (response.changeAvatar === undefined) {
+        throw new Error("GraphQL response did not include the updated user.");
+      }
 
-    await onSubmit?.(draftAvatarUrl);
-  };
+      return response.changeAvatar;
+    })
+    .onSuccess(applyUpdatedUser)
+    .onError((error: unknown) => {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Failed to update the avatar."
+      );
+    })
+    .onFinally(() => {
+      setIsSubmitting(false);
+    })
+    .handle;
 
   return (
-      <Card variant="outlined">
-        <CardContent>
-      <Stack padding={3} spacing={3} >
+    <Card variant="outlined">
+      <CardContent>
+        <Stack padding={3} spacing={3}>
+          {errorMessage !== null ? <Alert severity="error">{errorMessage}</Alert> : null}
         <Stack spacing={1}>
           <Typography variant="h5">Avatar</Typography>
           <Typography color="textSecondary" variant="body2">
@@ -51,31 +88,31 @@ export const ChangeAvatarForm = ({
           </Typography>
         </Stack>
         <AvatarInput
-          disabled={disabled}
+          disabled={isDisabled}
           onChange={setDraftAvatarUrl}
           value={draftAvatarUrl}
         />
 
-        { isChanged && ( <Stack direction={{ xs: "column-reverse", sm: "row" }} spacing={1.5} justifyContent="flex-end">
-          <Button
-            disabled={disabled}
-            onClick={handleCancel}
-            variant="outlined"
-          >
-            Cancel
-          </Button>
-          <Button
-            disabled={disabled}
-            onClick={() => {
-              void handleApply();
-            }}
-            variant="contained"
-          >
-            Apply
-          </Button>
-        </Stack> ) }
-      </Stack>
-        </CardContent>
-      </Card>
+          {isChanged ? (
+            <Stack
+              direction={{ xs: "column-reverse", sm: "row" }}
+              justifyContent="flex-end"
+              spacing={1.5}
+            >
+              <Button disabled={isDisabled} onClick={handleCancel} variant="outlined">
+                Cancel
+              </Button>
+              <Button
+                disabled={isDisabled}
+                onClick={handleApply}
+                variant="contained"
+              >
+                Apply
+              </Button>
+            </Stack>
+          ) : null}
+        </Stack>
+      </CardContent>
+    </Card>
   );
 };

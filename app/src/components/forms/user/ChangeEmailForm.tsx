@@ -1,6 +1,7 @@
 import type { ChangeEvent, ReactElement } from "react";
 import { useEffect, useState } from "react";
 
+import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
@@ -9,21 +10,27 @@ import Typography from "@mui/material/Typography";
 
 import { EmailInput } from "@components/form-elements/email/EmailInput";
 import type { EmailInputValidation } from "@components/form-elements/email/EmailInput";
+import { useUserSettingsMutation } from "@features/user/useUserSettingsMutation";
+import { createAsyncSubmitHandler } from "@helpers/createAsyncActionBuilder";
+import { requestGraphQL } from "@helpers/requestGraphQL";
 import { useCurrentUser } from "@hooks/useCurrentUser";
+import { buildChangeEmailMutation } from "@models/user";
+import type { GraphQLCurrentUserResponse, UserMutationResponse } from "@models/user";
 
 interface ChangeEmailFormProps {
   disabled?: boolean;
-  onSubmit?: (payload: { email: string }) => Promise<void> | void;
 }
 
 export const ChangeEmailForm = ({
-  disabled = false,
-  onSubmit
+  disabled = false
 }: ChangeEmailFormProps): ReactElement => {
   const { currentUser } = useCurrentUser();
+  const { applyUpdatedUser, getGraphQLAuthContext } = useUserSettingsMutation();
   const persistedEmail = currentUser?.email ?? "";
   const [email, setEmail] = useState(persistedEmail);
   const [validation, setValidation] = useState<EmailInputValidation | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     setEmail(persistedEmail);
@@ -32,6 +39,7 @@ export const ChangeEmailForm = ({
   const trimmedEmail = email.trim();
   const hasChanged = trimmedEmail !== persistedEmail.trim();
   const isValid = validation?.isValid ?? false;
+  const isDisabled = disabled || isSubmitting;
 
   const handleChange = (
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -41,22 +49,47 @@ export const ChangeEmailForm = ({
 
   const handleCancel = (): void => {
     setEmail(persistedEmail);
+    setErrorMessage(null);
   };
 
-  const handleApply = async (): Promise<void> => {
-    if (disabled || !isValid || !hasChanged) {
-      return;
-    }
+  const handleApply = createAsyncSubmitHandler<
+    UserMutationResponse,
+    GraphQLCurrentUserResponse
+  >()
+    .when(() => !isDisabled && isValid && hasChanged)
+    .onStart(() => {
+      setErrorMessage(null);
+      setIsSubmitting(true);
+    })
+    .request(() =>
+      requestGraphQL<UserMutationResponse>({
+        ...getGraphQLAuthContext(),
+        document: buildChangeEmailMutation(trimmedEmail)
+      })
+    )
+    .verify((response: UserMutationResponse) => {
+      if (response.changeEmail === undefined) {
+        throw new Error("GraphQL response did not include the updated user.");
+      }
 
-    await onSubmit?.({
-      email: trimmedEmail
-    });
-  };
+      return response.changeEmail;
+    })
+    .onSuccess(applyUpdatedUser)
+    .onError((error: unknown) => {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Failed to update the email."
+      );
+    })
+    .onFinally(() => {
+      setIsSubmitting(false);
+    })
+    .handle;
 
   return (
     <Card variant="outlined">
       <CardContent>
         <Stack padding={3} spacing={3}>
+          {errorMessage !== null ? <Alert severity="error">{errorMessage}</Alert> : null}
           <Stack spacing={1}>
             <Typography variant="h5">Email</Typography>
             <Typography color="textSecondary" variant="body2">
@@ -65,7 +98,7 @@ export const ChangeEmailForm = ({
           </Stack>
 
           <EmailInput
-            disabled={disabled}
+            disabled={isDisabled}
             onChange={handleChange}
             onValidationChange={setValidation}
             required
@@ -78,14 +111,12 @@ export const ChangeEmailForm = ({
               justifyContent="flex-end"
               spacing={1.5}
             >
-              <Button disabled={disabled} onClick={handleCancel} variant="outlined">
+              <Button disabled={isDisabled} onClick={handleCancel} variant="outlined">
                 Cancel
               </Button>
               <Button
-                disabled={disabled || !isValid}
-                onClick={() => {
-                  void handleApply();
-                }}
+                disabled={isDisabled || !isValid}
+                onClick={handleApply}
                 variant="contained"
               >
                 Apply

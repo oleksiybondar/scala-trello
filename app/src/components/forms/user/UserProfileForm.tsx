@@ -1,21 +1,23 @@
 import type { ChangeEvent, ReactElement } from "react";
 import { useEffect, useState } from "react";
 
+import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
+import { useUserSettingsMutation } from "@features/user/useUserSettingsMutation";
+import { createAsyncSubmitHandler } from "@helpers/createAsyncActionBuilder";
+import { requestGraphQL } from "@helpers/requestGraphQL";
 import { useCurrentUser } from "@hooks/useCurrentUser";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
+import { buildUpdateProfileMutation } from "@models/user";
+import type { GraphQLCurrentUserResponse, UserMutationResponse } from "@models/user";
 
 interface UserProfileFormProps {
   disabled?: boolean;
-  onSubmit?: (payload: {
-    firstName: string;
-    lastName: string;
-  }) => Promise<void> | void;
 }
 
 interface UserProfileFormState {
@@ -34,16 +36,18 @@ const getProfileState = (
 };
 
 export const UserProfileForm = ({
-  disabled = false,
-  onSubmit
+  disabled = false
 }: UserProfileFormProps): ReactElement => {
   const { currentUser } = useCurrentUser();
+  const { applyUpdatedUser, getGraphQLAuthContext } = useUserSettingsMutation();
   const persistedState = getProfileState(
     currentUser?.firstName,
     currentUser?.lastName
   );
   const [formState, setFormState] = useState(persistedState);
   const [isTouched, setIsTouched] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     setFormState(persistedState);
@@ -55,6 +59,7 @@ export const UserProfileForm = ({
   const firstNameError = isTouched && trimmedFirstName.length === 0;
   const lastNameError = isTouched && trimmedLastName.length === 0;
   const isValid = trimmedFirstName.length > 0 && trimmedLastName.length > 0;
+  const isDisabled = disabled || isSubmitting;
   const isChanged =
     trimmedFirstName !== persistedState.firstName.trim() ||
     trimmedLastName !== persistedState.lastName.trim();
@@ -72,25 +77,53 @@ export const UserProfileForm = ({
   const handleCancel = (): void => {
     setFormState(persistedState);
     setIsTouched(false);
+    setErrorMessage(null);
   };
 
-  const handleApply = async (): Promise<void> => {
-    setIsTouched(true);
+  const handleApply = createAsyncSubmitHandler<
+    UserMutationResponse,
+    GraphQLCurrentUserResponse
+  >()
+    .when(() => {
+      setIsTouched(true);
 
-    if (!isValid || !isChanged || disabled) {
-      return;
-    }
+      return isValid && isChanged && !isDisabled;
+    })
+    .onStart(() => {
+      setErrorMessage(null);
+      setIsSubmitting(true);
+    })
+    .request(() =>
+      requestGraphQL<UserMutationResponse>({
+        ...getGraphQLAuthContext(),
+        document: buildUpdateProfileMutation(trimmedFirstName, trimmedLastName)
+      })
+    )
+    .verify((response: UserMutationResponse) => {
+      if (response.updateProfile === undefined) {
+        throw new Error("GraphQL response did not include the updated user.");
+      }
 
-    await onSubmit?.({
-      firstName: trimmedFirstName,
-      lastName: trimmedLastName
-    });
-  };
+      return response.updateProfile;
+    })
+    .onSuccess(applyUpdatedUser)
+    .onError((error: unknown) => {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to update the profile details."
+      );
+    })
+    .onFinally(() => {
+      setIsSubmitting(false);
+    })
+    .handle;
 
   return (
-      <Card variant="outlined">
-        <CardContent>
-      <Stack padding={3} spacing={3}>
+    <Card variant="outlined">
+      <CardContent>
+        <Stack padding={3} spacing={3}>
+          {errorMessage !== null ? <Alert severity="error">{errorMessage}</Alert> : null}
         <Stack spacing={1}>
           <Typography variant="h5">Profile details</Typography>
           <Typography color="textSecondary" variant="body2">
@@ -99,7 +132,7 @@ export const UserProfileForm = ({
         </Stack>
 
         <TextField
-          disabled={disabled}
+          disabled={isDisabled}
           error={firstNameError}
           fullWidth
           helperText={firstNameError ? "First name is required." : " "}
@@ -110,7 +143,7 @@ export const UserProfileForm = ({
         />
 
         <TextField
-          disabled={disabled}
+          disabled={isDisabled}
           error={lastNameError}
           fullWidth
           helperText={lastNameError ? "Last name is required." : " "}
@@ -120,26 +153,26 @@ export const UserProfileForm = ({
           value={formState.lastName}
         />
 
-        { isChanged && (<Stack direction={{ xs: "column-reverse", sm: "row" }} spacing={1.5} justifyContent="flex-end">
-          <Button
-            disabled={disabled}
-            onClick={handleCancel}
-            variant="outlined"
-          >
-            Cancel
-          </Button>
-          <Button
-            disabled={disabled || !isValid}
-            onClick={() => {
-              void handleApply();
-            }}
-            variant="contained"
-          >
-            Apply
-          </Button>
-        </Stack> ) }
-      </Stack>
-        </CardContent>
-      </Card>
+          {isChanged ? (
+            <Stack
+              direction={{ xs: "column-reverse", sm: "row" }}
+              justifyContent="flex-end"
+              spacing={1.5}
+            >
+              <Button disabled={isDisabled} onClick={handleCancel} variant="outlined">
+                Cancel
+              </Button>
+              <Button
+                disabled={isDisabled || !isValid}
+                onClick={handleApply}
+                variant="contained"
+              >
+                Apply
+              </Button>
+            </Stack>
+          ) : null}
+        </Stack>
+      </CardContent>
+    </Card>
   );
 };
