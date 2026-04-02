@@ -14,6 +14,8 @@
       "@features/*": ["src/features/*"],
       "@helpers/*": ["src/helpers/*"],
       "@hooks/*": ["src/hooks/*"],
+      "@models": ["src/models"],
+      "@models/*": ["src/models/*"],
       "@pages/*": ["src/pages/*"],
       "@providers/*": ["src/providers/*"],
       "@routes/*": ["src/routes/*"],

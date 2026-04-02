@@ -68,8 +68,8 @@ describe("UserSettingsPage", () => {
       screen.getByRole("combobox", { name: "Theme source" })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("combobox", { name: "Theme mode" })
-    ).toHaveAttribute("aria-disabled", "true");
+      screen.getByRole("switch", { name: "Light" })
+    ).toBeDisabled();
     expect(
       screen.getByRole("combobox", { name: "Theme template" })
     ).toHaveAttribute("aria-disabled", "true");

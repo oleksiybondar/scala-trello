@@ -5,6 +5,7 @@ import { CurrentUserContext } from "@contexts/current-user-context";
 import type { CurrentUserContextValue } from "@contexts/current-user-context";
 import { meRequest } from "@features/auth/authApi";
 import { useAuth } from "@hooks/useAuth";
+import { mapAuthCurrentUserResponseToCurrentUser } from "@models/user";
 
 export const CurrentUserProvider = ({
   children
@@ -29,15 +30,7 @@ export const CurrentUserProvider = ({
           return;
         }
 
-        setCurrentUser({
-          avatarUrl: response.avatar_url,
-          createdAt: response.created_at,
-          email: response.email,
-          firstName: response.first_name,
-          lastName: response.last_name,
-          userId: response.id,
-          username: response.username
-        });
+        setCurrentUser(mapAuthCurrentUserResponseToCurrentUser(response));
       })
       .catch(() => {
         if (!isActive) {

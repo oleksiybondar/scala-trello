@@ -1,9 +1,9 @@
 import type {
-  AuthCurrentUserResponse,
   RegisterCredentials,
   AuthTokenResponse,
   LoginCredentials
 } from "@features/auth/types";
+import type { AuthCurrentUserResponse } from "@models/user";
 
 const AUTH_LOGIN_PATH = "/auth/login";
 const AUTH_LOGOUT_PATH = "/auth/logout";

@@ -7,8 +7,8 @@ import {
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { buildCurrentUserProfileQuery } from "@features/user/userQueries";
 import { useCurrentUserProfileQuery } from "@features/user/useCurrentUserProfileQuery";
+import { buildCurrentUserProfileQuery } from "@models/user";
 import { useAuth } from "@hooks/useAuth";
 import { AuthProvider } from "@providers/AuthProvider";
 import { CurrentUserProvider } from "@providers/CurrentUserProvider";

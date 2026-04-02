@@ -13,7 +13,7 @@ describe("HomePage", () => {
     expect(screen.getByRole("link", { name: "Intro Into Scala App" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Login" })).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Theme widget" })
+      screen.getByRole("heading", { name: "Current theme state" })
     ).toBeInTheDocument();
     expect(screen.getByText("Source: default")).toBeInTheDocument();
   });

@@ -1,14 +1,6 @@
-import { createContext } from 'react';
+import { createContext } from "react";
 
-interface CurrentUser {
-  userId: string;
-  username: string | null;
-  email: string | null;
-  firstName: string;
-  lastName: string;
-  avatarUrl: string | null;
-  createdAt: string;
-}
+import type { CurrentUser } from "@models/user";
 
 export interface CurrentUserContextValue {
   currentUser: CurrentUser | null;
