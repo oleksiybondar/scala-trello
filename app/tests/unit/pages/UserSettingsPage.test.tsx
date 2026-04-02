@@ -39,8 +39,11 @@ describe("UserSettingsPage", () => {
     ).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("heading", { name: "Profile" })).toBeInTheDocument();
     expect(
-      screen.getByText("Sign in to load the current user profile.")
+      screen.getByRole("heading", { name: "Profile details" })
     ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Edit" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "First name" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Last name" })).toBeInTheDocument();
   });
 
   test("switches sections through route navigation from the sidebar", async () => {

@@ -23,7 +23,6 @@ interface AvatarInputProps {
 export const AvatarInput = ({
   disabled = false,
   helperText,
-  label = "Avatar",
   onChange,
   value
 }: AvatarInputProps): ReactElement => {
@@ -67,10 +66,9 @@ export const AvatarInput = ({
   };
 
   return (
-    <Stack spacing={2}>
-      <Typography variant="subtitle2">{label}</Typography>
+    <Stack spacing={2} >
 
-      <Stack alignItems="center" direction={{ xs: "column", sm: "row" }} spacing={2}>
+      <Stack alignItems="center" direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="center">
         <Avatar
           alt="Avatar preview"
           src={hasAvatar ? value : undefined}
@@ -109,11 +107,11 @@ export const AvatarInput = ({
         </Stack>
       </Stack>
 
-      <Typography color={errorMessage === null ? "textSecondary" : "error"} variant="body2">
-        {errorMessage ??
-          helperText ??
-          "Choose an image file up to 1.5 MB. The selected file is stored locally as a data URL."}
-      </Typography>
+      { (errorMessage ?? helperText) && (
+          <Typography color={errorMessage === null ? "textSecondary" : "error"} variant="body2" justifyContent="center">
+            {errorMessage ?? helperText}
+        </Typography>)
+      }
 
       <input
         accept="image/*"

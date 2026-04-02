@@ -22,6 +22,7 @@ export const UserSettingsSidebar = (): ReactElement => {
               key={item.section}
               selected={location.pathname === item.to}
               to={item.to}
+              sx={{ borderRadius: '15px' }}
             >
               <ListItemText
                 primary={item.label}
