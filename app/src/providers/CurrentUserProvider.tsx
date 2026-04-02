@@ -4,8 +4,12 @@ import { useCallback, useEffect, useState } from "react";
 import { CurrentUserContext } from "@contexts/current-user-context";
 import type { CurrentUserContextValue } from "@contexts/current-user-context";
 import { meRequest } from "@features/auth/authApi";
+import { createAsyncSubmitHandler } from "@helpers/createAsyncActionBuilder";
 import { useAuth } from "@hooks/useAuth";
-import { mapAuthCurrentUserResponseToCurrentUser } from "@models/user";
+import {
+  mapAuthCurrentUserResponseToCurrentUser
+} from "@models/user";
+import type { AuthCurrentUserResponse, CurrentUser } from "@models/user";
 
 export const CurrentUserProvider = ({
   children
@@ -15,16 +19,30 @@ export const CurrentUserProvider = ({
     null
   );
 
-  const refreshCurrentUser = useCallback(async (): Promise<void> => {
-    if (accessToken === null || session === null) {
-      setCurrentUser(null);
+  const loadCurrentUserHandler = useCallback(
+    async (): Promise<void> => {
+      await createAsyncSubmitHandler<AuthCurrentUserResponse, CurrentUser>()
+        .when(() => {
+          return accessToken !== null && session !== null;
+        })
+        .request(() => {
+          if (accessToken === null || session === null) {
+            throw new Error("Authentication context is missing.");
+          }
 
-      return;
-    }
-
-    const response = await meRequest(accessToken, session.tokenType);
-    setCurrentUser(mapAuthCurrentUserResponseToCurrentUser(response));
-  }, [accessToken, session]);
+          return meRequest(accessToken, session.tokenType);
+        })
+        .verify(mapAuthCurrentUserResponseToCurrentUser)
+        .onSuccess(user => {
+          setCurrentUser(user);
+        })
+        .onError(() => {
+          setCurrentUser(null);
+        })
+        .handle();
+    },
+    [accessToken, session]
+  );
 
   useEffect(() => {
     if (accessToken === null || session === null) {
@@ -35,26 +53,31 @@ export const CurrentUserProvider = ({
 
     let isActive = true;
 
-    void meRequest(accessToken, session.tokenType)
-      .then(response => {
+    void createAsyncSubmitHandler<AuthCurrentUserResponse, CurrentUser>()
+      .request(() => {
+        return meRequest(accessToken, session.tokenType);
+      })
+      .verify(mapAuthCurrentUserResponseToCurrentUser)
+      .onSuccess(user => {
         if (!isActive) {
           return;
         }
 
-        setCurrentUser(mapAuthCurrentUserResponseToCurrentUser(response));
+        setCurrentUser(user);
       })
-      .catch(() => {
+      .onError(() => {
         if (!isActive) {
           return;
         }
 
         setCurrentUser(null);
-      });
+      })
+      .handle();
 
     return () => {
       isActive = false;
     };
-  }, [accessToken, refreshCurrentUser, session]);
+  }, [accessToken, loadCurrentUserHandler, session]);
 
   const userId = currentUser?.userId ?? null;
 
@@ -62,7 +85,7 @@ export const CurrentUserProvider = ({
     <CurrentUserContext.Provider
       value={{
         currentUser,
-        refreshCurrentUser,
+        refreshCurrentUser: loadCurrentUserHandler,
         setCurrentUser,
         userId
       }}
