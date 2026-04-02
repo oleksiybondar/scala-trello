@@ -1,5 +1,4 @@
 import type { ReactElement } from "react";
-import { useState } from "react";
 
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
@@ -10,8 +9,6 @@ import Typography from "@mui/material/Typography";
 import { Link as RouterLink } from "react-router-dom";
 
 import { AppNavBar } from "@components/navigation/AppNavBar";
-import { AvatarInput } from "@components/form-elements/avatar/AvatarInput";
-import { ThemeWidget } from "@components/theme/ThemeWidget";
 import { useAuth } from "@hooks/useAuth";
 import { useThemeManager } from "@hooks/useThemeManager";
 
@@ -19,7 +16,6 @@ export const HomePage = (): ReactElement => {
   const { isAuthenticated } = useAuth();
   const { mode, resolvedMode, resolvedTemplateName, source, templateName } =
     useThemeManager();
-  const [avatarValue, setAvatarValue] = useState("");
 
   return (
     <Container>
@@ -105,15 +101,8 @@ export const HomePage = (): ReactElement => {
                 </Typography>
               </Stack>
 
-              <AvatarInput
-                helperText="Uses the native file picker, validates image type and size, and stores the result as a data URL."
-                label="Try an avatar"
-                onChange={setAvatarValue}
-                value={avatarValue}
-              />
             </Stack>
           </Paper>
-          <ThemeWidget />
         </Stack>
       </Stack>
     </Container>
