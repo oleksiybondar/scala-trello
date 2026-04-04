@@ -2,11 +2,17 @@
 
 Practice monorepo for learning Scala, functional programming, Cats, Cats Effect, and a TypeScript frontend stack.
 
-The long-term product is a small Trello-like task board:
+The long-term product is a small dashboard-oriented task management application. It started as a Trello-like board, but the target shape is now a more complete collaborative workspace with authentication, dashboard membership, roles, ticket workflow, ticket comments, and time logging.
 
-- tickets move through `new -> in progress -> in review -> complete`
-- each ticket has a lightweight comment thread
-- the board is available only to authenticated users
+Planned product capabilities:
+
+- authenticated users can create and own dashboards
+- users can participate in multiple dashboards with different roles per dashboard
+- dashboard access is based on seeded roles such as `admin`, `contributor`, and `viewer`
+- tickets live inside dashboards and move through seeded workflow states
+- tickets can carry severity, assignment, estimation, component, scope, and acceptance criteria data
+- each ticket has a comment thread
+- time can be logged against tickets using seeded activity types such as development, testing, review, and planning
 - authentication is intended to support local email/password and Google OIDC
 - users remain local application users regardless of registration method
 - backend uses REST for auth, health/docs, Swagger, and GraphiQL
