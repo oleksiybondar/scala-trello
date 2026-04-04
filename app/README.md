@@ -1,16 +1,28 @@
 # App
 
-Frontend workspace for the training project. The goal is a small authenticated Trello-like UI built with React, TypeScript, Vite, and MUI on top of the Scala backend.
+Frontend workspace for the training project. The app is built with React, TypeScript, Vite, and MUI on top of the Scala backend, and currently focuses on authenticated user flows while the dashboard and ticket domain is still being prepared on the backend.
 
 ## Product direction
 
-The intended UI will include:
+Current UI capabilities:
 
-- authenticated access to the board
+- login with local credentials
+- registration with client-side email and password validation
+- authenticated session handling with access token refresh
+- current-user loading from `/auth/me`
+- user settings area with profile editing
+- user security settings for username, email, avatar, and password changes
+- UI preferences settings backed by the theme manager
+
+Planned next-stage product capabilities:
+
+- dashboard listing and dashboard detail views
+- dashboard membership and role-aware access
 - ticket listing and ticket detail views
-- state transitions: `new -> in progress -> in review -> complete`
-- comment thread per ticket
-- login flows for local credentials and later Google OIDC
+- workflow state transitions
+- ticket comments
+- time logging against tickets
+- later Google OIDC support
 
 ## Stack
 
@@ -73,6 +85,20 @@ Current routing:
 
 - `/` -> `HomePage`
 - `/home` -> `HomePage`
+- `/login` -> `LoginPage`
+- `/register` -> `RegisterPage`
+- `/settings` -> redirects to `/settings/profile`
+- `/settings/profile` -> `UserProfileSettingsPage`
+- `/settings/security` -> `UserSecuritySettingsPage`
+- `/settings/ui-preferences` -> `UserUiPreferencesSettingsPage`
+
+Current frontend/backend integration:
+
+- REST auth endpoints are used for register, login, refresh, logout, and current-user loading
+- GraphQL is already wired in the frontend helper layer and is intended for future dashboard and ticket features
+- auth state is provided through `AuthProvider`
+- current user loading is provided through `CurrentUserProvider`
+- settings mutations are organized under `features/user`
 
 Theming bootstrap:
 
@@ -80,6 +106,29 @@ Theming bootstrap:
 - `AppThemeProvider` owns MUI theme application and baseline styles
 - source is explicit: `default`, `os`, or `user`
 - user-controlled `mode` and `template` settings can be extended later
+
+## Implementation status
+
+Implemented today:
+
+- login page
+- registration page
+- auth provider with token lifecycle handling
+- current-user bootstrap against the backend
+- settings shell and sidebar navigation
+- profile editing UI
+- security editing UI for username, email, avatar, and password
+- UI preferences page and theme controls
+- unit and e2e test scaffolding
+
+Planned, but not implemented yet:
+
+- dashboard pages
+- dashboard member management
+- dashboard role-aware UI
+- ticket CRUD flows
+- comment UI
+- time logging UI
 
 The shared monorepo script can also run frontend checks from the repository root:
 

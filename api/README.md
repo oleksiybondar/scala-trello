@@ -1,6 +1,6 @@
 # API
 
-Scala 3 backend for the training project. The backend is where the Scala/FP/Cats/Cats Effect work happens, while also serving as the source of truth for authentication, persistence, and the future task-board domain.
+Scala 3 backend for the training project. The backend is where the Scala/FP/Cats/Cats Effect work happens, while also serving as the source of truth for authentication, persistence, and a task-board domain that is growing toward a realistic project-management application.
 
 ## Scope
 
@@ -10,6 +10,7 @@ Architecture target:
 - GraphQL for application/domain features
 - PostgreSQL for persistence
 - functional style with Cats and Cats Effect
+- dashboard-based task and collaboration domain
 
 Current implementation:
 
@@ -22,7 +23,7 @@ Current implementation:
 - `POST /graphql`
 - Swagger UI for REST endpoints
 - GraphiQL page
-- Flyway migrations for `users`, `auth_sessions`, and `password_history`
+- Flyway migrations for auth, users, dashboards, memberships, tickets, comments, time tracking, and seeded reference data
 - user repository plus authenticated GraphQL user queries and mutations
 
 Important status note:
@@ -34,8 +35,69 @@ Important status note:
 - `GET /auth/me` returns the current authenticated user for a valid access token
 - user profile, username, email, avatar, and password changes are available through authenticated GraphQL mutations
 - password changes enforce the configured strength rules and password-history checks
+- the database schema already defines the planned dashboard and ticketing model, but the Scala application layer for that domain is still pending
 - Google OIDC is not implemented yet
-- ticket board, workflow states, and comments are not implemented yet
+- dashboard, ticket, comment, and time-tracking behavior are not implemented yet in Scala/GraphQL
+
+## Product direction
+
+The planned application is a dashboard-oriented task board. A user can authenticate, own one dashboard, contribute to another dashboard, and operate under a dashboard-specific role. The backend keeps ownership, membership, workflow reference data, and authorization rules in PostgreSQL so later GraphQL features can build on a stable schema.
+
+Planned business capabilities:
+
+- register and authenticate users
+- create dashboards with a dedicated owner
+- add dashboard members and assign seeded roles such as `admin`, `contributor`, and `viewer`
+- control dashboard, ticket, and comment access through seeded permissions
+- create and manage tickets inside dashboards
+- classify tickets by state and severity
+- capture free-text scoping fields such as component, scope, and acceptance criteria
+- add comments to tickets
+- log work time against tickets with a seeded activity type
+- support ownership transfer later without collapsing owner and member-role concepts
+
+Reference data currently modeled in the database:
+
+- roles
+- permissions
+- states
+- severities
+- activities
+
+Current workflow vocabulary seeded in the database:
+
+- roles: `admin`, `contributor`, `viewer`
+- states: `new`, `in_progress`, `code_review`, `in_testing`, `done`
+- severities: `minor`, `normal`, `major`
+- activities: `code_review`, `development`, `testing`, `planning`, `design`, `documentation`, `refinement`, `debugging`
+
+## Data model
+
+The schema is intentionally split between top-level entities that use `UUID` identifiers and operational/reference records that use `BIGINT` identity columns.
+
+Main entities:
+
+- `users`: application users with profile and credential data
+- `auth_sessions`: refresh-token backed auth sessions
+- `password_history`: retained password hashes used for password reuse checks
+- `dashboards`: top-level workspaces with owner and audit fields
+- `dashboard_members`: dashboard-to-user membership rows with a role assignment
+- `tickets`: dashboard-scoped work items with assignee, state, severity, and estimation fields
+- `comments`: ticket-only comments with optional self-reference for reply chains
+- `time_tracking`: work log entries linked to a ticket, user, and activity
+
+Reference entities:
+
+- `roles`: seeded role definitions
+- `permissions`: per-role permissions for `dashboard`, `ticket`, and `comment` areas
+- `states`: seeded ticket workflow states
+- `severities`: seeded ticket severity levels
+- `activities`: seeded time logging categories
+
+Identifier strategy:
+
+- `UUID`: `users`, `auth_sessions`, `dashboards`
+- `BIGINT`: `roles`, `permissions`, `states`, `severities`, `activities`, `tickets`, `comments`, `time_tracking`
 
 ## Stack
 
@@ -133,6 +195,26 @@ Example token response:
   "expires_in": 900
 }
 ```
+
+## Implementation status
+
+Implemented in Scala today:
+
+- auth REST API
+- JWT access tokens and refresh-token session rotation
+- password hashing, password strength validation, and password history checks
+- authenticated GraphQL user queries
+- authenticated GraphQL user mutations for profile, avatar, username, email, and password changes
+- Slick repositories for current auth and user storage
+
+Prepared in the database, but not implemented in Scala yet:
+
+- dashboard creation and ownership flows
+- dashboard membership management
+- role and permission enforcement for dashboards
+- ticket creation and workflow updates
+- ticket comments
+- time logging
 
 ## Quality
 
