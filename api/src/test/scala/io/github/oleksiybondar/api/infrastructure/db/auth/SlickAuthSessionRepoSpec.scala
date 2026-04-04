@@ -120,8 +120,11 @@ class SlickAuthSessionRepoSpec extends FunSuite {
     withCleanDatabase { db =>
       val user = UserFixtures.user(
         id = UserId(UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")),
-        username = Some(io.github.oleksiybondar.api.domain.user.Username("session-user")),
-        email = Some(io.github.oleksiybondar.api.domain.user.Email("session-user@example.com"))
+        username = Some(io.github.oleksiybondar.api.domain.user.Username("spec-user-session")),
+        email =
+          Some(io.github.oleksiybondar.api.domain.user.Email("spec-user+session@example.com")),
+        firstName = io.github.oleksiybondar.api.domain.user.FirstName("Spec Session"),
+        lastName = io.github.oleksiybondar.api.domain.user.LastName("Test User")
       )
 
       run(

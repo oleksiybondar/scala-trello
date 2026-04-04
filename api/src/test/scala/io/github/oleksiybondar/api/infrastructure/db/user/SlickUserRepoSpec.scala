@@ -10,7 +10,12 @@ import java.util.UUID
 class SlickUserRepoSpec extends FunSuite {
 
   test("create persists a user that can be loaded by id") {
-    val user = testUser("11111111-1111-1111-1111-111111111111", "alice", "alice@example.com")
+    val user =
+      testUser(
+        "11111111-1111-1111-1111-111111111111",
+        "spec-user-alice",
+        "spec-user+alice@example.com"
+      )
 
     withCleanRepo { repo =>
       for {
@@ -21,13 +26,18 @@ class SlickUserRepoSpec extends FunSuite {
   }
 
   test("findByUsername and findByEmail return the matching user") {
-    val user = testUser("22222222-2222-2222-2222-222222222222", "bob", "bob@example.com")
+    val user =
+      testUser(
+        "22222222-2222-2222-2222-222222222222",
+        "spec-user-bob",
+        "spec-user+bob@example.com"
+      )
 
     withCleanRepo { repo =>
       for {
         _          <- repo.create(user)
-        byUsername <- repo.findByUsername(Username("bob"))
-        byEmail    <- repo.findByEmail(Email("bob@example.com"))
+        byUsername <- repo.findByUsername(Username("spec-user-bob"))
+        byEmail    <- repo.findByEmail(Email("spec-user+bob@example.com"))
       } yield {
         assertEquals(byUsername, Some(user))
         assertEquals(byEmail, Some(user))
@@ -37,8 +47,17 @@ class SlickUserRepoSpec extends FunSuite {
 
   test("list returns all persisted users") {
     val firstUser  =
-      testUser("33333333-3333-3333-3333-333333333333", "charlie", "charlie@example.com")
-    val secondUser = testUser("44444444-4444-4444-4444-444444444444", "diana", "diana@example.com")
+      testUser(
+        "33333333-3333-3333-3333-333333333333",
+        "spec-user-charlie",
+        "spec-user+charlie@example.com"
+      )
+    val secondUser =
+      testUser(
+        "44444444-4444-4444-4444-444444444444",
+        "spec-user-diana",
+        "spec-user+diana@example.com"
+      )
 
     withCleanRepo { repo =>
       for {
@@ -53,7 +72,12 @@ class SlickUserRepoSpec extends FunSuite {
   }
 
   test("update returns true and persists changes for an existing user") {
-    val existingUser = testUser("55555555-5555-5555-5555-555555555555", "eve", "eve@example.com")
+    val existingUser =
+      testUser(
+        "55555555-5555-5555-5555-555555555555",
+        "spec-user-eve",
+        "spec-user+eve@example.com"
+      )
     val updatedUser  =
       existingUser.copy(
         firstName = FirstName("Eva"),
@@ -74,7 +98,12 @@ class SlickUserRepoSpec extends FunSuite {
   }
 
   test("update returns false when the user does not exist") {
-    val missingUser = testUser("66666666-6666-6666-6666-666666666666", "frank", "frank@example.com")
+    val missingUser =
+      testUser(
+        "66666666-6666-6666-6666-666666666666",
+        "spec-user-frank",
+        "spec-user+frank@example.com"
+      )
 
     withCleanRepo { repo =>
       repo.update(missingUser).map(updated => assertEquals(updated, false))
@@ -82,7 +111,12 @@ class SlickUserRepoSpec extends FunSuite {
   }
 
   test("delete returns true for an existing user and removes it") {
-    val user = testUser("77777777-7777-7777-7777-777777777777", "grace", "grace@example.com")
+    val user =
+      testUser(
+        "77777777-7777-7777-7777-777777777777",
+        "spec-user-grace",
+        "spec-user+grace@example.com"
+      )
 
     withCleanRepo { repo =>
       for {
