@@ -110,8 +110,10 @@ class PasswordHistoryRepoSlickSpec extends FunSuite {
     withCleanDatabase { db =>
       val user = UserFixtures.user(
         id = UserId(UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")),
-        username = Some(Username("password-history-user")),
-        email = Some(Email("password-history-user@example.com"))
+        username = Some(Username("spec-user-password-history")),
+        email = Some(Email("spec-user+password-history@example.com")),
+        firstName = io.github.oleksiybondar.api.domain.user.FirstName("Spec Password"),
+        lastName = io.github.oleksiybondar.api.domain.user.LastName("Test User")
       )
 
       run(
