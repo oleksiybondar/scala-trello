@@ -21,18 +21,11 @@ object SlickUserRepoFixtures {
 
   def withCleanRepo[A](run: SlickUserRepo[IO] => IO[A]): A =
     repoResource
-      .use { case (db, repo) =>
-        clearDatabase(db) *> run(repo).guarantee(clearDatabase(db))
-      }
+      .use { case (_, repo) => run(repo) }
       .unsafeRunSync()
 
   def withCleanDatabase[A](run: Database => IO[A]): A =
     databaseResource
-      .use { db =>
-        clearDatabase(db) *> run(db).guarantee(clearDatabase(db))
-      }
+      .use(run)
       .unsafeRunSync()
-
-  private def clearDatabase(db: Database): IO[Unit] =
-    TestDatabaseSupport.clearTrackedUserData(db)
 }
