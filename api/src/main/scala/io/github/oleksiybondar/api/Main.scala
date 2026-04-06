@@ -3,6 +3,7 @@ package io.github.oleksiybondar.api
 import cats.effect.{IO, IOApp, Resource}
 import com.comcast.ip4s.{Host, Port}
 import io.github.oleksiybondar.api.config.{AppConfig, ConfigLoader}
+import io.github.oleksiybondar.api.domain.permission.{RoleService, RoleServiceLive}
 import io.github.oleksiybondar.api.domain.user.{UserService, UserServiceLive}
 import io.github.oleksiybondar.api.http.HttpApi
 import io.github.oleksiybondar.api.http.docs.graphql.GraphiQLRoutes
@@ -22,6 +23,12 @@ import io.github.oleksiybondar.api.infrastructure.db.auth.password.{
   PasswordHistoryRepoSlick
 }
 import io.github.oleksiybondar.api.infrastructure.db.auth.{AuthSessionRepo, AuthSessionRepoSlick}
+import io.github.oleksiybondar.api.infrastructure.db.permission.{
+  PermissionRepo,
+  RoleRepo,
+  SlickPermissionRepo,
+  SlickRoleRepo
+}
 import io.github.oleksiybondar.api.infrastructure.db.user.{SlickUserRepo, UserRepo}
 import io.github.oleksiybondar.api.modules.AuthModule
 import org.http4s.ember.server.EmberServerBuilder
@@ -77,10 +84,13 @@ object Main extends IOApp.Simple {
       db                 <- databaseResource(config)
       userRepo            = buildUserRepo(db)
       authSessionRepo     = buildAuthSessionRepo(db)
+      roleRepo            = buildRoleRepo(db)
+      permissionRepo      = buildPermissionRepo(db)
       passwordHistoryRepo = buildPasswordHistoryRepo(db)
       userService         = buildUserService(config, userRepo, passwordHistoryRepo)
+      roleService         = buildRoleService(roleRepo, permissionRepo)
       authModule          = buildAuthModule(config, userRepo, authSessionRepo, passwordHistoryRepo)
-      graphqlRoutes      <- graphqlRoutesResource(userService, authModule.authService)
+      graphqlRoutes      <- graphqlRoutesResource(userService, roleService, authModule.authService)
     } yield {
       buildHttpApp(authModule, userService, graphqlRoutes)
     }
@@ -90,12 +100,14 @@ object Main extends IOApp.Simple {
 
   def graphqlRoutesResource(
       userService: UserService[IO],
+      roleService: RoleService[IO],
       authService: io.github.oleksiybondar.api.domain.auth.AuthService[IO]
   ): Resource[IO, HttpRoutes[IO]] =
     Resource.eval(
       GraphQLRoutes.routes(
         GraphQLContext(
           userService = userService,
+          roleService = roleService,
           authService = authService,
           currentUserId = None
         )
@@ -104,6 +116,18 @@ object Main extends IOApp.Simple {
 
   def buildUserRepo(db: Database): UserRepo[IO] =
     new SlickUserRepo[IO](db)
+
+  def buildRoleRepo(db: Database): RoleRepo[IO] =
+    new SlickRoleRepo[IO](db)
+
+  def buildPermissionRepo(db: Database): PermissionRepo[IO] =
+    new SlickPermissionRepo[IO](db)
+
+  def buildRoleService(
+      roleRepo: RoleRepo[IO],
+      permissionRepo: PermissionRepo[IO]
+  ): RoleService[IO] =
+    new RoleServiceLive[IO](roleRepo, permissionRepo)
 
   def buildUserService(
       config: AppConfig,

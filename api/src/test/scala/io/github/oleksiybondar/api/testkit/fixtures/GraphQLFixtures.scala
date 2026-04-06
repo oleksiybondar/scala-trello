@@ -3,11 +3,17 @@ package io.github.oleksiybondar.api.testkit.fixtures
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import io.github.oleksiybondar.api.domain.auth.{AccessTokenClaims, AuthServiceLive, SessionId}
+import io.github.oleksiybondar.api.domain.permission.RoleServiceLive
 import io.github.oleksiybondar.api.domain.user.{User, UserId, UserServiceLive}
 import io.github.oleksiybondar.api.http.middleware.AuthMiddleware
 import io.github.oleksiybondar.api.http.routes.graphql.{GraphQLContext, GraphQLRoutes}
 import io.github.oleksiybondar.api.infrastructure.auth.JwtServiceLive
-import io.github.oleksiybondar.api.testkit.support.{InMemoryAuthRepo, InMemoryUserRepo}
+import io.github.oleksiybondar.api.testkit.support.{
+  InMemoryAuthRepo,
+  InMemoryPermissionRepo,
+  InMemoryRoleRepo,
+  InMemoryUserRepo
+}
 import org.http4s.HttpApp
 import org.http4s.server.Router
 
@@ -40,6 +46,26 @@ object GraphQLFixtures {
     (for {
       userRepo              <- InMemoryUserRepo.create[IO](users)
       authRepo              <- InMemoryAuthRepo.create[IO]()
+      roleRepo              <- InMemoryRoleRepo.create[IO](
+                                 List(
+                                   RoleFixtures.adminRole,
+                                   RoleFixtures.contributorRole,
+                                   RoleFixtures.viewerRole
+                                 )
+                               )
+      permissionRepo        <- InMemoryPermissionRepo.create[IO](
+                                 List(
+                                   PermissionFixtures.adminDashboardPermission,
+                                   PermissionFixtures.adminTicketPermission,
+                                   PermissionFixtures.adminCommentPermission,
+                                   PermissionFixtures.contributorDashboardPermission,
+                                   PermissionFixtures.contributorTicketPermission,
+                                   PermissionFixtures.contributorCommentPermission,
+                                   PermissionFixtures.viewerDashboardPermission,
+                                   PermissionFixtures.viewerTicketPermission,
+                                   PermissionFixtures.viewerCommentPermission
+                                 )
+                               )
       jwtService             = new JwtServiceLive[IO](AuthServiceFixtures.testAuthConfig.jwtSecret)
       authService            = new AuthServiceLive[IO](
                                  userRepo,
@@ -64,9 +90,11 @@ object GraphQLFixtures {
                                  AuthServiceFixtures.passwordStrengthValidator,
                                  AuthServiceFixtures.unsafeEmptyPasswordHistory
                                )
+      roleService            = new RoleServiceLive[IO](roleRepo, permissionRepo)
       graphqlRoutes         <- GraphQLRoutes.routes(
                                  GraphQLContext(
                                    userService = userService,
+                                   roleService = roleService,
                                    authService = authService,
                                    currentUserId = None
                                  )
