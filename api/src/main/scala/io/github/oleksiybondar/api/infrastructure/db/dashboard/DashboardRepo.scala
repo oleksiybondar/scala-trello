@@ -8,6 +8,7 @@ trait DashboardRepo[F[_]] {
   def findById(id: DashboardId): F[Option[Dashboard]]
   def list: F[List[Dashboard]]
   def listByOwner(ownerUserId: UserId): F[List[Dashboard]]
+  def listByMember(userId: UserId): F[List[Dashboard]]
   def update(dashboard: Dashboard): F[Boolean]
   def delete(id: DashboardId): F[Boolean]
 }

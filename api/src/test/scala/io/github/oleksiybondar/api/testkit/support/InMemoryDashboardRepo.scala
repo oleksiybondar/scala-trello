@@ -27,6 +27,13 @@ final class InMemoryDashboardRepo[F[_]: Sync] private (
         .sortBy(_.createdAt)(Ordering[java.time.Instant].reverse)
     )
 
+  override def listByMember(userId: UserId): F[List[Dashboard]] =
+    state.get.map(
+      _.values.toList
+        .filter(dashboard => dashboard.ownerUserId == userId || dashboard.createdByUserId == userId)
+        .sortBy(_.createdAt)(Ordering[java.time.Instant].reverse)
+    )
+
   override def update(dashboard: Dashboard): F[Boolean] =
     state.modify { current =>
       if (current.contains(dashboard.id))

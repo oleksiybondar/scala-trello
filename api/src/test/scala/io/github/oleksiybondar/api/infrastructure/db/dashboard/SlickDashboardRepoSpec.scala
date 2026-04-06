@@ -1,5 +1,6 @@
 package io.github.oleksiybondar.api.infrastructure.db.dashboard
 
+import cats.effect.IO
 import io.github.oleksiybondar.api.domain.dashboard.{
   DashboardDescription,
   DashboardId,
@@ -7,8 +8,12 @@ import io.github.oleksiybondar.api.domain.dashboard.{
 }
 import io.github.oleksiybondar.api.domain.user.UserId
 import io.github.oleksiybondar.api.testkit.fixtures.DashboardFixtures
-import io.github.oleksiybondar.api.testkit.fixtures.SlickDashboardRepoFixtures.withCleanRepo
+import io.github.oleksiybondar.api.testkit.fixtures.SlickDashboardRepoFixtures.{
+  withCleanRepo,
+  withCleanRepoAndDatabase
+}
 import munit.FunSuite
+import slick.jdbc.PostgresProfile.api._
 
 import java.time.Instant
 import java.util.UUID
@@ -68,6 +73,46 @@ class SlickDashboardRepoSpec extends FunSuite {
         _      <- repo.create(otherDashboard)
         result <- repo.listByOwner(ownedDashboard.ownerUserId)
       } yield assertEquals(result, List(ownedDashboard))
+    }
+  }
+
+  test("listByMember returns dashboards where the user has membership") {
+    val firstDashboard  = DashboardFixtures.sampleDashboard
+    val secondDashboard =
+      DashboardFixtures.dashboard(
+        id = DashboardId(UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff")),
+        name = DashboardName("Membership Board"),
+        ownerUserId = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222")),
+        createdByUserId = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222")),
+        lastModifiedByUserId = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222")),
+        createdAt = Instant.parse("2026-04-05T12:00:00Z"),
+        modifiedAt = Instant.parse("2026-04-05T12:00:00Z")
+      )
+
+    withCleanRepoAndDatabase { (db, repo) =>
+      for {
+        _      <- repo.create(firstDashboard)
+        _      <- repo.create(secondDashboard)
+        _      <- IO.fromFuture(
+                    IO(
+                      db.run(
+                        DBIO.seq(
+                          sqlu"""
+                            INSERT INTO roles (id, name, description)
+                            VALUES (1, 'admin', 'Full dashboard access including member management.')
+                          """,
+                          sqlu"""
+                            INSERT INTO dashboard_members (dashboard_id, user_id, role_id, created_at)
+                            VALUES
+                              ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-1111-1111-1111-111111111111', 1, TIMESTAMPTZ '2026-04-05T08:00:00Z'),
+                              ('ffffffff-ffff-ffff-ffff-ffffffffffff', '22222222-2222-2222-2222-222222222222', 1, TIMESTAMPTZ '2026-04-05T12:00:00Z')
+                          """
+                        )
+                      )
+                    )
+                  ).void
+        result <- repo.listByMember(UserId(UUID.fromString("11111111-1111-1111-1111-111111111111")))
+      } yield assertEquals(result, List(firstDashboard))
     }
   }
 

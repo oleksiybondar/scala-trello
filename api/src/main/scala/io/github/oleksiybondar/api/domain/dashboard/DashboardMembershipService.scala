@@ -28,4 +28,7 @@ trait DashboardMembershipService[F[_]] {
 
   /** Lists all members for a dashboard and enriches each membership with role permissions. */
   def listMembers(dashboardId: DashboardId): F[List[DashboardMemberWithRole]]
+
+  /** Lists all memberships for a user and enriches each membership with role permissions. */
+  def listMembershipsForUser(userId: UserId): F[List[DashboardMemberWithRole]]
 }

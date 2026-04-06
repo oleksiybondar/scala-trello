@@ -182,4 +182,61 @@ class DashboardMembershipServiceLiveSpec extends FunSuite {
       )
     )
   }
+
+  test("listMembershipsForUser returns memberships for the requested user with assembled roles") {
+    val firstMember  = DashboardMemberFixtures.sampleMember
+    val secondMember =
+      DashboardMemberFixtures.member(
+        dashboardId = DashboardId(UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")),
+        createdAt = Instant.parse("2026-04-06T08:05:00Z")
+      )
+    val otherMember  =
+      DashboardMemberFixtures.member(
+        userId = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222")),
+        roleId = RoleId(3)
+      )
+
+    val result = DashboardMembershipServiceFixtures.withDashboardMembershipService(
+      members = List(firstMember, secondMember, otherMember),
+      roles = List(RoleFixtures.adminRole, RoleFixtures.viewerRole),
+      permissions = List(
+        PermissionFixtures.adminDashboardPermission,
+        PermissionFixtures.adminTicketPermission,
+        PermissionFixtures.adminCommentPermission,
+        PermissionFixtures.viewerDashboardPermission,
+        PermissionFixtures.viewerTicketPermission,
+        PermissionFixtures.viewerCommentPermission
+      )
+    ) { ctx =>
+      ctx.dashboardMembershipService.listMembershipsForUser(firstMember.userId)
+    }
+
+    assertEquals(
+      result,
+      List(
+        DashboardMemberWithRole(
+          firstMember,
+          RoleWithPermissions(
+            RoleFixtures.adminRole,
+            List(
+              PermissionFixtures.adminDashboardPermission,
+              PermissionFixtures.adminTicketPermission,
+              PermissionFixtures.adminCommentPermission
+            )
+          )
+        ),
+        DashboardMemberWithRole(
+          secondMember,
+          RoleWithPermissions(
+            RoleFixtures.adminRole,
+            List(
+              PermissionFixtures.adminDashboardPermission,
+              PermissionFixtures.adminTicketPermission,
+              PermissionFixtures.adminCommentPermission
+            )
+          )
+        )
+      )
+    )
+  }
 }

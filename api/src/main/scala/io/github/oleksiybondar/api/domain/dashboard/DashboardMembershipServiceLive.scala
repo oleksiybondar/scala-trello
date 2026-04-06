@@ -37,6 +37,11 @@ final class DashboardMembershipServiceLive[F[_]: MonadThrow](
       .listByDashboardId(dashboardId)
       .flatMap(_.traverse(toMemberWithRole))
 
+  override def listMembershipsForUser(userId: UserId): F[List[DashboardMemberWithRole]] =
+    dashboardMemberRepo
+      .listByUserId(userId)
+      .flatMap(_.traverse(toMemberWithRole))
+
   private def toMemberWithRole(member: DashboardMember): F[DashboardMemberWithRole] =
     roleService
       .getRoleWithPermissions(member.roleId)

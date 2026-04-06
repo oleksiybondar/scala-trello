@@ -55,7 +55,22 @@ final class SlickDashboardRepo[F[_]: Async](db: Database) extends DashboardRepo[
       ).mapTo[DashboardRow]
   }
 
-  private val dashboards = TableQuery[DashboardsTable]
+  private final case class DashboardMemberLookupRow(
+      dashboardId: UUID,
+      userId: UUID
+  )
+
+  private final class DashboardMembersTable(tag: Tag)
+      extends Table[DashboardMemberLookupRow](tag, "dashboard_members") {
+    def dashboardId: Rep[UUID] = column[UUID]("dashboard_id")
+    def userId: Rep[UUID]      = column[UUID]("user_id")
+
+    def * : ProvenShape[DashboardMemberLookupRow] =
+      (dashboardId, userId).mapTo[DashboardMemberLookupRow]
+  }
+
+  private val dashboards       = TableQuery[DashboardsTable]
+  private val dashboardMembers = TableQuery[DashboardMembersTable]
 
   private def toRow(dashboard: Dashboard): DashboardRow =
     DashboardRow(
@@ -109,6 +124,17 @@ final class SlickDashboardRepo[F[_]: Async](db: Database) extends DashboardRepo[
       dashboards
         .filter(_.ownerUserId === ownerUserId.value)
         .sortBy(_.createdAt.desc)
+        .result
+    ).map(_.toList.map(toDomain))
+
+  override def listByMember(userId: UserId): F[List[Dashboard]] =
+    run(
+      dashboards
+        .join(dashboardMembers)
+        .on(_.id === _.dashboardId)
+        .filter { case (_, member) => member.userId === userId.value }
+        .sortBy { case (dashboard, _) => dashboard.createdAt.desc }
+        .map { case (dashboard, _) => dashboard }
         .result
     ).map(_.toList.map(toDomain))
 

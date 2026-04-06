@@ -33,6 +33,13 @@ object SlickDashboardRepoFixtures {
       }
       .unsafeRunSync()
 
+  def withCleanRepoAndDatabase[A](run: (Database, SlickDashboardRepo[IO]) => IO[A]): A =
+    repoResource
+      .use { case (db, repo) =>
+        clearDatabase(db) *> seedUsers(db) *> run(db, repo).guarantee(clearDatabase(db))
+      }
+      .unsafeRunSync()
+
   private def clearDatabase(db: Database): IO[Unit] =
     IO.fromFuture(
       IO(
