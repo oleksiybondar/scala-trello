@@ -1,3 +1,5 @@
+import { buildApiUrl } from "@configs/apiConfig";
+
 /**
  * GraphQL error entry returned by the backend when a request cannot be fulfilled.
  */
@@ -23,7 +25,7 @@ interface RequestGraphQLParams<TVariables extends object> {
   variables?: TVariables;
 }
 
-const GRAPHQL_ENDPOINT = "/graphql";
+const GRAPHQL_ENDPOINT = buildApiUrl("/graphql");
 
 /**
  * Executes a GraphQL request and returns the typed `data` payload.
