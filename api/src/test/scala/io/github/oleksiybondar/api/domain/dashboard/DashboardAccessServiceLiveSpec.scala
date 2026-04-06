@@ -4,6 +4,7 @@ import io.github.oleksiybondar.api.domain.permission.PermissionArea
 import io.github.oleksiybondar.api.domain.user.UserId
 import io.github.oleksiybondar.api.testkit.fixtures.{
   DashboardAccessServiceFixtures,
+  DashboardFixtures,
   DashboardMemberFixtures,
   PermissionFixtures,
   RoleFixtures
@@ -16,6 +17,7 @@ class DashboardAccessServiceLiveSpec extends FunSuite {
 
   test("canRead returns true when the member role allows the requested area") {
     val result = DashboardAccessServiceFixtures.withDashboardAccessService(
+      dashboards = List(DashboardFixtures.sampleDashboard),
       members = List(DashboardMemberFixtures.sampleMember),
       roles = List(RoleFixtures.adminRole),
       permissions = List(PermissionFixtures.adminDashboardPermission)
@@ -36,6 +38,7 @@ class DashboardAccessServiceLiveSpec extends FunSuite {
     )
 
     val result = DashboardAccessServiceFixtures.withDashboardAccessService(
+      dashboards = List(DashboardFixtures.sampleDashboard),
       members = List(viewerMember),
       roles = List(RoleFixtures.viewerRole),
       permissions = List(PermissionFixtures.viewerDashboardPermission)
@@ -52,6 +55,7 @@ class DashboardAccessServiceLiveSpec extends FunSuite {
 
   test("canModify returns false when the user is not a dashboard member") {
     val result = DashboardAccessServiceFixtures.withDashboardAccessService(
+      dashboards = List(DashboardFixtures.sampleDashboard),
       roles = List(RoleFixtures.adminRole),
       permissions = List(PermissionFixtures.adminDashboardPermission)
     ) { ctx =>
@@ -67,6 +71,7 @@ class DashboardAccessServiceLiveSpec extends FunSuite {
 
   test("dashboard convenience methods delegate to dashboard area checks") {
     val result = DashboardAccessServiceFixtures.withDashboardAccessService(
+      dashboards = List(DashboardFixtures.sampleDashboard),
       members = List(DashboardMemberFixtures.sampleMember),
       roles = List(RoleFixtures.adminRole),
       permissions = List(PermissionFixtures.adminDashboardPermission)
@@ -97,6 +102,7 @@ class DashboardAccessServiceLiveSpec extends FunSuite {
       )
 
     val result = DashboardAccessServiceFixtures.withDashboardAccessService(
+      dashboards = List(DashboardFixtures.sampleDashboard),
       members = List(contributorMember),
       roles = List(RoleFixtures.contributorRole),
       permissions = List(PermissionFixtures.contributorTicketPermission)
@@ -127,6 +133,7 @@ class DashboardAccessServiceLiveSpec extends FunSuite {
       )
 
     val result = DashboardAccessServiceFixtures.withDashboardAccessService(
+      dashboards = List(DashboardFixtures.sampleDashboard),
       members = List(contributorMember),
       roles = List(RoleFixtures.contributorRole),
       permissions = List(PermissionFixtures.contributorCommentPermission)
@@ -148,5 +155,59 @@ class DashboardAccessServiceLiveSpec extends FunSuite {
     }
 
     assertEquals(result, (true, true, false))
+  }
+
+  test("returns false when the dashboard does not exist") {
+    val result = DashboardAccessServiceFixtures.withDashboardAccessService(
+      members = List(DashboardMemberFixtures.sampleMember),
+      roles = List(RoleFixtures.adminRole),
+      permissions = List(PermissionFixtures.adminDashboardPermission)
+    ) { ctx =>
+      ctx.dashboardAccessService.canReadDashboard(
+        DashboardMemberFixtures.sampleMember.dashboardId,
+        DashboardMemberFixtures.sampleMember.userId
+      )
+    }
+
+    assertEquals(result, false)
+  }
+
+  test("returns false for inactive dashboards when the requester is not the owner") {
+    val inactiveDashboard = DashboardFixtures.sampleDashboard.copy(active = false)
+
+    val viewerMember =
+      DashboardMemberFixtures.sampleMember.copy(
+        userId = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222")),
+        roleId = io.github.oleksiybondar.api.domain.permission.RoleId(3)
+      )
+
+    val result = DashboardAccessServiceFixtures.withDashboardAccessService(
+      dashboards = List(inactiveDashboard),
+      members = List(viewerMember),
+      roles = List(RoleFixtures.viewerRole),
+      permissions = List(PermissionFixtures.viewerDashboardPermission)
+    ) { ctx =>
+      ctx.dashboardAccessService.canReadDashboard(viewerMember.dashboardId, viewerMember.userId)
+    }
+
+    assertEquals(result, false)
+  }
+
+  test("inactive dashboards still resolve permissions for the owner") {
+    val inactiveDashboard = DashboardFixtures.sampleDashboard.copy(active = false)
+
+    val result = DashboardAccessServiceFixtures.withDashboardAccessService(
+      dashboards = List(inactiveDashboard),
+      members = List(DashboardMemberFixtures.sampleMember),
+      roles = List(RoleFixtures.adminRole),
+      permissions = List(PermissionFixtures.adminDashboardPermission)
+    ) { ctx =>
+      ctx.dashboardAccessService.canReadDashboard(
+        DashboardMemberFixtures.sampleMember.dashboardId,
+        DashboardMemberFixtures.sampleMember.userId
+      )
+    }
+
+    assertEquals(result, true)
   }
 }

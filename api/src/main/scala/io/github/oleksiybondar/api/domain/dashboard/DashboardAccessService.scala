@@ -3,13 +3,16 @@ package io.github.oleksiybondar.api.domain.dashboard
 import io.github.oleksiybondar.api.domain.permission.PermissionArea
 import io.github.oleksiybondar.api.domain.user.UserId
 
-/** Service responsible for evaluating dashboard access based on membership role permissions.
+/** Service responsible for evaluating dashboard access based on dashboard state and membership role
+  * permissions.
   *
-  * This service resolves a user's dashboard membership and answers permission questions for the
-  * requested area. Missing membership is treated as denied access.
+  * This service first evaluates whether the dashboard itself allows access:
+  *   - missing dashboards deny access
+  *   - active dashboards continue to membership-based permission checks
+  *   - inactive dashboards deny access unless the requester is the owner
   *
-  * Dashboard ownership is intentionally out of scope here. Access decisions are driven only by the
-  * assigned membership role.
+  * After the dashboard-level gate is passed, permission decisions are driven by the assigned
+  * membership role. Missing membership is treated as denied access.
   */
 trait DashboardAccessService[F[_]] {
 

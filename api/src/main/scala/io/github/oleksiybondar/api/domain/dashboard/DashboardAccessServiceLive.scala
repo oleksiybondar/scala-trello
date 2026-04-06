@@ -4,8 +4,10 @@ import cats.Monad
 import cats.syntax.all._
 import io.github.oleksiybondar.api.domain.permission.PermissionArea
 import io.github.oleksiybondar.api.domain.user.UserId
+import io.github.oleksiybondar.api.infrastructure.db.dashboard.DashboardRepo
 
 final class DashboardAccessServiceLive[F[_]: Monad](
+    dashboardRepo: DashboardRepo[F],
     dashboardMembershipService: DashboardMembershipService[F]
 ) extends DashboardAccessService[F] {
 
@@ -89,7 +91,13 @@ final class DashboardAccessServiceLive[F[_]: Monad](
       dashboardId: DashboardId,
       userId: UserId
   )(evaluate: DashboardMemberWithRole => Boolean): F[Boolean] =
-    dashboardMembershipService
-      .findMember(dashboardId, userId)
-      .map(_.exists(evaluate))
+    dashboardRepo.findById(dashboardId).flatMap {
+      case None            => false.pure[F]
+      case Some(dashboard) =>
+        if (!dashboard.active && dashboard.ownerUserId != userId) false.pure[F]
+        else
+          dashboardMembershipService
+            .findMember(dashboardId, userId)
+            .map(_.exists(evaluate))
+    }
 }
