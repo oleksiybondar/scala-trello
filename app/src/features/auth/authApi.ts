@@ -3,19 +3,20 @@ import type {
   AuthTokenResponse,
   LoginCredentials
 } from "@features/auth/types";
+import { buildApiUrl } from "@configs/apiConfig";
 import type { AuthCurrentUserResponse } from "@models/user";
 
-const AUTH_LOGIN_PATH = "/auth/login";
-const AUTH_LOGOUT_PATH = "/auth/logout";
-const AUTH_ME_PATH = "/auth/me";
-const AUTH_REGISTER_PATH = "/auth/register";
-const AUTH_REFRESH_PATH = "/auth/refresh";
+const AUTH_LOGIN_URL = buildApiUrl("/auth/login");
+const AUTH_LOGOUT_URL = buildApiUrl("/auth/logout");
+const AUTH_ME_URL = buildApiUrl("/auth/me");
+const AUTH_REGISTER_URL = buildApiUrl("/auth/register");
+const AUTH_REFRESH_URL = buildApiUrl("/auth/refresh");
 
 /**
  * Executes a JSON POST request against the backend auth endpoints.
  *
  * @typeParam TResponse Response payload type expected from the backend.
- * @param path Backend endpoint path relative to the frontend origin.
+ * @param path Backend endpoint URL.
  * @param body JSON-serializable request body.
  * @returns Parsed response payload or `undefined` for `204 No Content`.
  */
@@ -49,7 +50,7 @@ const postJson = async <TResponse>(
  * Executes a JSON POST request that must return a response payload.
  *
  * @typeParam TResponse Response payload type expected from the backend.
- * @param path Backend endpoint path relative to the frontend origin.
+ * @param path Backend endpoint URL.
  * @param body JSON-serializable request body.
  * @returns Parsed response payload.
  */
@@ -77,7 +78,7 @@ export const meRequest = async (
   accessToken: string,
   tokenType: string
 ): Promise<AuthCurrentUserResponse> => {
-  const response = await fetch(AUTH_ME_PATH, {
+  const response = await fetch(AUTH_ME_URL, {
     credentials: "include",
     headers: {
       Authorization: `${tokenType} ${accessToken}`
@@ -87,7 +88,7 @@ export const meRequest = async (
 
   if (!response.ok) {
     throw new Error(
-      `Request to ${AUTH_ME_PATH} failed with status ${String(response.status)}.`
+      `Request to ${AUTH_ME_URL} failed with status ${String(response.status)}.`
     );
   }
 
@@ -103,7 +104,7 @@ export const meRequest = async (
 export const loginRequest = async (
   credentials: LoginCredentials
 ): Promise<AuthTokenResponse> => {
-  return postRequiredJson<AuthTokenResponse>(AUTH_LOGIN_PATH, credentials);
+  return postRequiredJson<AuthTokenResponse>(AUTH_LOGIN_URL, credentials);
 };
 
 /**
@@ -115,7 +116,7 @@ export const loginRequest = async (
 export const registerRequest = async (
   credentials: RegisterCredentials
 ): Promise<AuthTokenResponse> => {
-  return postRequiredJson<AuthTokenResponse>(AUTH_REGISTER_PATH, credentials);
+  return postRequiredJson<AuthTokenResponse>(AUTH_REGISTER_URL, credentials);
 };
 
 /**
@@ -128,7 +129,7 @@ export const refreshRequest = async (
   refreshToken: string
 ): Promise<AuthTokenResponse> => {
   return postRequiredJson<AuthTokenResponse>(
-    AUTH_REFRESH_PATH,
+    AUTH_REFRESH_URL,
     {
       refresh_token: refreshToken
     }
@@ -142,7 +143,7 @@ export const refreshRequest = async (
  * @returns A promise that resolves when the backend acknowledges logout.
  */
 export const logoutRequest = async (refreshToken: string): Promise<void> => {
-  await postJson(AUTH_LOGOUT_PATH, {
+  await postJson(AUTH_LOGOUT_URL, {
     refresh_token: refreshToken
   });
 };

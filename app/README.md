@@ -67,6 +67,14 @@ Override the proxy target with an environment variable when needed:
 API_URL=http://127.0.0.1:9000 npm run dev
 ```
 
+For deployed frontend environments such as Vercel, set `VITE_API_URL` to the
+public backend origin so browser requests go to the backend instead of the
+frontend host:
+
+```bash
+VITE_API_URL=https://your-backend.example.com
+```
+
 ## Source layout
 
 The initial bootstrap keeps shared code organized and leaves room for future
