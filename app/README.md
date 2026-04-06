@@ -56,10 +56,16 @@ npm run dev
 ```
 
 During local development, Vite proxies backend-bound requests to
-`http://127.0.0.1:8080` for:
+`http://127.0.0.1:8080` by default for:
 
 - `/auth/*`
 - `/graphql`
+
+Override the proxy target with an environment variable when needed:
+
+```bash
+API_URL=http://127.0.0.1:9000 npm run dev
+```
 
 ## Source layout
 
