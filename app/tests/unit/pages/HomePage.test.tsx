@@ -4,17 +4,38 @@ import { HomePage } from "@pages/HomePage";
 import { renderApp } from "@tests/setup/render";
 
 describe("HomePage", () => {
-  test("renders the bootstrap heading, navbar, and login entry point", () => {
+  test("renders the landing page sections and auth entry points", () => {
     renderApp(<HomePage />);
 
     expect(
-      screen.getByRole("heading", { name: "Theme system is in place." })
+      screen.getByRole("heading", {
+        name: "Track sprint work without enterprise bloat."
+      })
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Intro Into Scala App" })).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("img", { name: "Boards" })
+    ).toHaveLength(1);
     expect(screen.getByRole("link", { name: "Login" })).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Current theme state" })
+      screen.getByRole("heading", {
+        name: "Tickets move through a delivery-focused lifecycle."
+      })
     ).toBeInTheDocument();
-    expect(screen.getByText("Source: default")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: "Tickets carry effort tracking and discussion with them."
+      })
+    ).toBeInTheDocument();
+    expect(screen.getByText("Backend API sprint")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "A board groups the sprint scope, its members, and the tickets moving through implementation, review, and testing."
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Each ticket keeps its own estimate, logged work, and discussion, so the board shows both delivery state and effort visibility in one place."
+      )
+    ).toBeInTheDocument();
   });
 });

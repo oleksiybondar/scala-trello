@@ -10,6 +10,7 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import { Link as RouterLink } from "react-router-dom";
 
+import { AppLogo } from "@components/branding/AppLogo";
 import { useAuth } from "@hooks/useAuth";
 
 const getStatusLabel = (status: string): string => {
@@ -32,40 +33,40 @@ export const AppNavBar = (): ReactElement => {
     <AppBar color="transparent" elevation={0} position="static">
       <Toolbar disableGutters>
         <Stack alignItems="center" direction="row" flexGrow={1} spacing={2}>
-        <Link
-          color="textPrimary"
-          component={RouterLink}
-          to="/"
-          underline="none"
-          variant="h6"
-        >
-          Intro Into Scala App
-        </Link>
+          <Link
+            color="textPrimary"
+            component={RouterLink}
+            to="/"
+            sx={{ display: "inline-flex" }}
+            underline="none"
+          >
+            <AppLogo />
+          </Link>
 
-        <Stack alignItems="center" direction="row" spacing={1}>
-          <Button color="inherit" component={RouterLink} to="/home">
-            Home
-          </Button>
-          <Button color="inherit" component={RouterLink} to="/settings/profile">
-            Settings
-          </Button>
-          {!isAuthenticated ? (
-            <Button color="inherit" component={RouterLink} to="/login">
-              Login
+          <Stack alignItems="center" direction="row" spacing={1}>
+            <Button color="inherit" component={RouterLink} to="/home">
+              Home
             </Button>
-          ) : null}
-          {!isAuthenticated ? (
-            <Button color="inherit" component={RouterLink} to="/register">
-              Register
+            <Button color="inherit" component={RouterLink} to="/settings/profile">
+              Settings
             </Button>
-          ) : null}
-          <Chip
-            color={isAuthenticated ? "success" : "default"}
-            label={getStatusLabel(status)}
-            size="small"
-            variant={isAuthenticated ? "filled" : "outlined"}
-          />
-        </Stack>
+            {!isAuthenticated ? (
+              <Button color="inherit" component={RouterLink} to="/login">
+                Login
+              </Button>
+            ) : null}
+            {!isAuthenticated ? (
+              <Button color="inherit" component={RouterLink} to="/register">
+                Register
+              </Button>
+            ) : null}
+            <Chip
+              color={isAuthenticated ? "success" : "default"}
+              label={getStatusLabel(status)}
+              size="small"
+              variant={isAuthenticated ? "filled" : "outlined"}
+            />
+          </Stack>
         </Stack>
 
         <Box minWidth={{ sm: 220, xs: "auto" }}>
