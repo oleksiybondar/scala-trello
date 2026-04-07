@@ -7,8 +7,3 @@ final case class Role(
     name: RoleName,
     description: Option[String]
 )
-
-final case class RoleWithPermissions(
-    role: Role,
-    permissions: List[Permission]
-)

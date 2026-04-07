@@ -1,5 +1,7 @@
 package io.github.oleksiybondar.api.http.routes.graphql
 
+import io.github.oleksiybondar.api.http.routes.graphql.dashboard.DashboardApi
+import io.github.oleksiybondar.api.http.routes.graphql.permission.RoleApi
 import io.github.oleksiybondar.api.http.routes.graphql.user.UserApi
 import sangria.schema.{ObjectType, Schema, fields}
 
@@ -10,7 +12,7 @@ object GraphQLSchema {
     ObjectType(
       name = "Queries",
       fields = fields[GraphQLContext, Unit](
-        UserApi.queryFields*
+        (UserApi.queryFields ++ RoleApi.queryFields ++ DashboardApi.queryFields)*
       )
     )
 
@@ -18,7 +20,7 @@ object GraphQLSchema {
     ObjectType(
       name = "Mutations",
       fields = fields[GraphQLContext, Unit](
-        UserApi.mutationFields*
+        (UserApi.mutationFields ++ DashboardApi.mutationFields)*
       )
     )
 

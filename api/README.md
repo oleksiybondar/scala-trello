@@ -1,6 +1,6 @@
 # API
 
-Scala 3 backend for the training project. The backend is where the Scala/FP/Cats/Cats Effect work happens, while also serving as the source of truth for authentication, persistence, and a task-board domain that is growing toward a realistic project-management application.
+Scala 3 backend for the training project. The backend is where the Scala/FP/Cats/Cats Effect work happens, while serving as the source of truth for authentication, persistence, and the task-board domain.
 
 ## Scope
 
@@ -35,15 +35,15 @@ Important status note:
 - `GET /auth/me` returns the current authenticated user for a valid access token
 - user profile, username, email, avatar, and password changes are available through authenticated GraphQL mutations
 - password changes enforce the configured strength rules and password-history checks
-- the database schema already defines the planned dashboard and ticketing model, but the Scala application layer for that domain is still pending
+- the database schema defines the dashboard and ticketing model, and the Scala application layer currently covers roles plus the first dashboard flows
 - Google OIDC is not implemented yet
-- dashboard, ticket, comment, and time-tracking behavior are not implemented yet in Scala/GraphQL
+- ticket, comment, and time-tracking behavior are not implemented yet in Scala/GraphQL
 
-## Product direction
+## Product scope
 
-The planned application is a dashboard-oriented task board. A user can authenticate, own one dashboard, contribute to another dashboard, and operate under a dashboard-specific role. The backend keeps ownership, membership, workflow reference data, and authorization rules in PostgreSQL so later GraphQL features can build on a stable schema.
+The application is a dashboard-oriented task board. A user can authenticate, own one dashboard, contribute to another dashboard, and operate under a dashboard-specific role. The backend keeps ownership, membership, workflow reference data, and authorization rules in PostgreSQL.
 
-Planned business capabilities:
+Business capabilities covered by the current model:
 
 - register and authenticate users
 - create dashboards with a dedicated owner
@@ -205,13 +205,15 @@ Implemented in Scala today:
 - password hashing, password strength validation, and password history checks
 - authenticated GraphQL user queries
 - authenticated GraphQL user mutations for profile, avatar, username, email, and password changes
+- authenticated GraphQL role reads with nested permissions
+- authenticated GraphQL dashboard reads for current-user dashboards and dashboard members
+- authenticated GraphQL dashboard mutations for create, deactivate, and membership management
+- dashboard domain services for CRUD, membership, and access rules
 - Slick repositories for current auth and user storage
+- Slick repositories for roles, permissions, dashboards, and dashboard memberships
 
 Prepared in the database, but not implemented in Scala yet:
 
-- dashboard creation and ownership flows
-- dashboard membership management
-- role and permission enforcement for dashboards
 - ticket creation and workflow updates
 - ticket comments
 - time logging
