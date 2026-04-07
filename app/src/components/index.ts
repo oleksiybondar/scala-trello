@@ -1,4 +1,6 @@
 export { AppNavBar } from "@components/navigation/AppNavBar";
+export { AppUserInfo } from "@components/navigation/AppUserInfo";
+export { AppUserMenu } from "@components/navigation/AppUserMenu";
 export { AppLogo } from "@components/branding/AppLogo";
 export { AvatarInput } from "@components/form-elements/avatar/AvatarInput";
 export { EmailInput } from "@components/form-elements/email/EmailInput";
