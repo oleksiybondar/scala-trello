@@ -41,6 +41,16 @@ trait DashboardService[F[_]] {
       roleId: RoleId
   ): F[Boolean]
 
+  /** Changes an existing dashboard member role when the acting user has sufficient dashboard
+    * rights.
+    */
+  def changeMemberRole(
+      dashboardId: DashboardId,
+      actorUserId: UserId,
+      memberUserId: UserId,
+      roleId: RoleId
+  ): F[Boolean]
+
   /** Removes an existing dashboard member when the acting user has sufficient dashboard rights. */
   def removeMember(dashboardId: DashboardId, actorUserId: UserId, memberUserId: UserId): F[Boolean]
 }

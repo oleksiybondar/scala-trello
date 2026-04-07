@@ -136,6 +136,22 @@ final class DashboardServiceLive[F[_]: Temporal](
         }
     }
 
+  override def changeMemberRole(
+      dashboardId: DashboardId,
+      actorUserId: UserId,
+      memberUserId: UserId,
+      roleId: RoleId
+  ): F[Boolean] =
+    dashboardAccessService.canModifyDashboard(dashboardId, actorUserId).flatMap {
+      case false => false.pure[F]
+      case true  =>
+        roleService.getRole(roleId).flatMap {
+          case None       => false.pure[F]
+          case Some(role) =>
+            dashboardMembershipService.changeMemberRole(dashboardId, memberUserId, role.id)
+        }
+    }
+
   override def removeMember(
       dashboardId: DashboardId,
       actorUserId: UserId,

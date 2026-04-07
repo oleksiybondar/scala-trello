@@ -133,6 +133,34 @@ class DashboardServiceLiveSpec extends FunSuite {
     assertEquals(result, (true, Some(RoleId(3))))
   }
 
+  test("changeMemberRole updates a membership role when the actor has access and the role exists") {
+    val dashboard = DashboardFixtures.sampleDashboard
+    val member    =
+      DashboardMemberFixtures.member(
+        userId = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222")),
+        roleId = RoleId(3)
+      )
+
+    val result = DashboardServiceFixtures.withDashboardService(
+      dashboards = List(dashboard),
+      members = List(DashboardMemberFixtures.sampleMember, member),
+      roles = List(RoleFixtures.adminRole, RoleFixtures.viewerRole),
+      permissions = List(PermissionFixtures.adminDashboardPermission)
+    ) { ctx =>
+      for {
+        changed <- ctx.dashboardService.changeMemberRole(
+                     dashboard.id,
+                     dashboard.ownerUserId,
+                     member.userId,
+                     RoleId(1)
+                   )
+        updated <- ctx.dashboardMembershipService.findMember(dashboard.id, member.userId)
+      } yield (changed, updated.map(_.member.roleId))
+    }
+
+    assertEquals(result, (true, Some(RoleId(1))))
+  }
+
   test("removeMember removes a membership when the actor has access") {
     val dashboard      = DashboardFixtures.sampleDashboard
     val memberToRemove =
