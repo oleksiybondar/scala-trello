@@ -12,7 +12,7 @@ import { AppUserMenu } from "@components/navigation/AppUserMenu";
 export const AppNavBar = (): ReactElement => {
 
   return (
-    <AppBar color="transparent" elevation={0} position="static">
+    <AppBar color="primary"  position="fixed">
       <Toolbar disableGutters>
         <Stack alignItems="center" direction="row" flexGrow={1} spacing={2}>
           <Link

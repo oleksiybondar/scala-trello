@@ -8,6 +8,7 @@ import { LandingBoardsSection } from "@components/landing/LandingBoardsSection";
 import { LandingCollaborationSection } from "@components/landing/LandingCollaborationSection";
 import { LandingHeroSection } from "@components/landing/LandingHeroSection";
 import { AppNavBar } from "@components/navigation/AppNavBar";
+import Divider from "@mui/material/Divider";
 
 export const HomePage = (): ReactElement => {
   return (
@@ -22,8 +23,11 @@ export const HomePage = (): ReactElement => {
         <AppNavBar />
 
           <Stack pb={6} spacing={3}>
+            <Divider />
             <LandingHeroSection />
+            <Divider />
             <LandingBoardsSection />
+            <Divider />
             <LandingCollaborationSection />
           </Stack>
         </Stack>
