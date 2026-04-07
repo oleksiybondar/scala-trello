@@ -2,9 +2,9 @@
 
 Practice monorepo for learning Scala, functional programming, Cats, Cats Effect, and a TypeScript frontend stack.
 
-The long-term product is a small dashboard-oriented task management application. It started as a Trello-like board, but the target shape is now a more complete collaborative workspace with authentication, dashboard membership, roles, ticket workflow, ticket comments, and time logging.
+The product is a dashboard-oriented task management application with authentication, dashboard membership, roles, ticket workflow, ticket comments, and time logging.
 
-Planned product capabilities:
+Core product scope:
 
 - authenticated users can create and own dashboards
 - users can participate in multiple dashboards with different roles per dashboard
@@ -13,7 +13,7 @@ Planned product capabilities:
 - tickets can carry severity, assignment, estimation, component, scope, and acceptance criteria data
 - each ticket has a comment thread
 - time can be logged against tickets using seeded activity types such as development, testing, review, and planning
-- authentication is intended to support local email/password and Google OIDC
+- authentication supports local email/password today and may expand later
 - users remain local application users regardless of registration method
 - backend uses REST for auth, health/docs, Swagger, and GraphiQL
 - backend uses GraphQL for business/domain features
@@ -94,7 +94,4 @@ sh ./scripts/run-app-checks.sh build
 sh ./scripts/run-app-checks.sh test
 ```
 
-## Notes
-
-- The IDE in this workspace is opened at `api/`, but the Git repository root is the parent directory.
-- This is a learning-first project. Clear structure, incremental delivery, and explicit tradeoffs matter more here than shipping features quickly.
+This is a learning-first project. Clear structure, incremental delivery, and explicit tradeoffs matter more here than shipping features quickly.

@@ -1,8 +1,8 @@
 # App
 
-Frontend workspace for the training project. The app is built with React, TypeScript, Vite, and MUI on top of the Scala backend, and currently focuses on authenticated user flows while the dashboard and ticket domain is still being prepared on the backend.
+Frontend workspace for the training project. The app is built with React, TypeScript, Vite, and MUI on top of the Scala backend, and currently focuses on authenticated user flows on top of a backend that now also exposes initial dashboard and role GraphQL APIs.
 
-## Product direction
+## Current UI scope
 
 Current UI capabilities:
 
@@ -13,16 +13,6 @@ Current UI capabilities:
 - user settings area with profile editing
 - user security settings for username, email, avatar, and password changes
 - UI preferences settings backed by the theme manager
-
-Planned next-stage product capabilities:
-
-- dashboard listing and dashboard detail views
-- dashboard membership and role-aware access
-- ticket listing and ticket detail views
-- workflow state transitions
-- ticket comments
-- time logging against tickets
-- later Google OIDC support
 
 ## Stack
 
@@ -109,7 +99,7 @@ Current routing:
 Current frontend/backend integration:
 
 - REST auth endpoints are used for register, login, refresh, logout, and current-user loading
-- GraphQL is already wired in the frontend helper layer and is intended for future dashboard and ticket features
+- GraphQL is wired in the frontend helper layer and can consume backend role and dashboard APIs
 - auth state is provided through `AuthProvider`
 - current user loading is provided through `CurrentUserProvider`
 - settings mutations are organized under `features/user`
@@ -134,15 +124,6 @@ Implemented today:
 - security editing UI for username, email, avatar, and password
 - UI preferences page and theme controls
 - unit and e2e test scaffolding
-
-Planned, but not implemented yet:
-
-- dashboard pages
-- dashboard member management
-- dashboard role-aware UI
-- ticket CRUD flows
-- comment UI
-- time logging UI
 
 The shared monorepo script can also run frontend checks from the repository root:
 
