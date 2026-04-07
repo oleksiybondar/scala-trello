@@ -3,7 +3,12 @@ package io.github.oleksiybondar.api
 import cats.effect.{IO, IOApp, Resource}
 import com.comcast.ip4s.{Host, Port}
 import io.github.oleksiybondar.api.config.{AppConfig, ConfigLoader}
-import io.github.oleksiybondar.api.domain.permission.{RoleService, RoleServiceLive}
+import io.github.oleksiybondar.api.domain.permission.{
+  PermissionService,
+  PermissionServiceLive,
+  RoleService,
+  RoleServiceLive
+}
 import io.github.oleksiybondar.api.domain.user.{UserService, UserServiceLive}
 import io.github.oleksiybondar.api.http.HttpApi
 import io.github.oleksiybondar.api.http.docs.graphql.GraphiQLRoutes
@@ -89,8 +94,14 @@ object Main extends IOApp.Simple {
       passwordHistoryRepo = buildPasswordHistoryRepo(db)
       userService         = buildUserService(config, userRepo, passwordHistoryRepo)
       roleService         = buildRoleService(roleRepo, permissionRepo)
+      permissionService   = buildPermissionService(permissionRepo)
       authModule          = buildAuthModule(config, userRepo, authSessionRepo, passwordHistoryRepo)
-      graphqlRoutes      <- graphqlRoutesResource(userService, roleService, authModule.authService)
+      graphqlRoutes      <- graphqlRoutesResource(
+                              userService,
+                              roleService,
+                              permissionService,
+                              authModule.authService
+                            )
     } yield {
       buildHttpApp(authModule, userService, graphqlRoutes)
     }
@@ -101,6 +112,7 @@ object Main extends IOApp.Simple {
   def graphqlRoutesResource(
       userService: UserService[IO],
       roleService: RoleService[IO],
+      permissionService: PermissionService[IO],
       authService: io.github.oleksiybondar.api.domain.auth.AuthService[IO]
   ): Resource[IO, HttpRoutes[IO]] =
     Resource.eval(
@@ -108,6 +120,7 @@ object Main extends IOApp.Simple {
         GraphQLContext(
           userService = userService,
           roleService = roleService,
+          permissionService = permissionService,
           authService = authService,
           currentUserId = None
         )
@@ -128,6 +141,9 @@ object Main extends IOApp.Simple {
       permissionRepo: PermissionRepo[IO]
   ): RoleService[IO] =
     new RoleServiceLive[IO](roleRepo, permissionRepo)
+
+  def buildPermissionService(permissionRepo: PermissionRepo[IO]): PermissionService[IO] =
+    new PermissionServiceLive[IO](permissionRepo)
 
   def buildUserService(
       config: AppConfig,

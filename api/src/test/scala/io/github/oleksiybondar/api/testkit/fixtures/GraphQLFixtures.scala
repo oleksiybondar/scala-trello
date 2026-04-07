@@ -3,7 +3,7 @@ package io.github.oleksiybondar.api.testkit.fixtures
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import io.github.oleksiybondar.api.domain.auth.{AccessTokenClaims, AuthServiceLive, SessionId}
-import io.github.oleksiybondar.api.domain.permission.RoleServiceLive
+import io.github.oleksiybondar.api.domain.permission.{PermissionServiceLive, RoleServiceLive}
 import io.github.oleksiybondar.api.domain.user.{User, UserId, UserServiceLive}
 import io.github.oleksiybondar.api.http.middleware.AuthMiddleware
 import io.github.oleksiybondar.api.http.routes.graphql.{GraphQLContext, GraphQLRoutes}
@@ -91,10 +91,12 @@ object GraphQLFixtures {
                                  AuthServiceFixtures.unsafeEmptyPasswordHistory
                                )
       roleService            = new RoleServiceLive[IO](roleRepo, permissionRepo)
+      permissionService      = new PermissionServiceLive[IO](permissionRepo)
       graphqlRoutes         <- GraphQLRoutes.routes(
                                  GraphQLContext(
                                    userService = userService,
                                    roleService = roleService,
+                                   permissionService = permissionService,
                                    authService = authService,
                                    currentUserId = None
                                  )

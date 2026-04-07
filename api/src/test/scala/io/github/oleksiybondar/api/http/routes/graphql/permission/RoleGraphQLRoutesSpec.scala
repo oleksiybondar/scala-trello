@@ -43,6 +43,30 @@ class RoleGraphQLRoutesSpec extends FunSuite {
     )
   }
 
+  test("POST /graphql returns a single role with nested permissions") {
+    val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        roleQuery,
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body   = response.as[Json].unsafeRunSync()
+    val cursor = body.hcursor.downField("data").downField("role")
+
+    assertEquals(response.status, Status.Ok)
+    assertEquals(cursor.get[String]("name").toOption, Some("admin"))
+    assertEquals(
+      cursor.downField("permissions").focus.flatMap(_.asArray).map(_.size),
+      Some(3)
+    )
+  }
+
   private val rolesQuery =
     """query {
       |  roles {
@@ -57,6 +81,17 @@ class RoleGraphQLRoutesSpec extends FunSuite {
       |      canModify
       |      canDelete
       |      canReassign
+      |    }
+      |  }
+      |}""".stripMargin
+
+  private val roleQuery =
+    """query {
+      |  role(id: 1) {
+      |    id
+      |    name
+      |    permissions {
+      |      id
       |    }
       |  }
       |}""".stripMargin
