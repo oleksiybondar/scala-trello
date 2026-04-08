@@ -13,7 +13,7 @@ export const AppNavBar = (): ReactElement => {
 
   return (
     <AppBar color="primary"  position="fixed">
-      <Toolbar disableGutters>
+      <Toolbar>
         <Stack alignItems="center" direction="row" flexGrow={1} spacing={2}>
           <Link
             color="textPrimary"

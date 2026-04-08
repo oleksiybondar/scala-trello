@@ -10,6 +10,18 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { Link as RouterLink } from "react-router-dom";
 
+/**
+ * Static hero block for the visitor landing page.
+ *
+ * This component intentionally keeps a larger chunk of presentational markup in
+ * one place. The section is mostly fixed introduction content with no
+ * meaningful logic, so aggressively splitting it into smaller components would
+ * add indirection without improving clarity.
+ *
+ * Some inner fragments may later be extracted into reusable UI or replaced by
+ * real feature-driven widgets, but the section itself should remain a
+ * coarse-grained content block.
+ */
 export const LandingHeroSection = (): ReactElement => {
   return (
     <Paper

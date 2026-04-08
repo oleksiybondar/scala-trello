@@ -10,6 +10,19 @@ import { LandingHeroSection } from "@components/landing/LandingHeroSection";
 import { AppNavBar } from "@components/navigation/AppNavBar";
 import Divider from "@mui/material/Divider";
 
+/**
+ * Visitor landing page with static introduction content.
+ *
+ * The page is intentionally composed from a few decoupled but still fairly
+ * large section components. That is a deliberate tradeoff: the content is
+ * mostly static, contains no meaningful interaction logic, and reads more
+ * clearly as a small number of narrative blocks.
+ *
+ * Some parts of these sections may later become reusable components or be
+ * replaced when real functionality is implemented, but the overall approach
+ * should remain the same. Do not break this page into many tiny components
+ * without a concrete need.
+ */
 export const HomePage = (): ReactElement => {
   return (
     <Box

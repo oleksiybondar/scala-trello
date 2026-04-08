@@ -27,6 +27,17 @@ const workflowStates = [
   }
 ] as const;
 
+/**
+ * Static workflow overview for the visitor landing page.
+ *
+ * The component is intentionally a relatively large content section. It exists
+ * to explain the application model and current workflow states, not to provide
+ * reusable business UI, so keeping the markup together is acceptable here.
+ *
+ * Individual pieces may eventually be replaced once real board and ticket
+ * functionality is implemented, but the page-level approach should stay the
+ * same: compose the landing page from a few decoupled, content-first sections.
+ */
 export const LandingBoardsSection = (): ReactElement => {
   return (
     <Paper

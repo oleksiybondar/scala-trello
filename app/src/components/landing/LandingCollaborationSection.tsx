@@ -15,6 +15,18 @@ const activities = [
   "debugging"
 ] as const;
 
+/**
+ * Static time-tracking and comments overview for the visitor landing page.
+ *
+ * This section intentionally bundles a larger amount of static content because
+ * it serves as explanatory copy rather than reusable domain UI. Keeping it
+ * together makes the landing page easier to reason about while the underlying
+ * application features are still being shaped.
+ *
+ * Some fragments can later be replaced by real feature components, but the
+ * landing page should continue using a small number of larger, decoupled
+ * sections instead of many tiny pieces.
+ */
 export const LandingCollaborationSection = (): ReactElement => {
   return (
     <Paper
