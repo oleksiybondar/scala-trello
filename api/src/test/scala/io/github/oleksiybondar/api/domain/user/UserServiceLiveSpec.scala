@@ -1,12 +1,14 @@
 package io.github.oleksiybondar.api.domain.user
 
-import cats.effect.IO
 import cats.effect.unsafe.implicits.global
+import cats.effect.{IO, Ref}
 import io.github.oleksiybondar.api.domain.auth.password.PasswordHistory
 import io.github.oleksiybondar.api.domain.auth.password.PasswordStrengthError.PasswordTooShort
+import io.github.oleksiybondar.api.infrastructure.db.user.UserRepo
 import io.github.oleksiybondar.api.testkit.fixtures.AuthServiceFixtures.{
   fakePasswordHasher,
-  passwordStrengthValidator
+  passwordStrengthValidator,
+  unsafeEmptyPasswordHistory
 }
 import io.github.oleksiybondar.api.testkit.fixtures.UserFixtures
 import io.github.oleksiybondar.api.testkit.fixtures.UserServiceFixtures.withUserService
@@ -223,6 +225,60 @@ class UserServiceLiveSpec extends FunSuite {
     }
 
     assertEquals(result, Left(UserMutationError.EmailAlreadyUsed))
+  }
+
+  test("changeEmail fails fast on duplicate email before loading the target user") {
+    val result = (
+      for {
+        findByIdCalls <- Ref.of[IO, Int](0)
+        takenUser      = UserFixtures.user(
+                           id = UserId(UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")),
+                           username = Some(Username("taken-user")),
+                           email = Some(Email("taken@example.com"))
+                         )
+        userRepo       = new UserRepo[IO] {
+                           override def create(user: User): IO[Unit] =
+                             IO.unit
+
+                           override def findById(id: UserId): IO[Option[User]] =
+                             findByIdCalls.updateAndGet(_ + 1).as(None)
+
+                           override def findByUsername(username: Username): IO[Option[User]] =
+                             IO.pure(None)
+
+                           override def findByEmail(email: Email): IO[Option[User]] =
+                             IO.pure(Option.when(email == Email("taken@example.com"))(takenUser))
+
+                           override def list: IO[List[User]] =
+                             IO.pure(Nil)
+
+                           override def listPage(offset: Int, limit: Int): IO[List[User]] =
+                             IO.pure(Nil)
+
+                           override def update(user: User): IO[Boolean] =
+                             IO.pure(false)
+
+                           override def delete(id: UserId): IO[Boolean] =
+                             IO.pure(false)
+                         }
+        userService    = new UserServiceLive[IO](
+                           userRepo,
+                           fakePasswordHasher,
+                           passwordStrengthValidator,
+                           unsafeEmptyPasswordHistory
+                         )
+        outcome       <- userService
+                           .changeEmail(
+                             UserId(UUID.fromString("dddddddd-dddd-dddd-dddd-dddddddddddd")),
+                             "taken@example.com"
+                           )
+                           .value
+        findByIdCount <- findByIdCalls.get
+      } yield (outcome, findByIdCount)
+    ).unsafeRunSync()
+
+    assertEquals(result._1, Left(UserMutationError.EmailAlreadyUsed))
+    assertEquals(result._2, 0)
   }
 
   test("changePassword returns InvalidCurrentPassword when the current password is wrong") {

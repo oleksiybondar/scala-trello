@@ -133,6 +133,34 @@ class DashboardServiceLiveSpec extends FunSuite {
     assertEquals(result, (true, Some(RoleId(3))))
   }
 
+  test("addMember returns false when the invited user is already a dashboard member") {
+    val dashboard      = DashboardFixtures.sampleDashboard
+    val existingMember =
+      DashboardMemberFixtures.member(
+        userId = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222")),
+        roleId = RoleId(3)
+      )
+
+    val result = DashboardServiceFixtures.withDashboardService(
+      dashboards = List(dashboard),
+      members = List(DashboardMemberFixtures.sampleMember, existingMember),
+      roles = List(RoleFixtures.adminRole, RoleFixtures.viewerRole),
+      permissions = List(PermissionFixtures.adminDashboardPermission)
+    ) { ctx =>
+      for {
+        added  <- ctx.dashboardService.addMember(
+                    dashboard.id,
+                    dashboard.ownerUserId,
+                    existingMember.userId,
+                    RoleId(1)
+                  )
+        member <- ctx.dashboardMembershipService.findMember(dashboard.id, existingMember.userId)
+      } yield (added, member.map(_.member.roleId))
+    }
+
+    assertEquals(result, (false, Some(RoleId(3))))
+  }
+
   test("changeMemberRole updates a membership role when the actor has access and the role exists") {
     val dashboard = DashboardFixtures.sampleDashboard
     val member    =

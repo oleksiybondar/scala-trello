@@ -182,12 +182,31 @@ class DashboardGraphQLRoutesSpec extends FunSuite {
     assertEquals(response.status, Status.Ok)
     assertEquals(
       cursor.get[String]("userId").toOption,
-      Some("22222222-2222-2222-2222-222222222222")
+      Some("44444444-4444-4444-4444-444444444444")
     )
     assertEquals(
       cursor.downField("role").get[String]("name").toOption,
       Some("viewer")
     )
+  }
+
+  test("POST /graphql returns an error when inviting a user who is already a dashboard member") {
+    val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        duplicateInviteDashboardMemberMutation,
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body = response.as[Json].unsafeRunSync()
+
+    assertEquals(response.status, Status.Ok)
+    assert(body.noSpaces.contains("Member could not be added to the dashboard"))
   }
 
   test("POST /graphql changes a dashboard member role") {
@@ -302,7 +321,7 @@ class DashboardGraphQLRoutesSpec extends FunSuite {
     """mutation {
       |  inviteDashboardMember(
       |    dashboardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
-      |    userId: "22222222-2222-2222-2222-222222222222"
+      |    userId: "44444444-4444-4444-4444-444444444444"
       |    roleId: 3
       |  ) {
       |    dashboardId
@@ -321,6 +340,22 @@ class DashboardGraphQLRoutesSpec extends FunSuite {
       |    userId: "22222222-2222-2222-2222-222222222222"
       |    roleId: 3
       |  ) {
+      |    userId
+      |    role {
+      |      id
+      |      name
+      |    }
+      |  }
+      |}""".stripMargin
+
+  private val duplicateInviteDashboardMemberMutation =
+    """mutation {
+      |  inviteDashboardMember(
+      |    dashboardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+      |    userId: "22222222-2222-2222-2222-222222222222"
+      |    roleId: 3
+      |  ) {
+      |    dashboardId
       |    userId
       |    role {
       |      id

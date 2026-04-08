@@ -118,20 +118,24 @@ final class DashboardServiceLive[F[_]: Temporal](
     dashboardAccessService.canCreateDashboard(dashboardId, actorUserId).flatMap {
       case false => false.pure[F]
       case true  =>
-        roleService.getRole(roleId).flatMap {
-          case None       => false.pure[F]
-          case Some(role) =>
-            Temporal[F].realTimeInstant.flatMap { now =>
-              dashboardMembershipService
-                .addMember(
-                  DashboardMember(
-                    dashboardId = dashboardId,
-                    userId = memberUserId,
-                    roleId = role.id,
-                    createdAt = now
-                  )
-                )
-                .as(true)
+        dashboardMembershipService.findMember(dashboardId, memberUserId).flatMap {
+          case Some(_) => false.pure[F]
+          case None    =>
+            roleService.getRole(roleId).flatMap {
+              case None       => false.pure[F]
+              case Some(role) =>
+                Temporal[F].realTimeInstant.flatMap { now =>
+                  dashboardMembershipService
+                    .addMember(
+                      DashboardMember(
+                        dashboardId = dashboardId,
+                        userId = memberUserId,
+                        roleId = role.id,
+                        createdAt = now
+                      )
+                    )
+                    .as(true)
+                }
             }
         }
     }

@@ -1,9 +1,14 @@
 package io.github.oleksiybondar.api.domain.auth
 
+import cats.effect.unsafe.implicits.global
+import cats.effect.{IO, Ref}
+import io.github.oleksiybondar.api.domain.auth.password.PasswordHasher
 import io.github.oleksiybondar.api.domain.auth.password.PasswordStrengthError.PasswordTooShort
 import io.github.oleksiybondar.api.domain.user.{Email, Username}
+import io.github.oleksiybondar.api.infrastructure.auth.JwtServiceLive
 import io.github.oleksiybondar.api.testkit.fixtures.AuthServiceFixtures.withAuthService
-import io.github.oleksiybondar.api.testkit.fixtures.UserFixtures
+import io.github.oleksiybondar.api.testkit.fixtures.{AuthServiceFixtures, UserFixtures}
+import io.github.oleksiybondar.api.testkit.support.{InMemoryAuthRepo, InMemoryUserRepo}
 import munit.FunSuite
 
 class AuthServiceLiveSpec extends FunSuite {
@@ -83,6 +88,58 @@ class AuthServiceLiveSpec extends FunSuite {
     }
 
     assertEquals(result, Left(AuthError.EmailAlreadyUsed))
+  }
+
+  test("register fails fast on duplicate email before hashing the password") {
+    val result = (
+      for {
+        hashCalls  <- Ref.of[IO, Int](0)
+        userRepo   <- InMemoryUserRepo.create[IO](List(UserFixtures.sampleUser))
+        authRepo   <- InMemoryAuthRepo.create[IO]()
+        authService = new AuthServiceLive[IO](
+                        userRepo,
+                        authRepo,
+                        new JwtServiceLive[IO](AuthServiceFixtures.testAuthConfig.jwtSecret),
+                        new PasswordHasher[IO] {
+                          override def hash(password: String)
+                              : IO[io.github.oleksiybondar.api.domain.user.PasswordHash] =
+                            hashCalls.update(_ + 1) *> IO.pure(
+                              io.github.oleksiybondar.api.domain.user.PasswordHash(
+                                s"hash:$password"
+                              )
+                            )
+
+                          override def verify(
+                              password: String,
+                              hash: io.github.oleksiybondar.api.domain.user.PasswordHash
+                          ): IO[Boolean] =
+                            IO.pure(hash == io.github.oleksiybondar.api.domain.user.PasswordHash(
+                              s"hash:$password"
+                            ))
+                        },
+                        AuthServiceFixtures.passwordStrengthValidator,
+                        AuthServiceFixtures.unsafeEmptyPasswordHistory,
+                        accessTokenTtlSeconds =
+                          AuthServiceFixtures.testAuthConfig.accessTokenTtlSeconds,
+                        sessionTtlDays = AuthServiceFixtures.testAuthConfig.sessionTtlDays
+                      )
+        outcome    <- authService
+                        .register(
+                          RegisterUserCommand(
+                            email = "alice@example.com",
+                            password = "secret123",
+                            firstName = "Alice",
+                            lastName = "Example",
+                            username = None
+                          )
+                        )
+                        .value
+        hashCount  <- hashCalls.get
+      } yield (outcome, hashCount)
+    ).unsafeRunSync()
+
+    assertEquals(result._1, Left(AuthError.EmailAlreadyUsed))
+    assertEquals(result._2, 0)
   }
 
   test("register records the initial password in password history") {
