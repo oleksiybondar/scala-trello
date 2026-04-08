@@ -109,6 +109,61 @@ class BoardGraphQLRoutesSpec extends FunSuite {
     )
   }
 
+  test("POST /graphql resolves nested board users, members count, and member role permissions") {
+    val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        nestedBoardDataQuery,
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body            = response.as[Json].unsafeRunSync()
+    val boardCursor     = body.hcursor.downField("data").downField("myBoards").downArray
+    val memberCursor    = body.hcursor.downField("data").downField("dashboardMembers").downArray
+    val permissionsJson =
+      memberCursor
+        .downField("role")
+        .downField("permissions")
+        .focus
+        .flatMap(_.asArray)
+        .getOrElse(Vector.empty)
+
+    assertEquals(response.status, Status.Ok)
+    assertEquals(
+      boardCursor.get[String]("id").toOption,
+      Some("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+    )
+    assertEquals(boardCursor.downField("owner").get[String]("firstName").toOption, Some("Alice"))
+    assertEquals(
+      boardCursor.downField("createdBy").get[String]("lastName").toOption,
+      Some("Example")
+    )
+    assertEquals(
+      boardCursor.downField("lastModifiedBy").get[String]("id").toOption,
+      Some(UserFixtures.sampleUser.id.value.toString)
+    )
+    assertEquals(boardCursor.get[Int]("membersCount").toOption, Some(2))
+    assertEquals(
+      memberCursor.get[String]("boardId").toOption,
+      Some("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+    )
+    assertEquals(
+      memberCursor.get[String]("dashboardId").toOption,
+      Some("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+    )
+    assertEquals(memberCursor.downField("role").get[String]("name").toOption, Some("admin"))
+    assertEquals(permissionsJson.size, 3)
+    assertEquals(
+      permissionsJson.head.hcursor.get[String]("area").toOption,
+      Some("dashboard")
+    )
+  }
+
   test("POST /graphql returns dashboard members for an authorized dashboard member") {
     val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
       for {
@@ -487,6 +542,45 @@ class BoardGraphQLRoutesSpec extends FunSuite {
       |    role {
       |      id
       |      name
+      |    }
+      |  }
+      |}""".stripMargin
+
+  private val nestedBoardDataQuery =
+    """query {
+      |  myBoards {
+      |    id
+      |    owner {
+      |      id
+      |      firstName
+      |      lastName
+      |      avatarUrl
+      |    }
+      |    createdBy {
+      |      id
+      |      firstName
+      |      lastName
+      |      avatarUrl
+      |    }
+      |    lastModifiedBy {
+      |      id
+      |      firstName
+      |      lastName
+      |      avatarUrl
+      |    }
+      |    membersCount
+      |  }
+      |  dashboardMembers(dashboardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa") {
+      |    boardId
+      |    dashboardId
+      |    role {
+      |      id
+      |      name
+      |      permissions {
+      |        id
+      |        area
+      |        canRead
+      |      }
       |    }
       |  }
       |}""".stripMargin

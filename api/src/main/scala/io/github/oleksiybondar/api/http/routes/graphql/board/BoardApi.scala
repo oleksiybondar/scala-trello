@@ -6,12 +6,15 @@ import cats.syntax.all._
 import io.github.oleksiybondar.api.domain.board.{Board, BoardDescription, BoardId, BoardName}
 import io.github.oleksiybondar.api.domain.permission.RoleId
 import io.github.oleksiybondar.api.http.routes.graphql.GraphQLContext
+import io.github.oleksiybondar.api.http.routes.graphql.permission.RoleApi.PermissionType
 import io.github.oleksiybondar.api.http.routes.graphql.user.UserApi.InvalidUserInput
+import io.github.oleksiybondar.api.http.routes.graphql.user.{UserApi, UserView}
 import sangria.execution.UserFacingError
 import sangria.schema.{
   Argument,
   BooleanType,
   Field,
+  IntType,
   ListType,
   LongType,
   ObjectType,
@@ -35,24 +38,34 @@ object BoardApi {
   private val UserIdArg      = Argument("userId", StringType)
   private val RoleIdArg      = Argument("roleId", LongType)
 
-  val BoardRoleType: ObjectType[Unit, BoardRoleView] =
+  val BoardRoleType: ObjectType[GraphQLContext, BoardRoleView] =
     ObjectType(
       name = "BoardRoleView",
-      fields[Unit, BoardRoleView](
+      fields[GraphQLContext, BoardRoleView](
         Field("id", StringType, resolve = _.value.id),
         Field("name", StringType, resolve = _.value.name),
         Field(
           "description",
           sangria.schema.OptionType(StringType),
           resolve = _.value.description
+        ),
+        Field(
+          "permissions",
+          ListType(PermissionType),
+          resolve =
+            ctx =>
+              ctx.ctx.roleService
+                .getRoleWithPermissions(RoleId(ctx.value.id.toLong))
+                .map(_.fold(List.empty)(_.permissions))
+                .unsafeToFuture()
         )
       )
     )
 
-  val BoardType: ObjectType[Unit, BoardView] =
+  val BoardType: ObjectType[GraphQLContext, BoardView] =
     ObjectType(
       name = "BoardView",
-      fields[Unit, BoardView](
+      fields[GraphQLContext, BoardView](
         Field("id", StringType, resolve = _.value.id),
         Field("name", StringType, resolve = _.value.name),
         Field(
@@ -65,14 +78,39 @@ object BoardApi {
         Field("createdByUserId", StringType, resolve = _.value.createdByUserId),
         Field("createdAt", StringType, resolve = _.value.createdAt),
         Field("modifiedAt", StringType, resolve = _.value.modifiedAt),
-        Field("lastModifiedByUserId", StringType, resolve = _.value.lastModifiedByUserId)
+        Field("lastModifiedByUserId", StringType, resolve = _.value.lastModifiedByUserId),
+        Field(
+          "owner",
+          sangria.schema.OptionType(UserApi.UserType),
+          resolve = ctx => loadUserView(ctx.ctx, ctx.value.ownerUserId).unsafeToFuture()
+        ),
+        Field(
+          "createdBy",
+          sangria.schema.OptionType(UserApi.UserType),
+          resolve = ctx => loadUserView(ctx.ctx, ctx.value.createdByUserId).unsafeToFuture()
+        ),
+        Field(
+          "lastModifiedBy",
+          sangria.schema.OptionType(UserApi.UserType),
+          resolve = ctx => loadUserView(ctx.ctx, ctx.value.lastModifiedByUserId).unsafeToFuture()
+        ),
+        Field(
+          "membersCount",
+          IntType,
+          resolve =
+            ctx =>
+              ctx.ctx.dashboardMembershipService
+                .listMembers(BoardId(UUID.fromString(ctx.value.id)))
+                .map(_.size)
+                .unsafeToFuture()
+        )
       )
     )
 
-  val BoardMemberType: ObjectType[Unit, BoardMemberView] =
+  val BoardMemberType: ObjectType[GraphQLContext, BoardMemberView] =
     ObjectType(
       name = "BoardMemberView",
-      fields[Unit, BoardMemberView](
+      fields[GraphQLContext, BoardMemberView](
         Field("boardId", StringType, resolve = _.value.boardId),
         // TODO: remove this legacy alias after the UI migrates to `boardId`.
         Field("dashboardId", StringType, resolve = _.value.boardId),
@@ -272,6 +310,12 @@ object BoardApi {
     }
   }
 
+  private def loadUserView(context: GraphQLContext, rawUserId: String): IO[Option[UserView]] =
+    parseUserId(rawUserId)
+      .liftTo[IO]
+      .flatMap(context.userService.getUser)
+      .map(_.map(toUserView))
+
   private def toMemberView(
       member: io.github.oleksiybondar.api.domain.board.BoardMemberWithRole
   ) =
@@ -297,5 +341,16 @@ object BoardApi {
       createdAt = dashboard.createdAt.toString,
       modifiedAt = dashboard.modifiedAt.toString,
       lastModifiedByUserId = dashboard.lastModifiedByUserId.value.toString
+    )
+
+  private def toUserView(user: io.github.oleksiybondar.api.domain.user.User): UserView =
+    UserView(
+      id = user.id.value.toString,
+      username = user.username.map(_.value),
+      email = user.email.map(_.value),
+      firstName = user.firstName.value,
+      lastName = user.lastName.value,
+      avatarUrl = user.avatarUrl.map(_.value),
+      createdAt = user.createdAt.toString
     )
 }
