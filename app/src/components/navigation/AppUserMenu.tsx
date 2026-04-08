@@ -91,8 +91,10 @@ export const AppUserMenu = (): ReactElement => {
         ariaControls={isOpen ? "app-user-menu" : undefined}
         ariaExpanded={isOpen ? "true" : undefined}
         avatarUrl={currentUser?.avatarUrl ?? undefined}
+        firstName={currentUser?.firstName}
         fullName={fullName}
         isAuthenticated={isAuthenticated}
+        lastName={currentUser?.lastName}
         onClick={handleOpen}
         secondaryLabel={secondaryLabel}
       />

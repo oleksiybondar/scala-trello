@@ -1,3 +1,4 @@
+export { AppAvatar } from "@components/avatar/AppAvatar";
 export { CreateBoardDialog } from "@components/boards/CreateBoardDialog";
 export { CreateBoardForm } from "@components/boards/CreateBoardForm";
 export { NoBoards } from "@components/boards/NoBoards";

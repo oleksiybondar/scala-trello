@@ -89,6 +89,8 @@ export const ChangeAvatarForm = ({
         </Stack>
         <AvatarInput
           disabled={isDisabled}
+          firstName={currentUser?.firstName}
+          lastName={currentUser?.lastName}
           onChange={setDraftAvatarUrl}
           value={draftAvatarUrl}
         />

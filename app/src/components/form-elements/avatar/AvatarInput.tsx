@@ -3,18 +3,20 @@ import { useRef, useState } from "react";
 
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
-import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
-import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+
+import { AppAvatar } from "@components/avatar/AppAvatar";
 import { readFileAsDataUrl } from "@helpers/readFileAsDataUrl";
 
 const MAX_AVATAR_FILE_SIZE_BYTES = 1_500_000;
 
 interface AvatarInputProps {
   disabled?: boolean;
+  firstName?: string | null | undefined;
   helperText?: string;
+  lastName?: string | null | undefined;
   label?: string;
   onChange?: (nextValue: string) => void;
   value: string;
@@ -22,7 +24,9 @@ interface AvatarInputProps {
 
 export const AvatarInput = ({
   disabled = false,
+  firstName,
   helperText,
+  lastName,
   onChange,
   value
 }: AvatarInputProps): ReactElement => {
@@ -69,17 +73,14 @@ export const AvatarInput = ({
     <Stack spacing={2} >
 
       <Stack alignItems="center" direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="center">
-        <Avatar
-          alt="Avatar preview"
-          src={hasAvatar ? value : undefined}
-          sx={{
-            bgcolor: hasAvatar ? undefined : "action.selected",
-            height: 96,
-            width: 96
-          }}
-        >
-          {hasAvatar ? null : <PersonOutlineIcon fontSize="large" />}
-        </Avatar>
+        <AppAvatar
+          avatarUrl={hasAvatar ? value : undefined}
+          fallbackText="?"
+          firstName={firstName}
+          label="Avatar preview"
+          lastName={lastName}
+          size="large"
+        />
 
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
           <Button
