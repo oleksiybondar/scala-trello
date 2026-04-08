@@ -14,7 +14,7 @@ import slick.lifted.ProvenShape
 final class SlickPermissionRepo[F[_]: Async](db: Database)
     extends PermissionRepo[F] {
 
-  private final case class DashboardPermissionRow(
+  private final case class PermissionRow(
       id: Long,
       roleId: Long,
       area: String,
@@ -26,7 +26,7 @@ final class SlickPermissionRepo[F[_]: Async](db: Database)
   )
 
   private final class PermissionsTable(tag: Tag)
-      extends Table[DashboardPermissionRow](tag, "permissions") {
+      extends Table[PermissionRow](tag, "permissions") {
     def id: Rep[Long]             = column[Long]("id", O.PrimaryKey)
     def roleId: Rep[Long]         = column[Long]("role_id")
     def area: Rep[String]         = column[String]("area")
@@ -37,15 +37,15 @@ final class SlickPermissionRepo[F[_]: Async](db: Database)
     def canReassign: Rep[Boolean] =
       column[Boolean]("can_reassign")
 
-    def * : ProvenShape[DashboardPermissionRow] =
+    def * : ProvenShape[PermissionRow] =
       (id, roleId, area, canRead, canCreate, canModify, canDelete, canReassign)
-        .mapTo[DashboardPermissionRow]
+        .mapTo[PermissionRow]
   }
 
   private val permissions = TableQuery[PermissionsTable]
 
   private def toDomain(
-      row: DashboardPermissionRow
+      row: PermissionRow
   ): Either[IllegalArgumentException, Permission] =
     PermissionArea
       .fromString(row.area)
@@ -66,10 +66,10 @@ final class SlickPermissionRepo[F[_]: Async](db: Database)
   private def run[A](action: DBIO[A]): F[A] =
     Async[F].fromFuture(Async[F].delay(db.run(action)))
 
-  private def decodeRow(row: DashboardPermissionRow): F[Permission] =
+  private def decodeRow(row: PermissionRow): F[Permission] =
     Async[F].fromEither(toDomain(row))
 
-  private def decodeRows(rows: Seq[DashboardPermissionRow]): F[List[Permission]] =
+  private def decodeRows(rows: Seq[PermissionRow]): F[List[Permission]] =
     rows.toList.traverse(decodeRow)
 
   override def findById(id: PermissionId): F[Option[Permission]] =

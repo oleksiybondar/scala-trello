@@ -1,0 +1,6 @@
+ALTER TABLE dashboards RENAME TO boards;
+
+ALTER INDEX dashboards_owner_user_id_idx RENAME TO boards_owner_user_id_idx;
+ALTER INDEX dashboards_created_by_user_id_idx RENAME TO boards_created_by_user_id_idx;
+ALTER INDEX dashboards_last_modified_by_user_id_idx RENAME TO boards_last_modified_by_user_id_idx;
+ALTER INDEX dashboards_active_idx RENAME TO boards_active_idx;

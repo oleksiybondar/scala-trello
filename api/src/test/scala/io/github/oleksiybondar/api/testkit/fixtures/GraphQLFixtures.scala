@@ -3,10 +3,10 @@ package io.github.oleksiybondar.api.testkit.fixtures
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import io.github.oleksiybondar.api.domain.auth.{AccessTokenClaims, AuthServiceLive, SessionId}
-import io.github.oleksiybondar.api.domain.dashboard.{
-  DashboardAccessServiceLive,
-  DashboardMembershipServiceLive,
-  DashboardServiceLive
+import io.github.oleksiybondar.api.domain.board.{
+  BoardAccessServiceLive,
+  BoardMembershipServiceLive,
+  BoardServiceLive
 }
 import io.github.oleksiybondar.api.domain.permission.{PermissionServiceLive, RoleServiceLive}
 import io.github.oleksiybondar.api.domain.user.{User, UserId, UserServiceLive}
@@ -15,8 +15,8 @@ import io.github.oleksiybondar.api.http.routes.graphql.{GraphQLContext, GraphQLR
 import io.github.oleksiybondar.api.infrastructure.auth.JwtServiceLive
 import io.github.oleksiybondar.api.testkit.support.{
   InMemoryAuthRepo,
-  InMemoryDashboardMemberRepo,
-  InMemoryDashboardRepo,
+  InMemoryBoardMemberRepo,
+  InMemoryBoardRepo,
   InMemoryPermissionRepo,
   InMemoryRoleRepo,
   InMemoryUserRepo
@@ -52,11 +52,11 @@ object GraphQLFixtures {
   )(run: GraphQLTestContext => IO[A]): A =
     (for {
       userRepo                  <- InMemoryUserRepo.create[IO](users)
-      dashboardRepo             <- InMemoryDashboardRepo.create[IO](List(DashboardFixtures.sampleDashboard))
-      dashboardMemberRepo       <- InMemoryDashboardMemberRepo.create[IO](
+      dashboardRepo             <- InMemoryBoardRepo.create[IO](List(BoardFixtures.sampleDashboard))
+      dashboardMemberRepo       <- InMemoryBoardMemberRepo.create[IO](
                                      List(
-                                       DashboardMemberFixtures.sampleMember,
-                                       DashboardMemberFixtures.member(
+                                       BoardMemberFixtures.sampleMember,
+                                       BoardMemberFixtures.member(
                                          userId = io.github.oleksiybondar.api.domain.user.UserId(
                                            java.util.UUID.fromString(
                                              "22222222-2222-2222-2222-222222222222"
@@ -114,15 +114,15 @@ object GraphQLFixtures {
                                    )
       roleService                = new RoleServiceLive[IO](roleRepo, permissionRepo)
       permissionService          = new PermissionServiceLive[IO](permissionRepo)
-      dashboardMembershipService = new DashboardMembershipServiceLive[IO](
+      dashboardMembershipService = new BoardMembershipServiceLive[IO](
                                      dashboardMemberRepo,
                                      roleService
                                    )
-      dashboardAccessService     = new DashboardAccessServiceLive[IO](
+      dashboardAccessService     = new BoardAccessServiceLive[IO](
                                      dashboardRepo,
                                      dashboardMembershipService
                                    )
-      dashboardService           = new DashboardServiceLive[IO](
+      dashboardService           = new BoardServiceLive[IO](
                                      dashboardRepo,
                                      dashboardAccessService,
                                      dashboardMembershipService,

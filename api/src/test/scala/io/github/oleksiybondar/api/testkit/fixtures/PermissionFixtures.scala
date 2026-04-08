@@ -13,7 +13,7 @@ object PermissionFixtures {
     Permission(
       id = PermissionId(1),
       roleId = RoleId(1),
-      area = PermissionArea.Dashboard,
+      area = PermissionArea.Board,
       canRead = true,
       canCreate = true,
       canModify = true,
@@ -49,7 +49,7 @@ object PermissionFixtures {
     Permission(
       id = PermissionId(4),
       roleId = RoleId(2),
-      area = PermissionArea.Dashboard,
+      area = PermissionArea.Board,
       canRead = true,
       canCreate = false,
       canModify = false,
@@ -85,7 +85,7 @@ object PermissionFixtures {
     Permission(
       id = PermissionId(7),
       roleId = RoleId(3),
-      area = PermissionArea.Dashboard,
+      area = PermissionArea.Board,
       canRead = true,
       canCreate = false,
       canModify = false,

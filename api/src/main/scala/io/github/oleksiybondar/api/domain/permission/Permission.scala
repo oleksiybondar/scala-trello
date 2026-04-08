@@ -4,9 +4,9 @@ final case class PermissionId(value: Long) extends AnyVal
 final case class RoleId(value: Long)       extends AnyVal
 
 enum PermissionArea(val value: String) {
-  case Dashboard extends PermissionArea("dashboard")
-  case Ticket    extends PermissionArea("ticket")
-  case Comment   extends PermissionArea("comment")
+  case Board   extends PermissionArea("dashboard")
+  case Ticket  extends PermissionArea("ticket")
+  case Comment extends PermissionArea("comment")
 }
 
 object PermissionArea {

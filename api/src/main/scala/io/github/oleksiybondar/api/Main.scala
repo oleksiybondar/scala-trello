@@ -3,13 +3,13 @@ package io.github.oleksiybondar.api
 import cats.effect.{IO, IOApp, Resource}
 import com.comcast.ip4s.{Host, Port}
 import io.github.oleksiybondar.api.config.{AppConfig, ConfigLoader}
-import io.github.oleksiybondar.api.domain.dashboard.{
-  DashboardAccessService,
-  DashboardAccessServiceLive,
-  DashboardMembershipService,
-  DashboardMembershipServiceLive,
-  DashboardService,
-  DashboardServiceLive
+import io.github.oleksiybondar.api.domain.board.{
+  BoardAccessService,
+  BoardAccessServiceLive,
+  BoardMembershipService,
+  BoardMembershipServiceLive,
+  BoardService,
+  BoardServiceLive
 }
 import io.github.oleksiybondar.api.domain.permission.{
   PermissionService,
@@ -36,11 +36,11 @@ import io.github.oleksiybondar.api.infrastructure.db.auth.password.{
   PasswordHistoryRepoSlick
 }
 import io.github.oleksiybondar.api.infrastructure.db.auth.{AuthSessionRepo, AuthSessionRepoSlick}
-import io.github.oleksiybondar.api.infrastructure.db.dashboard.{
-  DashboardMemberRepo,
-  DashboardRepo,
-  SlickDashboardMemberRepo,
-  SlickDashboardRepo
+import io.github.oleksiybondar.api.infrastructure.db.board.{
+  BoardMemberRepo,
+  BoardRepo,
+  SlickBoardMemberRepo,
+  SlickBoardRepo
 }
 import io.github.oleksiybondar.api.infrastructure.db.permission.{
   PermissionRepo,
@@ -140,9 +140,9 @@ object Main extends IOApp.Simple {
 
   def graphqlRoutesResource(
       userService: UserService[IO],
-      dashboardService: DashboardService[IO],
-      dashboardMembershipService: DashboardMembershipService[IO],
-      dashboardAccessService: DashboardAccessService[IO],
+      dashboardService: BoardService[IO],
+      dashboardMembershipService: BoardMembershipService[IO],
+      dashboardAccessService: BoardAccessService[IO],
       roleService: RoleService[IO],
       permissionService: PermissionService[IO],
       authService: io.github.oleksiybondar.api.domain.auth.AuthService[IO]
@@ -165,11 +165,11 @@ object Main extends IOApp.Simple {
   def buildUserRepo(db: Database): UserRepo[IO] =
     new SlickUserRepo[IO](db)
 
-  def buildDashboardRepo(db: Database): DashboardRepo[IO] =
-    new SlickDashboardRepo[IO](db)
+  def buildDashboardRepo(db: Database): BoardRepo[IO] =
+    new SlickBoardRepo[IO](db)
 
-  def buildDashboardMemberRepo(db: Database): DashboardMemberRepo[IO] =
-    new SlickDashboardMemberRepo[IO](db)
+  def buildDashboardMemberRepo(db: Database): BoardMemberRepo[IO] =
+    new SlickBoardMemberRepo[IO](db)
 
   def buildRoleRepo(db: Database): RoleRepo[IO] =
     new SlickRoleRepo[IO](db)
@@ -187,24 +187,24 @@ object Main extends IOApp.Simple {
     new PermissionServiceLive[IO](permissionRepo)
 
   def buildDashboardMembershipService(
-      dashboardMemberRepo: DashboardMemberRepo[IO],
+      dashboardMemberRepo: BoardMemberRepo[IO],
       roleService: RoleService[IO]
-  ): DashboardMembershipService[IO] =
-    new DashboardMembershipServiceLive[IO](dashboardMemberRepo, roleService)
+  ): BoardMembershipService[IO] =
+    new BoardMembershipServiceLive[IO](dashboardMemberRepo, roleService)
 
   def buildDashboardAccessService(
-      dashboardRepo: DashboardRepo[IO],
-      dashboardMembershipService: DashboardMembershipService[IO]
-  ): DashboardAccessService[IO] =
-    new DashboardAccessServiceLive[IO](dashboardRepo, dashboardMembershipService)
+      dashboardRepo: BoardRepo[IO],
+      dashboardMembershipService: BoardMembershipService[IO]
+  ): BoardAccessService[IO] =
+    new BoardAccessServiceLive[IO](dashboardRepo, dashboardMembershipService)
 
   def buildDashboardService(
-      dashboardRepo: DashboardRepo[IO],
-      dashboardAccessService: DashboardAccessService[IO],
-      dashboardMembershipService: DashboardMembershipService[IO],
+      dashboardRepo: BoardRepo[IO],
+      dashboardAccessService: BoardAccessService[IO],
+      dashboardMembershipService: BoardMembershipService[IO],
       roleService: RoleService[IO]
-  ): DashboardService[IO] =
-    new DashboardServiceLive[IO](
+  ): BoardService[IO] =
+    new BoardServiceLive[IO](
       dashboardRepo,
       dashboardAccessService,
       dashboardMembershipService,
