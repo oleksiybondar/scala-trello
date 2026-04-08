@@ -3,12 +3,11 @@ import { useEffect } from "react";
 
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
-import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
 import { useNavigate } from "react-router-dom";
 
 import { RegisterForm } from "@components/forms/auth/RegisterForm";
-import { AppNavBar } from "@components/navigation/AppNavBar";
+import { AppPageLayout } from "@components/layout/AppPageLayout";
 import { useAuth } from "@hooks/useAuth";
 
 export const RegisterPage = (): ReactElement => {
@@ -24,18 +23,14 @@ export const RegisterPage = (): ReactElement => {
   }, [isAuthenticated, navigate]);
 
   return (
-    <Container maxWidth="md">
-      <Stack minHeight="100vh" py={4} spacing={4}>
-        <AppNavBar />
-
-        <Stack alignItems="center" flexGrow={1} justifyContent="center">
-          <Card variant="outlined">
-            <CardContent>
-              <RegisterForm />
-            </CardContent>
-          </Card>
-        </Stack>
+    <AppPageLayout containerMaxWidth="md">
+      <Stack alignItems="center" flexGrow={1} justifyContent="center">
+        <Card sx={{ maxWidth: 560, width: "100%" }}  variant="outlined">
+          <CardContent>
+            <RegisterForm />
+          </CardContent>
+        </Card>
       </Stack>
-    </Container>
+    </AppPageLayout>
   );
 };

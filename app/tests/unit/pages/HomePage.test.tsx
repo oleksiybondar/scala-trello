@@ -15,7 +15,7 @@ describe("HomePage", () => {
     expect(
       screen.getAllByRole("img", { name: "Boards" })
     ).toHaveLength(1);
-    expect(screen.getByRole("link", { name: "Login" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Sign in" })).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
         name: "Tickets move through a delivery-focused lifecycle."

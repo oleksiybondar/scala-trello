@@ -10,9 +10,8 @@ import { AppLogo } from "@components/branding/AppLogo";
 import { AppUserMenu } from "@components/navigation/AppUserMenu";
 
 export const AppNavBar = (): ReactElement => {
-
   return (
-    <AppBar color="primary"  position="fixed">
+    <AppBar color="primary" position="sticky">
       <Toolbar>
         <Stack alignItems="center" direction="row" flexGrow={1} spacing={2}>
           <Link
@@ -24,10 +23,6 @@ export const AppNavBar = (): ReactElement => {
           >
             <AppLogo />
           </Link>
-
-          <Stack alignItems="center" direction="row" spacing={1}>
-
-          </Stack>
         </Stack>
 
         <AppUserMenu />

@@ -1,14 +1,13 @@
 import type { ReactElement } from "react";
 
 import Box from "@mui/material/Box";
-import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
+import Divider from "@mui/material/Divider";
 
+import { AppPageLayout } from "@components/layout/AppPageLayout";
 import { LandingBoardsSection } from "@components/landing/LandingBoardsSection";
 import { LandingCollaborationSection } from "@components/landing/LandingCollaborationSection";
 import { LandingHeroSection } from "@components/landing/LandingHeroSection";
-import { AppNavBar } from "@components/navigation/AppNavBar";
-import Divider from "@mui/material/Divider";
 
 /**
  * Visitor landing page with static introduction content.
@@ -28,23 +27,19 @@ export const HomePage = (): ReactElement => {
     <Box
       sx={{
         background:
-          "radial-gradient(circle at top, rgba(25, 118, 210, 0.08), transparent 34%)"
+          "radial-gradient(circle at top, rgba(25, 118, 210, 0.08), transparent 34%)",
+        minHeight: "100vh"
       }}
     >
-      <Container maxWidth="lg">
-        <Stack minHeight="100vh" py={4} spacing={4}>
-        <AppNavBar />
-
-          <Stack pb={6} spacing={3}>
-            <Divider />
-            <LandingHeroSection />
-            <Divider />
-            <LandingBoardsSection />
-            <Divider />
-            <LandingCollaborationSection />
-          </Stack>
+      <AppPageLayout>
+        <Stack spacing={3}>
+          <LandingHeroSection />
+          <Divider />
+          <LandingBoardsSection />
+          <Divider />
+          <LandingCollaborationSection />
         </Stack>
-      </Container>
+      </AppPageLayout>
     </Box>
   );
 };
