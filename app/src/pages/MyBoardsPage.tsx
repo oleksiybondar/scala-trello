@@ -1,18 +1,19 @@
 import type { ReactElement } from "react";
 import { useState } from "react";
 
+import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { CreateBoardDialog } from "@components/boards/CreateBoardDialog";
 import { NoBoards } from "@components/boards/NoBoards";
 import { AppPageLayout } from "@components/layout/AppPageLayout";
+import { useBoards } from "@hooks/useBoards";
+import { BoardsProvider } from "@providers/BoardsProvider";
 
-/**
- * Empty-state entry page for the user's boards area.
- */
-export const MyBoardsPage = (): ReactElement => {
+const MyBoardsPageContent = (): ReactElement => {
   const [isCreateBoardDialogOpen, setIsCreateBoardDialogOpen] = useState(false);
+  const { boards } = useBoards();
 
   return (
     <AppPageLayout>
@@ -24,11 +25,28 @@ export const MyBoardsPage = (): ReactElement => {
         </Typography>
       </Stack>
 
-      <NoBoards
-        onCreateBoard={() => {
-          setIsCreateBoardDialogOpen(true);
-        }}
-      />
+      {boards.length === 0 ? (
+        <NoBoards
+          onCreateBoard={() => {
+            setIsCreateBoardDialogOpen(true);
+          }}
+        />
+      ) : (
+        <Stack spacing={2}>
+          {boards.map(board => (
+            <Paper key={board.boardId} sx={{ p: 3 }} variant="outlined">
+              <Stack spacing={1}>
+                <Typography variant="h5">{board.name}</Typography>
+                {board.description !== null && board.description.length > 0 ? (
+                  <Typography color="text.secondary" variant="body2">
+                    {board.description}
+                  </Typography>
+                ) : null}
+              </Stack>
+            </Paper>
+          ))}
+        </Stack>
+      )}
 
       <CreateBoardDialog
         onClose={() => {
@@ -37,5 +55,16 @@ export const MyBoardsPage = (): ReactElement => {
         open={isCreateBoardDialogOpen}
       />
     </AppPageLayout>
+  );
+};
+
+/**
+ * Boards entry page backed by the boards facade provider.
+ */
+export const MyBoardsPage = (): ReactElement => {
+  return (
+    <BoardsProvider>
+      <MyBoardsPageContent />
+    </BoardsProvider>
   );
 };
