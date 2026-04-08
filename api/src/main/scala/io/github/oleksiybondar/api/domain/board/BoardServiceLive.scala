@@ -19,7 +19,7 @@ final class BoardServiceLive[F[_]: Temporal](
       _         <- dashboardRepo.create(dashboard)
       _         <- dashboardMembershipService.addMember(
                      BoardMember(
-                       dashboardId = dashboard.id,
+                       boardId = dashboard.id,
                        userId = dashboard.ownerUserId,
                        roleId = adminRole.id,
                        createdAt = dashboard.createdAt
@@ -37,7 +37,7 @@ final class BoardServiceLive[F[_]: Temporal](
     dashboardMembershipService
       .listMembershipsForUser(userId)
       .flatMap(
-        _.traverse(memberWithRole => dashboardRepo.findById(memberWithRole.member.dashboardId))
+        _.traverse(memberWithRole => dashboardRepo.findById(memberWithRole.member.boardId))
       )
       .map(_.flatten)
 
@@ -78,7 +78,7 @@ final class BoardServiceLive[F[_]: Temporal](
                     case None    =>
                       dashboardMembershipService.addMember(
                         BoardMember(
-                          dashboardId = dashboardId,
+                          boardId = dashboardId,
                           userId = newOwnerUserId,
                           roleId = adminRole.id,
                           createdAt = now
@@ -128,7 +128,7 @@ final class BoardServiceLive[F[_]: Temporal](
                   dashboardMembershipService
                     .addMember(
                       BoardMember(
-                        dashboardId = dashboardId,
+                        boardId = dashboardId,
                         userId = memberUserId,
                         roleId = role.id,
                         createdAt = now

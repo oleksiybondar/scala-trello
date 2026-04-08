@@ -14,30 +14,30 @@ import java.util.UUID
 final class SlickBoardMemberRepo[F[_]: Async](db: Database) extends BoardMemberRepo[F] {
 
   private final case class BoardMemberRow(
-      dashboardId: UUID,
+      boardId: UUID,
       userId: UUID,
       roleId: Long,
       createdAt: Instant
   )
 
   private final class BoardMembersTable(tag: Tag)
-      extends Table[BoardMemberRow](tag, "dashboard_members") {
-    def dashboardId: Rep[UUID]  = column[UUID]("dashboard_id")
+      extends Table[BoardMemberRow](tag, "board_members") {
+    def boardId: Rep[UUID]      = column[UUID]("board_id")
     def userId: Rep[UUID]       = column[UUID]("user_id")
     def roleId: Rep[Long]       = column[Long]("role_id")
     def createdAt: Rep[Instant] = column[Instant]("created_at")
 
-    def pk: PrimaryKey = primaryKey("dashboard_members_pk", (dashboardId, userId))
+    def pk: PrimaryKey = primaryKey("board_members_pk", (boardId, userId))
 
     def * : ProvenShape[BoardMemberRow] =
-      (dashboardId, userId, roleId, createdAt).mapTo[BoardMemberRow]
+      (boardId, userId, roleId, createdAt).mapTo[BoardMemberRow]
   }
 
-  private val dashboardMembers = TableQuery[BoardMembersTable]
+  private val boardMembers = TableQuery[BoardMembersTable]
 
   private def toRow(member: BoardMember): BoardMemberRow =
     BoardMemberRow(
-      dashboardId = member.dashboardId.value,
+      boardId = member.boardId.value,
       userId = member.userId.value,
       roleId = member.roleId.value,
       createdAt = member.createdAt
@@ -45,7 +45,7 @@ final class SlickBoardMemberRepo[F[_]: Async](db: Database) extends BoardMemberR
 
   private def toDomain(row: BoardMemberRow): BoardMember =
     BoardMember(
-      dashboardId = BoardId(row.dashboardId),
+      boardId = BoardId(row.boardId),
       userId = UserId(row.userId),
       roleId = RoleId(row.roleId),
       createdAt = row.createdAt
@@ -55,51 +55,51 @@ final class SlickBoardMemberRepo[F[_]: Async](db: Database) extends BoardMemberR
     Async[F].fromFuture(Async[F].delay(db.run(action)))
 
   override def create(member: BoardMember): F[Unit] =
-    run(dashboardMembers += toRow(member)).void
+    run(boardMembers += toRow(member)).void
 
-  override def findByDashboardIdAndUserId(
-      dashboardId: BoardId,
+  override def findByBoardIdAndUserId(
+      boardId: BoardId,
       userId: UserId
   ): F[Option[BoardMember]] =
     run(
-      dashboardMembers
-        .filter(row => row.dashboardId === dashboardId.value && row.userId === userId.value)
+      boardMembers
+        .filter(row => row.boardId === boardId.value && row.userId === userId.value)
         .result
         .headOption
     ).map(_.map(toDomain))
 
-  override def listByDashboardId(dashboardId: BoardId): F[List[BoardMember]] =
+  override def listByBoardId(boardId: BoardId): F[List[BoardMember]] =
     run(
-      dashboardMembers
-        .filter(_.dashboardId === dashboardId.value)
+      boardMembers
+        .filter(_.boardId === boardId.value)
         .sortBy(_.createdAt.asc)
         .result
     ).map(_.toList.map(toDomain))
 
   override def listByUserId(userId: UserId): F[List[BoardMember]] =
     run(
-      dashboardMembers
+      boardMembers
         .filter(_.userId === userId.value)
         .sortBy(_.createdAt.asc)
         .result
     ).map(_.toList.map(toDomain))
 
   override def updateRole(
-      dashboardId: BoardId,
+      boardId: BoardId,
       userId: UserId,
       roleId: RoleId
   ): F[Boolean] =
     run(
-      dashboardMembers
-        .filter(row => row.dashboardId === dashboardId.value && row.userId === userId.value)
+      boardMembers
+        .filter(row => row.boardId === boardId.value && row.userId === userId.value)
         .map(_.roleId)
         .update(roleId.value)
     ).map(_ > 0)
 
-  override def delete(dashboardId: BoardId, userId: UserId): F[Boolean] =
+  override def delete(boardId: BoardId, userId: UserId): F[Boolean] =
     run(
-      dashboardMembers
-        .filter(row => row.dashboardId === dashboardId.value && row.userId === userId.value)
+      boardMembers
+        .filter(row => row.boardId === boardId.value && row.userId === userId.value)
         .delete
     ).map(_ > 0)
 }

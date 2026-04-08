@@ -44,7 +44,7 @@ object SlickBoardRepoFixtures {
     IO.fromFuture(
       IO(
         db.run(
-          sqlu"TRUNCATE TABLE time_tracking, comments, tickets, dashboard_members, boards, permissions, roles, activities, severities, states, auth_sessions, password_history, users CASCADE"
+          sqlu"TRUNCATE TABLE time_tracking, comments, tickets, board_members, boards, permissions, roles, activities, severities, states, auth_sessions, password_history, users CASCADE"
         )
       )
     ).void

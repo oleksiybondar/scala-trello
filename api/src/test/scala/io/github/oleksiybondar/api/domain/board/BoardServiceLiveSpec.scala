@@ -75,7 +75,7 @@ class BoardServiceLiveSpec extends FunSuite {
     val firstMember     = BoardMemberFixtures.sampleMember
     val secondMember    =
       BoardMemberFixtures.member(
-        dashboardId = secondDashboard.id,
+        boardId = secondDashboard.id,
         userId = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222"))
       )
 

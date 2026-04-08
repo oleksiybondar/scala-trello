@@ -11,20 +11,20 @@ object BoardMemberFixtures {
 
   val sampleMember: BoardMember =
     BoardMember(
-      dashboardId = BoardId(UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")),
+      boardId = BoardId(UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")),
       userId = UserId(UUID.fromString("11111111-1111-1111-1111-111111111111")),
       roleId = RoleId(1),
       createdAt = Instant.parse("2026-04-06T08:00:00Z")
     )
 
   def member(
-      dashboardId: BoardId = sampleMember.dashboardId,
+      boardId: BoardId = sampleMember.boardId,
       userId: UserId = sampleMember.userId,
       roleId: RoleId = sampleMember.roleId,
       createdAt: Instant = sampleMember.createdAt
   ): BoardMember =
     BoardMember(
-      dashboardId = dashboardId,
+      boardId = boardId,
       userId = userId,
       roleId = roleId,
       createdAt = createdAt

@@ -98,7 +98,7 @@ class SlickBoardRepoSpec extends FunSuite {
                             VALUES (1, 'admin', 'Full dashboard access including member management.')
                           """,
                           sqlu"""
-                            INSERT INTO dashboard_members (dashboard_id, user_id, role_id, created_at)
+                            INSERT INTO board_members (board_id, user_id, role_id, created_at)
                             VALUES
                               ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-1111-1111-1111-111111111111', 1, TIMESTAMPTZ '2026-04-05T08:00:00Z'),
                               ('ffffffff-ffff-ffff-ffff-ffffffffffff', '22222222-2222-2222-2222-222222222222', 1, TIMESTAMPTZ '2026-04-05T12:00:00Z')

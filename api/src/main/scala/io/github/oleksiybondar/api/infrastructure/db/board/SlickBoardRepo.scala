@@ -51,17 +51,17 @@ final class SlickBoardRepo[F[_]: Async](db: Database) extends BoardRepo[F] {
   }
 
   private final case class BoardMemberLookupRow(
-      dashboardId: UUID,
+      boardId: UUID,
       userId: UUID
   )
 
   private final class BoardMembersTable(tag: Tag)
-      extends Table[BoardMemberLookupRow](tag, "dashboard_members") {
-    def dashboardId: Rep[UUID] = column[UUID]("dashboard_id")
-    def userId: Rep[UUID]      = column[UUID]("user_id")
+      extends Table[BoardMemberLookupRow](tag, "board_members") {
+    def boardId: Rep[UUID] = column[UUID]("board_id")
+    def userId: Rep[UUID]  = column[UUID]("user_id")
 
     def * : ProvenShape[BoardMemberLookupRow] =
-      (dashboardId, userId).mapTo[BoardMemberLookupRow]
+      (boardId, userId).mapTo[BoardMemberLookupRow]
   }
 
   private val boards       = TableQuery[BoardsTable]
@@ -126,7 +126,7 @@ final class SlickBoardRepo[F[_]: Async](db: Database) extends BoardRepo[F] {
     run(
       boards
         .join(boardMembers)
-        .on(_.id === _.dashboardId)
+        .on(_.id === _.boardId)
         .filter { case (_, member) => member.userId === userId.value }
         .sortBy { case (board, _) => board.createdAt.desc }
         .map { case (board, _) => board }

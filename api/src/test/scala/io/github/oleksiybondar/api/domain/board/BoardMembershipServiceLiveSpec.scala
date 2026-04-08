@@ -28,7 +28,7 @@ class BoardMembershipServiceLiveSpec extends FunSuite {
     ) { ctx =>
       for {
         _      <- ctx.dashboardMembershipService.addMember(member)
-        result <- ctx.dashboardMembershipService.findMember(member.dashboardId, member.userId)
+        result <- ctx.dashboardMembershipService.findMember(member.boardId, member.userId)
       } yield result
     }
 
@@ -59,8 +59,8 @@ class BoardMembershipServiceLiveSpec extends FunSuite {
       permissions = List(PermissionFixtures.adminDashboardPermission)
     ) { ctx =>
       for {
-        removed <- ctx.dashboardMembershipService.removeMember(member.dashboardId, member.userId)
-        result  <- ctx.dashboardMembershipService.findMember(member.dashboardId, member.userId)
+        removed <- ctx.dashboardMembershipService.removeMember(member.boardId, member.userId)
+        result  <- ctx.dashboardMembershipService.findMember(member.boardId, member.userId)
       } yield (removed, result)
     }
 
@@ -80,11 +80,11 @@ class BoardMembershipServiceLiveSpec extends FunSuite {
     ) { ctx =>
       for {
         updated <- ctx.dashboardMembershipService.changeMemberRole(
-                     member.dashboardId,
+                     member.boardId,
                      member.userId,
                      RoleId(3)
                    )
-        result  <- ctx.dashboardMembershipService.findMember(member.dashboardId, member.userId)
+        result  <- ctx.dashboardMembershipService.findMember(member.boardId, member.userId)
       } yield (updated, result)
     }
 
@@ -109,7 +109,7 @@ class BoardMembershipServiceLiveSpec extends FunSuite {
         PermissionFixtures.adminCommentPermission
       )
     ) { ctx =>
-      ctx.dashboardMembershipService.findMember(member.dashboardId, member.userId)
+      ctx.dashboardMembershipService.findMember(member.boardId, member.userId)
     }
 
     assertEquals(
@@ -151,7 +151,7 @@ class BoardMembershipServiceLiveSpec extends FunSuite {
         PermissionFixtures.viewerCommentPermission
       )
     ) { ctx =>
-      ctx.dashboardMembershipService.listMembers(firstMember.dashboardId)
+      ctx.dashboardMembershipService.listMembers(firstMember.boardId)
     }
 
     assertEquals(
@@ -187,7 +187,7 @@ class BoardMembershipServiceLiveSpec extends FunSuite {
     val firstMember  = BoardMemberFixtures.sampleMember
     val secondMember =
       BoardMemberFixtures.member(
-        dashboardId = BoardId(UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")),
+        boardId = BoardId(UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")),
         createdAt = Instant.parse("2026-04-06T08:05:00Z")
       )
     val otherMember  =

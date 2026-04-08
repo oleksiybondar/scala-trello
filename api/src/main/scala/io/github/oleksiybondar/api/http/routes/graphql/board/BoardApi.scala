@@ -73,7 +73,9 @@ object BoardApi {
     ObjectType(
       name = "BoardMemberView",
       fields[Unit, BoardMemberView](
-        Field("dashboardId", StringType, resolve = _.value.dashboardId),
+        Field("boardId", StringType, resolve = _.value.boardId),
+        // TODO: remove this legacy alias after the UI migrates to `boardId`.
+        Field("dashboardId", StringType, resolve = _.value.boardId),
         Field("userId", StringType, resolve = _.value.userId),
         Field("createdAt", StringType, resolve = _.value.createdAt),
         Field("role", BoardRoleType, resolve = _.value.role)
@@ -274,7 +276,7 @@ object BoardApi {
       member: io.github.oleksiybondar.api.domain.board.BoardMemberWithRole
   ) =
     BoardMemberView(
-      dashboardId = member.member.dashboardId.value.toString,
+      boardId = member.member.boardId.value.toString,
       userId = member.member.userId.value.toString,
       createdAt = member.member.createdAt.toString,
       role = BoardRoleView(

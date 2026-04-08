@@ -18,12 +18,12 @@ class SlickBoardMemberRepoSpec extends FunSuite {
     withCleanRepo { repo =>
       for {
         _      <- repo.create(member)
-        result <- repo.findByDashboardIdAndUserId(member.dashboardId, member.userId)
+        result <- repo.findByBoardIdAndUserId(member.boardId, member.userId)
       } yield assertEquals(result, Some(member))
     }
   }
 
-  test("listByDashboardId returns members for the requested dashboard ordered by createdAt") {
+  test("listByBoardId returns members for the requested dashboard ordered by createdAt") {
     val firstMember  = BoardMemberFixtures.sampleMember
     val secondMember =
       BoardMemberFixtures.member(
@@ -36,7 +36,7 @@ class SlickBoardMemberRepoSpec extends FunSuite {
       for {
         _      <- repo.create(firstMember)
         _      <- repo.create(secondMember)
-        result <- repo.listByDashboardId(firstMember.dashboardId)
+        result <- repo.listByBoardId(firstMember.boardId)
       } yield assertEquals(result, List(firstMember, secondMember))
     }
   }
@@ -45,7 +45,7 @@ class SlickBoardMemberRepoSpec extends FunSuite {
     val firstMember  = BoardMemberFixtures.sampleMember
     val secondMember =
       BoardMemberFixtures.member(
-        dashboardId = BoardId(UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")),
+        boardId = BoardId(UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")),
         createdAt = Instant.parse("2026-04-06T09:05:00Z")
       )
     val otherMember  =
@@ -69,8 +69,8 @@ class SlickBoardMemberRepoSpec extends FunSuite {
     withCleanRepo { repo =>
       for {
         _       <- repo.create(member)
-        updated <- repo.updateRole(member.dashboardId, member.userId, RoleId(3))
-        result  <- repo.findByDashboardIdAndUserId(member.dashboardId, member.userId)
+        updated <- repo.updateRole(member.boardId, member.userId, RoleId(3))
+        result  <- repo.findByBoardIdAndUserId(member.boardId, member.userId)
       } yield {
         assertEquals(updated, true)
         assertEquals(result.map(_.roleId), Some(RoleId(3)))
@@ -96,8 +96,8 @@ class SlickBoardMemberRepoSpec extends FunSuite {
     withCleanRepo { repo =>
       for {
         _       <- repo.create(member)
-        deleted <- repo.delete(member.dashboardId, member.userId)
-        result  <- repo.findByDashboardIdAndUserId(member.dashboardId, member.userId)
+        deleted <- repo.delete(member.boardId, member.userId)
+        result  <- repo.findByBoardIdAndUserId(member.boardId, member.userId)
       } yield {
         assertEquals(deleted, true)
         assertEquals(result, None)

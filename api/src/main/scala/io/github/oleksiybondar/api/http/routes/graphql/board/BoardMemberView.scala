@@ -19,7 +19,7 @@ final case class BoardRoleView(
 )
 
 final case class BoardMemberView(
-    dashboardId: String,
+    boardId: String,
     userId: String,
     createdAt: String,
     role: BoardRoleView

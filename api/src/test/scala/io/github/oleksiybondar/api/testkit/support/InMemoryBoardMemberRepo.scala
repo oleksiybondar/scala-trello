@@ -13,18 +13,18 @@ final class InMemoryBoardMemberRepo[F[_]: Sync] private (
 ) extends BoardMemberRepo[F] {
 
   override def create(member: BoardMember): F[Unit] =
-    state.update(_.updated((member.dashboardId, member.userId), member))
+    state.update(_.updated((member.boardId, member.userId), member))
 
-  override def findByDashboardIdAndUserId(
-      dashboardId: BoardId,
+  override def findByBoardIdAndUserId(
+      boardId: BoardId,
       userId: UserId
   ): F[Option[BoardMember]] =
-    state.get.map(_.get((dashboardId, userId)))
+    state.get.map(_.get((boardId, userId)))
 
-  override def listByDashboardId(dashboardId: BoardId): F[List[BoardMember]] =
+  override def listByBoardId(boardId: BoardId): F[List[BoardMember]] =
     state.get.map(
       _.values.toList
-        .filter(_.dashboardId == dashboardId)
+        .filter(_.boardId == boardId)
         .sortBy(_.createdAt)
     )
 
@@ -36,16 +36,16 @@ final class InMemoryBoardMemberRepo[F[_]: Sync] private (
     )
 
   override def updateRole(
-      dashboardId: BoardId,
+      boardId: BoardId,
       userId: UserId,
       roleId: RoleId
   ): F[Boolean] =
     state.modify { current =>
-      current.get((dashboardId, userId)) match {
+      current.get((boardId, userId)) match {
         case Some(existing) =>
           (
             current.updated(
-              (dashboardId, userId),
+              (boardId, userId),
               existing.copy(roleId = roleId)
             ),
             true
@@ -54,10 +54,10 @@ final class InMemoryBoardMemberRepo[F[_]: Sync] private (
       }
     }
 
-  override def delete(dashboardId: BoardId, userId: UserId): F[Boolean] =
+  override def delete(boardId: BoardId, userId: UserId): F[Boolean] =
     state.modify { current =>
-      if (current.contains((dashboardId, userId)))
-        (current - ((dashboardId, userId)), true)
+      if (current.contains((boardId, userId)))
+        (current - ((boardId, userId)), true)
       else
         (current, false)
     }
@@ -70,7 +70,7 @@ object InMemoryBoardMemberRepo {
   ): F[InMemoryBoardMemberRepo[F]] =
     Ref
       .of[F, Map[(BoardId, UserId), BoardMember]](
-        members.map(member => (member.dashboardId, member.userId) -> member).toMap
+        members.map(member => (member.boardId, member.userId) -> member).toMap
       )
       .map(new InMemoryBoardMemberRepo[F](_))
 }

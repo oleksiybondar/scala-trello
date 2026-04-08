@@ -7,38 +7,38 @@ import io.github.oleksiybondar.api.domain.user.UserId
 import io.github.oleksiybondar.api.infrastructure.db.board.BoardMemberRepo
 
 final class BoardMembershipServiceLive[F[_]: MonadThrow](
-    dashboardMemberRepo: BoardMemberRepo[F],
+    boardMemberRepo: BoardMemberRepo[F],
     roleService: RoleService[F]
 ) extends BoardMembershipService[F] {
 
   override def addMember(member: BoardMember): F[Unit] =
-    dashboardMemberRepo.create(member)
+    boardMemberRepo.create(member)
 
   override def removeMember(dashboardId: BoardId, userId: UserId): F[Boolean] =
-    dashboardMemberRepo.delete(dashboardId, userId)
+    boardMemberRepo.delete(dashboardId, userId)
 
   override def changeMemberRole(
       dashboardId: BoardId,
       userId: UserId,
       roleId: RoleId
   ): F[Boolean] =
-    dashboardMemberRepo.updateRole(dashboardId, userId, roleId)
+    boardMemberRepo.updateRole(dashboardId, userId, roleId)
 
   override def findMember(
       dashboardId: BoardId,
       userId: UserId
   ): F[Option[BoardMemberWithRole]] =
-    dashboardMemberRepo
-      .findByDashboardIdAndUserId(dashboardId, userId)
+    boardMemberRepo
+      .findByBoardIdAndUserId(dashboardId, userId)
       .flatMap(_.traverse(toMemberWithRole))
 
   override def listMembers(dashboardId: BoardId): F[List[BoardMemberWithRole]] =
-    dashboardMemberRepo
-      .listByDashboardId(dashboardId)
+    boardMemberRepo
+      .listByBoardId(dashboardId)
       .flatMap(_.traverse(toMemberWithRole))
 
   override def listMembershipsForUser(userId: UserId): F[List[BoardMemberWithRole]] =
-    dashboardMemberRepo
+    boardMemberRepo
       .listByUserId(userId)
       .flatMap(_.traverse(toMemberWithRole))
 

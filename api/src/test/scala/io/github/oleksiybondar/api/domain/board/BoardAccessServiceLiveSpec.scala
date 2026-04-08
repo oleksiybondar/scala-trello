@@ -23,7 +23,7 @@ class BoardAccessServiceLiveSpec extends FunSuite {
       permissions = List(PermissionFixtures.adminDashboardPermission)
     ) { ctx =>
       ctx.dashboardAccessService.canRead(
-        BoardMemberFixtures.sampleMember.dashboardId,
+        BoardMemberFixtures.sampleMember.boardId,
         BoardMemberFixtures.sampleMember.userId,
         PermissionArea.Board
       )
@@ -44,7 +44,7 @@ class BoardAccessServiceLiveSpec extends FunSuite {
       permissions = List(PermissionFixtures.viewerDashboardPermission)
     ) { ctx =>
       ctx.dashboardAccessService.canDelete(
-        viewerMember.dashboardId,
+        viewerMember.boardId,
         viewerMember.userId,
         PermissionArea.Board
       )
@@ -60,7 +60,7 @@ class BoardAccessServiceLiveSpec extends FunSuite {
       permissions = List(PermissionFixtures.adminDashboardPermission)
     ) { ctx =>
       ctx.dashboardAccessService.canModify(
-        BoardMemberFixtures.sampleMember.dashboardId,
+        BoardMemberFixtures.sampleMember.boardId,
         UserId(UUID.fromString("99999999-9999-9999-9999-999999999999")),
         PermissionArea.Board
       )
@@ -78,15 +78,15 @@ class BoardAccessServiceLiveSpec extends FunSuite {
     ) { ctx =>
       for {
         canRead     <- ctx.dashboardAccessService.canReadDashboard(
-                         BoardMemberFixtures.sampleMember.dashboardId,
+                         BoardMemberFixtures.sampleMember.boardId,
                          BoardMemberFixtures.sampleMember.userId
                        )
         canModify   <- ctx.dashboardAccessService.canModifyDashboard(
-                         BoardMemberFixtures.sampleMember.dashboardId,
+                         BoardMemberFixtures.sampleMember.boardId,
                          BoardMemberFixtures.sampleMember.userId
                        )
         canReassign <- ctx.dashboardAccessService.canReassignDashboard(
-                         BoardMemberFixtures.sampleMember.dashboardId,
+                         BoardMemberFixtures.sampleMember.boardId,
                          BoardMemberFixtures.sampleMember.userId
                        )
       } yield (canRead, canModify, canReassign)
@@ -109,15 +109,15 @@ class BoardAccessServiceLiveSpec extends FunSuite {
     ) { ctx =>
       for {
         canRead     <- ctx.dashboardAccessService.canReadTicket(
-                         contributorMember.dashboardId,
+                         contributorMember.boardId,
                          contributorMember.userId
                        )
         canCreate   <- ctx.dashboardAccessService.canCreateTicket(
-                         contributorMember.dashboardId,
+                         contributorMember.boardId,
                          contributorMember.userId
                        )
         canReassign <- ctx.dashboardAccessService.canReassignTicket(
-                         contributorMember.dashboardId,
+                         contributorMember.boardId,
                          contributorMember.userId
                        )
       } yield (canRead, canCreate, canReassign)
@@ -140,15 +140,15 @@ class BoardAccessServiceLiveSpec extends FunSuite {
     ) { ctx =>
       for {
         canRead   <- ctx.dashboardAccessService.canReadComment(
-                       contributorMember.dashboardId,
+                       contributorMember.boardId,
                        contributorMember.userId
                      )
         canModify <- ctx.dashboardAccessService.canModifyComment(
-                       contributorMember.dashboardId,
+                       contributorMember.boardId,
                        contributorMember.userId
                      )
         canDelete <- ctx.dashboardAccessService.canDeleteComment(
-                       contributorMember.dashboardId,
+                       contributorMember.boardId,
                        contributorMember.userId
                      )
       } yield (canRead, canModify, canDelete)
@@ -164,7 +164,7 @@ class BoardAccessServiceLiveSpec extends FunSuite {
       permissions = List(PermissionFixtures.adminDashboardPermission)
     ) { ctx =>
       ctx.dashboardAccessService.canReadDashboard(
-        BoardMemberFixtures.sampleMember.dashboardId,
+        BoardMemberFixtures.sampleMember.boardId,
         BoardMemberFixtures.sampleMember.userId
       )
     }
@@ -187,7 +187,7 @@ class BoardAccessServiceLiveSpec extends FunSuite {
       roles = List(RoleFixtures.viewerRole),
       permissions = List(PermissionFixtures.viewerDashboardPermission)
     ) { ctx =>
-      ctx.dashboardAccessService.canReadDashboard(viewerMember.dashboardId, viewerMember.userId)
+      ctx.dashboardAccessService.canReadDashboard(viewerMember.boardId, viewerMember.userId)
     }
 
     assertEquals(result, false)
@@ -203,7 +203,7 @@ class BoardAccessServiceLiveSpec extends FunSuite {
       permissions = List(PermissionFixtures.adminDashboardPermission)
     ) { ctx =>
       ctx.dashboardAccessService.canReadDashboard(
-        BoardMemberFixtures.sampleMember.dashboardId,
+        BoardMemberFixtures.sampleMember.boardId,
         BoardMemberFixtures.sampleMember.userId
       )
     }
