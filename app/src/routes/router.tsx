@@ -1,21 +1,23 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 
-import { HomePage } from "@pages/HomePage";
 import { LoginPage } from "@pages/LoginPage";
+import { MyBoardsPage } from "@pages/MyBoardsPage";
 import { RegisterPage } from "@pages/RegisterPage";
+import { RootPage } from "@pages/RootPage";
 import { UserProfileSettingsPage } from "@pages/UserProfileSettingsPage";
 import { UserSecuritySettingsPage } from "@pages/UserSecuritySettingsPage";
 import { UserUiPreferencesSettingsPage } from "@pages/UserUiPreferencesSettingsPage";
 import { UserSettingsPage } from "@pages/UserSettingsPage";
+import { RequireAuthentication } from "@routes/RequireAuthentication";
 
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <HomePage />
+    element: <RootPage />
   },
   {
     path: "/home",
-    element: <HomePage />
+    element: <RootPage />
   },
   {
     path: "/login",
@@ -26,8 +28,20 @@ export const router = createBrowserRouter([
     element: <RegisterPage />
   },
   {
+    path: "/boards",
+    element: (
+      <RequireAuthentication>
+        <MyBoardsPage />
+      </RequireAuthentication>
+    )
+  },
+  {
     path: "/settings",
-    element: <UserSettingsPage />,
+    element: (
+      <RequireAuthentication>
+        <UserSettingsPage />
+      </RequireAuthentication>
+    ),
     children: [
       {
         index: true,

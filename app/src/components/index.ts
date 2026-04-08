@@ -1,3 +1,5 @@
+export { CreateBoardDialog } from "@components/boards/CreateBoardDialog";
+export { NoBoards } from "@components/boards/NoBoards";
 export { AppFooter } from "@components/footer/AppFooter";
 export { LoginForm } from "@components/forms/auth/LoginForm";
 export { AppPageLayout } from "@components/layout/AppPageLayout";

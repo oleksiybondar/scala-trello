@@ -16,7 +16,7 @@ export const RegisterPage = (): ReactElement => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      void navigate("/home", {
+      void navigate("/boards", {
         replace: true
       });
     }
