@@ -1,23 +1,37 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { UseMutationResult } from "@tanstack/react-query";
 
-import { createDashboardRequest } from "@features/board/boardsApi";
-import { mapCreateBoardInputToRequest, mapDashboardResponseToBoard } from "@models/board";
+import { useAuth } from "@hooks/useAuth";
+import { requestGraphQL } from "@helpers/requestGraphQL";
+import {
+  buildCreateDashboardMutation,
+  mapCreateBoardInputToRequest,
+  mapDashboardResponseToBoard
+} from "@models/board";
 import type { Board, CreateBoardInput } from "@models/board";
+import type { CreateDashboardMutationResponse } from "@models/board";
 
-export const useCreateBoardMutation = (
-  userId: string
-): UseMutationResult<Board, Error, CreateBoardInput> => {
+export const useCreateBoardMutation = (): UseMutationResult<
+  Board,
+  Error,
+  CreateBoardInput
+> => {
+  const { accessToken, session } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (input: CreateBoardInput) => {
-      const dashboard = await createDashboardRequest(
-        mapCreateBoardInputToRequest(input),
-        userId
-      );
+      if (accessToken === null || session === null) {
+        throw new Error("Authentication context is required to create a board.");
+      }
 
-      return mapDashboardResponseToBoard(dashboard);
+      const response = await requestGraphQL<CreateDashboardMutationResponse>({
+        accessToken,
+        document: buildCreateDashboardMutation(mapCreateBoardInputToRequest(input)),
+        tokenType: session.tokenType
+      });
+
+      return mapDashboardResponseToBoard(response.createDashboard);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({

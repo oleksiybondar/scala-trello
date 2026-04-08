@@ -8,7 +8,6 @@ import type {
 } from "@contexts/boards-context";
 import { useCreateBoardMutation } from "@features/board/useCreateBoardMutation";
 import { useBoardsQuery } from "@features/board/useBoardsQuery";
-import { useCurrentUser } from "@hooks/useCurrentUser";
 import type { CreateBoardInput } from "@models/board";
 
 const DEFAULT_QUERY_BOARDS_PARAMS = {
@@ -33,12 +32,11 @@ const normalizeQueryBoardsParams = (
 export const BoardsProvider = ({
   children
 }: PropsWithChildren): ReactElement => {
-  const { userId } = useCurrentUser();
   const [currentParams, setCurrentParams] = useState(
     normalizeQueryBoardsParams(DEFAULT_QUERY_BOARDS_PARAMS)
   );
   const boardsQuery = useBoardsQuery(currentParams);
-  const createBoardMutation = useCreateBoardMutation(userId ?? "anonymous-user");
+  const createBoardMutation = useCreateBoardMutation();
 
   const value = useMemo(
     () => ({

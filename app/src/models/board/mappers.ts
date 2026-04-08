@@ -7,13 +7,13 @@ export const mapDashboardResponseToBoard = (
   return {
     active: response.active,
     boardId: response.id,
-    createdAt: response.created_at,
-    createdByUserId: response.created_by_user_id,
+    createdAt: response.createdAt,
+    createdByUserId: response.createdByUserId,
     description: response.description,
-    lastModifiedByUserId: response.last_modified_by_user_id,
-    modifiedAt: response.modified_at,
+    lastModifiedByUserId: response.lastModifiedByUserId,
+    modifiedAt: response.modifiedAt,
     name: response.name,
-    ownerUserId: response.owner_user_id
+    ownerUserId: response.ownerUserId
   };
 };
 

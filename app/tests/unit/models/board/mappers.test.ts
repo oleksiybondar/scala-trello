@@ -8,14 +8,14 @@ describe("board mappers", () => {
     expect(
       mapDashboardResponseToBoard({
         active: true,
-        created_at: "2026-04-08T10:00:00Z",
-        created_by_user_id: "user-2",
+        createdAt: "2026-04-08T10:00:00Z",
+        createdByUserId: "user-2",
         description: "Sprint board for backend work.",
         id: "board-1",
-        last_modified_by_user_id: "user-3",
-        modified_at: "2026-04-08T12:00:00Z",
+        lastModifiedByUserId: "user-3",
+        modifiedAt: "2026-04-08T12:00:00Z",
         name: "Backend API sprint",
-        owner_user_id: "user-1"
+        ownerUserId: "user-1"
       })
     ).toEqual({
       active: true,

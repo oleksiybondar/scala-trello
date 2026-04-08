@@ -1,16 +1,24 @@
 export interface DashboardResponse {
   active: boolean;
-  created_at: string;
-  created_by_user_id: string;
+  createdAt: string;
+  createdByUserId: string;
   description: string | null;
   id: string;
-  last_modified_by_user_id: string;
-  modified_at: string;
+  lastModifiedByUserId: string;
+  modifiedAt: string;
   name: string;
-  owner_user_id: string;
+  ownerUserId: string;
 }
 
 export interface CreateBoardRequest {
   description?: string;
   name: string;
+}
+
+export interface MyDashboardsQueryResponse {
+  myDashboards: DashboardResponse[];
+}
+
+export interface CreateDashboardMutationResponse {
+  createDashboard: DashboardResponse;
 }
