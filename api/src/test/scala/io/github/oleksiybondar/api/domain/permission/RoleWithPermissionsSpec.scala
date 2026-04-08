@@ -12,7 +12,7 @@ class RoleWithPermissionsSpec extends FunSuite {
         permissions = List(PermissionFixtures.viewerDashboardPermission)
       )
 
-    assertEquals(roleWithPermissions.canRead(PermissionArea.Dashboard), true)
+    assertEquals(roleWithPermissions.canRead(PermissionArea.Board), true)
   }
 
   test("canCreate returns false when the matching area denies create") {

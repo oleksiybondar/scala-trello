@@ -88,8 +88,8 @@ final class UserServiceLive[F[_]: Sync](
   override def changeEmail(userId: UserId, email: String): EitherT[F, UserMutationError, User] =
     for {
       normalized <- EitherT.fromEither[F](normalizeEmail(email))
-      user       <- loadUser(userId)
       _          <- ensureEmailAvailable(userId, normalized)
+      user       <- loadUser(userId)
       updated     = user.copy(email = Some(normalized))
       _          <- persist(updated)
     } yield updated

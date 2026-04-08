@@ -1,0 +1,10 @@
+ALTER TABLE dashboard_members RENAME TO board_members;
+ALTER TABLE board_members RENAME COLUMN dashboard_id TO board_id;
+
+ALTER TABLE board_members RENAME CONSTRAINT dashboard_members_pkey TO board_members_pkey;
+ALTER TABLE board_members RENAME CONSTRAINT dashboard_members_dashboard_id_fkey TO board_members_board_id_fkey;
+ALTER TABLE board_members RENAME CONSTRAINT dashboard_members_user_id_fkey TO board_members_user_id_fkey;
+ALTER TABLE board_members RENAME CONSTRAINT dashboard_members_role_id_fkey TO board_members_role_id_fkey;
+
+ALTER INDEX dashboard_members_user_id_idx RENAME TO board_members_user_id_idx;
+ALTER INDEX dashboard_members_role_id_idx RENAME TO board_members_role_id_idx;

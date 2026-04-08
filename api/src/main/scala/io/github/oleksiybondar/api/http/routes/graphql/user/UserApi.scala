@@ -30,10 +30,10 @@ object UserApi {
       with UserFacingError
 
   /** Shared GraphQL view of a user returned by queries and user mutations. */
-  val UserType: ObjectType[Unit, UserView] =
+  val UserType: ObjectType[GraphQLContext, UserView] =
     ObjectType(
       name = "UserView",
-      fields[Unit, UserView](
+      fields[GraphQLContext, UserView](
         Field("id", StringType, resolve = _.value.id),
         Field("username", OptionType(StringType), resolve = _.value.username),
         Field("email", OptionType(StringType), resolve = _.value.email),
