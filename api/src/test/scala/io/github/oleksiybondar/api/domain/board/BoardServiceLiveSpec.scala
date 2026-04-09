@@ -63,6 +63,52 @@ class BoardServiceLiveSpec extends FunSuite {
     assertEquals(result, (true, Some(newOwnerUserId), Some(RoleId(1))))
   }
 
+  test("changeOwnership adds the new owner as admin when they are not yet a member") {
+    val dashboard      = BoardFixtures.sampleDashboard
+    val newOwnerUserId = UserId(UUID.fromString("33333333-3333-3333-3333-333333333333"))
+
+    val result = BoardServiceFixtures.withBoardService(
+      dashboards = List(dashboard),
+      members = List(BoardMemberFixtures.sampleMember),
+      roles = List(RoleFixtures.adminRole),
+      permissions = List(PermissionFixtures.adminDashboardPermission)
+    ) { ctx =>
+      for {
+        changed       <-
+          ctx.dashboardService.changeOwnership(dashboard.id, dashboard.ownerUserId, newOwnerUserId)
+        updatedBoard  <- ctx.dashboardRepo.findById(dashboard.id)
+        updatedMember <- ctx.dashboardMembershipService.findMember(dashboard.id, newOwnerUserId)
+      } yield (changed, updatedBoard.map(_.ownerUserId), updatedMember.map(_.member.roleId))
+    }
+
+    assertEquals(result, (true, Some(newOwnerUserId), Some(RoleId(1))))
+  }
+
+  test("changeOwnership returns false when the actor cannot modify the dashboard") {
+    val dashboard      = BoardFixtures.sampleDashboard
+    val newOwnerUserId = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222"))
+    val viewerMember   =
+      BoardMemberFixtures.sampleMember.copy(roleId = RoleId(3))
+
+    val result = BoardServiceFixtures.withBoardService(
+      dashboards = List(dashboard),
+      members = List(viewerMember),
+      roles = List(RoleFixtures.adminRole, RoleFixtures.viewerRole),
+      permissions = List(
+        PermissionFixtures.adminDashboardPermission,
+        PermissionFixtures.viewerDashboardPermission
+      )
+    ) { ctx =>
+      for {
+        changed <-
+          ctx.dashboardService.changeOwnership(dashboard.id, viewerMember.userId, newOwnerUserId)
+        updated <- ctx.dashboardRepo.findById(dashboard.id)
+      } yield (changed, updated.map(_.ownerUserId))
+    }
+
+    assertEquals(result, (false, Some(dashboard.ownerUserId)))
+  }
+
   test("listDashboardsForUser returns dashboards where the user is a member") {
     val firstDashboard  = BoardFixtures.sampleDashboard
     val secondDashboard =
@@ -297,6 +343,30 @@ class BoardServiceLiveSpec extends FunSuite {
     assertEquals(result, (false, Some(RoleId(3))))
   }
 
+  test("addMember returns false when the requested role does not exist") {
+    val dashboard    = BoardFixtures.sampleDashboard
+    val memberUserId = UserId(UUID.fromString("33333333-3333-3333-3333-333333333333"))
+
+    val result = BoardServiceFixtures.withBoardService(
+      dashboards = List(dashboard),
+      members = List(BoardMemberFixtures.sampleMember),
+      roles = List(RoleFixtures.adminRole),
+      permissions = List(PermissionFixtures.adminDashboardPermission)
+    ) { ctx =>
+      for {
+        added  <- ctx.dashboardService.addMember(
+                    dashboard.id,
+                    dashboard.ownerUserId,
+                    memberUserId,
+                    RoleId(999)
+                  )
+        member <- ctx.dashboardMembershipService.findMember(dashboard.id, memberUserId)
+      } yield (added, member)
+    }
+
+    assertEquals(result, (false, None))
+  }
+
   test("changeMemberRole updates a membership role when the actor has access and the role exists") {
     val dashboard = BoardFixtures.sampleDashboard
     val member    =
@@ -325,6 +395,37 @@ class BoardServiceLiveSpec extends FunSuite {
     assertEquals(result, (true, Some(RoleId(1))))
   }
 
+  test("changeMemberRole returns false when the requested role does not exist") {
+    val dashboard = BoardFixtures.sampleDashboard
+    val member    =
+      BoardMemberFixtures.member(
+        userId = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222")),
+        roleId = RoleId(3)
+      )
+
+    val result = BoardServiceFixtures.withBoardService(
+      dashboards = List(dashboard),
+      members = List(BoardMemberFixtures.sampleMember, member),
+      roles = List(RoleFixtures.adminRole, RoleFixtures.viewerRole),
+      permissions = List(
+        PermissionFixtures.adminDashboardPermission,
+        PermissionFixtures.viewerDashboardPermission
+      )
+    ) { ctx =>
+      for {
+        changed <- ctx.dashboardService.changeMemberRole(
+                     dashboard.id,
+                     dashboard.ownerUserId,
+                     member.userId,
+                     RoleId(999)
+                   )
+        updated <- ctx.dashboardMembershipService.findMember(dashboard.id, member.userId)
+      } yield (changed, updated.map(_.member.roleId))
+    }
+
+    assertEquals(result, (false, Some(RoleId(3))))
+  }
+
   test("removeMember removes a membership when the actor has access") {
     val dashboard      = BoardFixtures.sampleDashboard
     val memberToRemove =
@@ -350,5 +451,44 @@ class BoardServiceLiveSpec extends FunSuite {
     }
 
     assertEquals(result, (true, None))
+  }
+
+  test("removeMember returns false when the actor cannot delete dashboard members") {
+    val dashboard      = BoardFixtures.sampleDashboard
+    val viewerActor    = BoardMemberFixtures.sampleMember.copy(roleId = RoleId(3))
+    val memberToRemove =
+      BoardMemberFixtures.member(
+        userId = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222")),
+        roleId = RoleId(3)
+      )
+
+    val result = BoardServiceFixtures.withBoardService(
+      dashboards = List(dashboard),
+      members = List(viewerActor, memberToRemove),
+      roles = List(RoleFixtures.viewerRole),
+      permissions = List(PermissionFixtures.viewerDashboardPermission)
+    ) { ctx =>
+      for {
+        removed <- ctx.dashboardService.removeMember(
+                     dashboard.id,
+                     viewerActor.userId,
+                     memberToRemove.userId
+                   )
+        member  <- ctx.dashboardMembershipService.findMember(dashboard.id, memberToRemove.userId)
+      } yield (removed, member.map(_.member.roleId))
+    }
+
+    assertEquals(result, (false, Some(RoleId(3))))
+  }
+
+  test("createDashboard fails fast when the admin role is missing") {
+    val error =
+      intercept[IllegalStateException] {
+        BoardServiceFixtures.withBoardService() { ctx =>
+          ctx.dashboardService.createDashboard(BoardFixtures.sampleDashboard)
+        }
+      }
+
+    assertEquals(error.getMessage, "Admin role was not found")
   }
 }

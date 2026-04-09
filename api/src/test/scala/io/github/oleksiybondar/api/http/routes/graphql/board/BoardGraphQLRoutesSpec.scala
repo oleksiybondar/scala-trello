@@ -205,6 +205,29 @@ class BoardGraphQLRoutesSpec extends FunSuite {
     assertEquals(cursor.get[String]("name").toOption, Some("Core Board"))
   }
 
+  test("POST /graphql still supports the legacy dashboard field alias") {
+    val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        dashboardLegacyQuery,
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body   = response.as[Json].unsafeRunSync()
+    val cursor = body.hcursor.downField("data").downField("dashboard")
+
+    assertEquals(response.status, Status.Ok)
+    assertEquals(
+      cursor.get[String]("id").toOption,
+      Some("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+    )
+  }
+
   test("POST /graphql supports querying dashboards together with members and roles") {
     val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
       for {
@@ -768,6 +791,171 @@ class BoardGraphQLRoutesSpec extends FunSuite {
     assertEquals(body.hcursor.downField("errors").focus, None)
   }
 
+  test("POST /graphql returns an error when board id is missing") {
+    val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        missingBoardIdQuery,
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body = response.as[Json].unsafeRunSync()
+
+    assertEquals(response.status, Status.Ok)
+    assert(body.noSpaces.contains("Board id is required"))
+  }
+
+  test("POST /graphql returns an error when board id is not a UUID") {
+    val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        invalidBoardIdQuery,
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body = response.as[Json].unsafeRunSync()
+
+    assertEquals(response.status, Status.Ok)
+    assert(body.noSpaces.contains("Invalid UUID: not-a-uuid"))
+  }
+
+  test("POST /graphql returns an error when changing ownership to an unknown user login") {
+    val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        missingOwnerMutation,
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body = response.as[Json].unsafeRunSync()
+
+    assertEquals(response.status, Status.Ok)
+    assert(body.noSpaces.contains("Owner user was not found"))
+  }
+
+  test("POST /graphql returns an error when inviting an unknown user login") {
+    val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        missingInvitedUserMutation,
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body = response.as[Json].unsafeRunSync()
+
+    assertEquals(response.status, Status.Ok)
+    assert(body.noSpaces.contains("Invited user was not found"))
+  }
+
+  test("POST /graphql returns an error when inviting a member without user input") {
+    val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        missingMemberInputMutation,
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body = response.as[Json].unsafeRunSync()
+
+    assertEquals(response.status, Status.Ok)
+    assert(body.noSpaces.contains("User is required"))
+  }
+
+  test("POST /graphql denies board title changes for a read-only member") {
+    val viewerMembership =
+      io.github.oleksiybondar.api.testkit.fixtures.BoardMemberFixtures.sampleMember.copy(
+        roleId = io.github.oleksiybondar.api.domain.permission.RoleId(3)
+      )
+
+    val response = withGraphQLRoutes(
+      users = List(UserFixtures.sampleUser),
+      members = List(viewerMembership)
+    ) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        changeBoardTitleMutation,
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body = response.as[Json].unsafeRunSync()
+
+    assertEquals(response.status, Status.Ok)
+    assert(body.noSpaces.contains("Board title could not be changed"))
+  }
+
+  test("POST /graphql denies access to an inactive board for non-owners") {
+    val inactiveBoard =
+      io.github.oleksiybondar.api.testkit.fixtures.BoardFixtures.sampleDashboard.copy(active =
+        false
+      )
+    val viewerMember  =
+      io.github.oleksiybondar.api.testkit.fixtures.BoardMemberFixtures.sampleMember.copy(
+        userId = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222")),
+        roleId = io.github.oleksiybondar.api.domain.permission.RoleId(3)
+      )
+
+    val response = withGraphQLRoutes(
+      users = List(
+        UserFixtures.sampleUser,
+        UserFixtures.user(
+          id = viewerMember.userId,
+          username = Some(Username("viewer")),
+          email = Some(Email("viewer@example.com")),
+          passwordHash = PasswordHash("hash:viewer"),
+          firstName = FirstName("Read"),
+          lastName = LastName("Only")
+        )
+      ),
+      dashboards = List(inactiveBoard),
+      members = List(viewerMember)
+    ) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(viewerMember.userId)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        boardQuery,
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body = response.as[Json].unsafeRunSync()
+
+    assertEquals(response.status, Status.Ok)
+    assert(body.noSpaces.contains("You do not have access to this board"))
+  }
+
   private val dashboardMembersQuery =
     """query {
       |  dashboardMembers(dashboardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa") {
@@ -803,6 +991,29 @@ class BoardGraphQLRoutesSpec extends FunSuite {
       |    id
       |    name
       |    active
+      |  }
+      |}""".stripMargin
+
+  private val dashboardLegacyQuery =
+    """query {
+      |  dashboard(dashboardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa") {
+      |    id
+      |    name
+      |    active
+      |  }
+      |}""".stripMargin
+
+  private val missingBoardIdQuery =
+    """query {
+      |  board {
+      |    id
+      |  }
+      |}""".stripMargin
+
+  private val invalidBoardIdQuery =
+    """query {
+      |  board(boardId: "not-a-uuid") {
+      |    id
       |  }
       |}""".stripMargin
 
@@ -910,6 +1121,17 @@ class BoardGraphQLRoutesSpec extends FunSuite {
       |  }
       |}""".stripMargin
 
+  private val missingOwnerMutation =
+    """mutation {
+      |  changeBoardOwnership(
+      |    boardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+      |    owner: "missing-user"
+      |  ) {
+      |    id
+      |    ownerUserId
+      |  }
+      |}""".stripMargin
+
   private val deactivateBoardMutation =
     """mutation {
       |  deactivateBoard(boardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa") {
@@ -939,6 +1161,29 @@ class BoardGraphQLRoutesSpec extends FunSuite {
       |      id
       |      name
       |    }
+      |  }
+      |}""".stripMargin
+
+  private val missingInvitedUserMutation =
+    """mutation {
+      |  inviteBoardMember(
+      |    boardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+      |    user: "unknown-user"
+      |    roleId: 3
+      |  ) {
+      |    boardId
+      |    userId
+      |  }
+      |}""".stripMargin
+
+  private val missingMemberInputMutation =
+    """mutation {
+      |  inviteBoardMember(
+      |    boardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+      |    roleId: 3
+      |  ) {
+      |    boardId
+      |    userId
       |  }
       |}""".stripMargin
 

@@ -1,8 +1,8 @@
 import type { ChangeEvent, ReactElement } from "react";
 
 import Box from "@mui/material/Box";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import Switch from "@mui/material/Switch";
-import Typography from "@mui/material/Typography";
 
 interface BoardsShowInactiveToggleProps {
   checked: boolean;
@@ -17,20 +17,24 @@ export const BoardsShowInactiveToggle = ({
     <Box
       sx={{
         alignItems: "center",
-        display: "flex",
+        display: "flex"
       }}
     >
-
+      <FormControlLabel
+        control={
           <Switch
             checked={checked}
             onChange={(_event: ChangeEvent<HTMLInputElement>, nextChecked: boolean) => {
               onChange(nextChecked);
             }}
           />
-            <Typography noWrap>
-                Show Inactive
-            </Typography>
-
+        }
+        label="Show inactive"
+        sx={{
+          m: 0,
+          whiteSpace: "nowrap"
+        }}
+      />
     </Box>
   );
 };
