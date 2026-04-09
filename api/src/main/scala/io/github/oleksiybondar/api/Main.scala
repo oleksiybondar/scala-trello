@@ -2,7 +2,7 @@ package io.github.oleksiybondar.api
 
 import cats.effect.{IO, IOApp, Resource}
 import com.comcast.ip4s.{Host, Port}
-import io.github.oleksiybondar.api.config.{AppConfig, ConfigLoader}
+import io.github.oleksiybondar.api.config.{AppConfig, ConfigLoader, DebugMode}
 import io.github.oleksiybondar.api.domain.board.{
   BoardAccessService,
   BoardAccessServiceLive,
@@ -21,7 +21,7 @@ import io.github.oleksiybondar.api.domain.user.{UserService, UserServiceLive}
 import io.github.oleksiybondar.api.http.HttpApi
 import io.github.oleksiybondar.api.http.docs.graphql.GraphiQLRoutes
 import io.github.oleksiybondar.api.http.docs.rest.OpenAPI
-import io.github.oleksiybondar.api.http.middleware.AuthMiddleware
+import io.github.oleksiybondar.api.http.middleware.{AuthMiddleware, LoggingMiddleware}
 import io.github.oleksiybondar.api.http.routes.graphql.{GraphQLContext, GraphQLRoutes}
 import io.github.oleksiybondar.api.http.routes.rest.auth.AuthRoutes
 import io.github.oleksiybondar.api.http.routes.rest.health.HealthRoutes
@@ -78,7 +78,7 @@ object Main extends IOApp.Simple {
   def buildApp(
       config: AppConfig
   ): Resource[IO, HttpApp[IO]] =
-    appResource(config)
+    appResource(config, DebugMode.isEnabled())
 
   def buildServer(
       config: AppConfig,
@@ -97,7 +97,8 @@ object Main extends IOApp.Simple {
     }
 
   def appResource(
-      config: AppConfig
+      config: AppConfig,
+      debugEnabled: Boolean
   ): Resource[IO, HttpApp[IO]] =
     for {
       db                        <- databaseResource(config)
@@ -132,7 +133,7 @@ object Main extends IOApp.Simple {
                                      authModule.authService
                                    )
     } yield {
-      buildHttpApp(authModule, userService, graphqlRoutes)
+      buildHttpApp(authModule, userService, graphqlRoutes, debugEnabled)
     }
 
   def databaseResource(config: AppConfig): Resource[IO, Database] =
@@ -248,18 +249,21 @@ object Main extends IOApp.Simple {
   def buildHttpApp(
       authModule: AuthModule[IO],
       userService: UserService[IO],
-      graphqlRoutes: HttpRoutes[IO]
+      graphqlRoutes: HttpRoutes[IO],
+      debugEnabled: Boolean
   ): HttpApp[IO] = {
     val authenticatedGraphqlRoutes =
       AuthMiddleware.middleware[IO](authModule.authService)(graphqlRoutes)
 
-    HttpApi.make[IO](
+    val httpApp = HttpApi.make[IO](
       HealthRoutes.routes[IO],
       AuthRoutes.routes[IO](authModule.authService, userService),
       authenticatedGraphqlRoutes,
       OpenAPI.routes[IO],
       GraphiQLRoutes.routes[IO]
     )
+
+    LoggingMiddleware[IO](debugEnabled).apply(httpApp)
   }
 
   private def parseHost(config: AppConfig): IO[Host] =

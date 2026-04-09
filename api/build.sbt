@@ -87,4 +87,8 @@ addCommandAlias(
 addCommandAlias("quality", "; fmtCheck; lint; coverageCheck")
 addCommandAlias("migrate", "runMain io.github.oleksiybondar.api.MigrateMain")
 addCommandAlias("app", "runMain io.github.oleksiybondar.api.Main")
+addCommandAlias(
+  "dev",
+  """; set Compile / run / fork := true; set Compile / run / envVars += ("debug" -> "true"); runMain io.github.oleksiybondar.api.Main"""
+)
 addCommandAlias("migrateAndRun", "migrate; app")

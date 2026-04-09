@@ -138,6 +138,12 @@ Start the API:
 sbt app
 ```
 
+Start the API in debug mode:
+
+```bash
+sbt dev
+```
+
 Run migration and app together:
 
 ```bash
@@ -151,6 +157,7 @@ Default config from `src/main/resources/application.conf`:
 - database: `jdbc:postgresql://localhost:5432/api`
 - user: `api_user`
 - password: `api_password`
+- debug logging: set `debug=true` to log request, response, and error events; default mode logs errors only
 
 ## Docs and endpoints
 
