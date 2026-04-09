@@ -10,11 +10,13 @@ import type { Board } from "@models/board";
 interface BoardCardHeaderProps {
   board: Board;
   onOpenSettings: () => void;
+  showSettingsButton?: boolean;
 }
 
 export const BoardCardHeader = ({
   board,
-  onOpenSettings
+  onOpenSettings,
+  showSettingsButton = true
 }: BoardCardHeaderProps): ReactElement => {
   return (
     <Stack
@@ -36,16 +38,18 @@ export const BoardCardHeader = ({
       >
         {board.name}
       </Typography>
-      <IconButton
-        aria-label="Board settings"
-        onClick={event => {
-          event.stopPropagation();
-          onOpenSettings();
-        }}
-        size="small"
-      >
-        <SettingsOutlinedIcon fontSize="small" />
-      </IconButton>
+      {showSettingsButton ? (
+        <IconButton
+          aria-label="Board settings"
+          onClick={event => {
+            event.stopPropagation();
+            onOpenSettings();
+          }}
+          size="small"
+        >
+          <SettingsOutlinedIcon fontSize="small" />
+        </IconButton>
+      ) : null}
     </Stack>
   );
 };

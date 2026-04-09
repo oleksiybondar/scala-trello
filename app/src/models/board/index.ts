@@ -2,11 +2,14 @@ export {
   buildActivateBoardMutation,
   buildBoardQuery,
   buildBoardMembersQuery,
+  buildChangeBoardMemberRoleMutation,
   buildChangeBoardDescriptionMutation,
   buildChangeBoardOwnershipMutation,
   buildChangeBoardTitleMutation,
   buildCreateBoardMutation,
   buildDeactivateBoardMutation,
+  buildInviteBoardMemberMutation,
+  buildRemoveBoardMemberMutation,
   buildMyBoardsQuery
 } from "./graphql";
 export {
@@ -22,17 +25,22 @@ export type {
   BoardUserSummaryResponse,
   BoardQueryResponse,
   BoardResponse,
+  ChangeBoardMemberRoleMutationResponse,
   ChangeBoardDescriptionMutationResponse,
   ChangeBoardOwnershipMutationResponse,
   ChangeBoardTitleMutationResponse,
   CreateBoardRequest,
   CreateBoardMutationResponse,
   DeactivateBoardMutationResponse,
+  InviteBoardMemberMutationResponse,
   MyBoardsQueryResponse
+  ,
+  RemoveBoardMemberMutationResponse
 } from "./dto";
 export type {
   Board,
   BoardMember,
+  BoardPermission,
   BoardRole,
   BoardUserSummary,
   CreateBoardInput

@@ -2,17 +2,25 @@ import type { ReactElement } from "react";
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 
+import { BoardAddMemberCard } from "@components/boards/board-settings/members/BoardAddMemberCard";
 import { BoardMembersListCard } from "@components/boards/board-settings/members/BoardMembersListCard";
-import { BoardSettingsPlaceholderPanel } from "@components/boards/board-settings/BoardSettingsPlaceholderPanel";
+import { useBoard } from "@hooks/useBoard";
 
 export const BoardMembersManagementCard = (): ReactElement => {
+  const { boardPermissionAccess } = useBoard();
+
+  if (
+    !boardPermissionAccess.canRead &&
+    !boardPermissionAccess.canCreate &&
+    !boardPermissionAccess.canModify &&
+    !boardPermissionAccess.canDelete
+  ) {
+    return <></>;
+  }
+
   return (
     <Stack spacing={3}>
-      <BoardSettingsPlaceholderPanel
-        description="Future section for searching users and inviting a new member."
-        helperText="User query input and invite action scaffold"
-        title="Add New Member"
-      />
+      <BoardAddMemberCard />
       <Divider />
       <BoardMembersListCard />
     </Stack>

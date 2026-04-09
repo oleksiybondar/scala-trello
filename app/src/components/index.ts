@@ -1,5 +1,6 @@
 export { BoardCard } from "@components/boards/BoardCard";
 export { BoardCardHeader } from "@components/boards/BoardCardHeader";
+export { BoardColumn } from "@components/boards/board-page/BoardColumn";
 export { BoardSettingsHeader } from "@components/boards/board-settings/BoardSettingsHeader";
 export { BoardSettingsLayout } from "@components/boards/board-settings/BoardSettingsLayout";
 export { BoardSettingsPlaceholderPanel } from "@components/boards/board-settings/BoardSettingsPlaceholderPanel";

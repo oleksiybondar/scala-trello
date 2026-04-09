@@ -485,12 +485,22 @@ class BoardGraphQLRoutesSpec extends FunSuite {
   }
 
   test("POST /graphql invites a dashboard member") {
-    val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
+    val invitedUser =
+      UserFixtures.user(
+        id = UserId(UUID.fromString("44444444-4444-4444-4444-444444444444")),
+        username = Some(Username("diana")),
+        email = Some(Email("diana@example.com")),
+        passwordHash = PasswordHash("hash:diana"),
+        firstName = FirstName("Diana"),
+        lastName = LastName("Member")
+      )
+
+    val response = withGraphQLRoutes(List(UserFixtures.sampleUser, invitedUser)) { ctx =>
       for {
         token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
         response <- ctx.httpApp.run(
                       graphqlRequest(
-                        inviteDashboardMemberMutation,
+                        inviteBoardMemberMutation,
                         accessToken = Some(token)
                       )
                     )
@@ -498,7 +508,7 @@ class BoardGraphQLRoutesSpec extends FunSuite {
     }
 
     val body   = response.as[Json].unsafeRunSync()
-    val cursor = body.hcursor.downField("data").downField("inviteDashboardMember")
+    val cursor = body.hcursor.downField("data").downField("inviteBoardMember")
 
     assertEquals(response.status, Status.Ok)
     assertEquals(
@@ -553,6 +563,29 @@ class BoardGraphQLRoutesSpec extends FunSuite {
     )
   }
 
+  test("POST /graphql changes a board member role") {
+    val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        changeBoardMemberRoleMutation,
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body   = response.as[Json].unsafeRunSync()
+    val cursor = body.hcursor.downField("data").downField("changeBoardMemberRole")
+
+    assertEquals(response.status, Status.Ok)
+    assertEquals(
+      cursor.downField("role").get[String]("name").toOption,
+      Some("viewer")
+    )
+  }
+
   test("POST /graphql removes a dashboard member") {
     val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
       for {
@@ -573,6 +606,74 @@ class BoardGraphQLRoutesSpec extends FunSuite {
       body.hcursor.downField("data").get[Boolean]("removeDashboardMember").toOption,
       Some(true)
     )
+  }
+
+  test("POST /graphql removes a board member") {
+    val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        removeBoardMemberMutation,
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body = response.as[Json].unsafeRunSync()
+
+    assertEquals(response.status, Status.Ok)
+    assertEquals(
+      body.hcursor.downField("data").get[Boolean]("removeBoardMember").toOption,
+      Some(true)
+    )
+  }
+
+  test("POST /graphql returns an error when removing yourself from a board") {
+    val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        removeCurrentBoardMemberMutation,
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body = response.as[Json].unsafeRunSync()
+
+    assertEquals(response.status, Status.Ok)
+    assert(body.noSpaces.contains("You cannot remove yourself from the board"))
+  }
+
+  test("POST /graphql returns an error when removing the last board member") {
+    val onlyMember =
+      io.github.oleksiybondar.api.testkit.fixtures.BoardMemberFixtures.member(
+        userId = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222"))
+      )
+
+    val response = withGraphQLRoutes(
+      users = List(UserFixtures.sampleUser),
+      members = List(onlyMember)
+    ) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        removeCurrentBoardMemberMutationAsAdminForSingleMemberBoard,
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body = response.as[Json].unsafeRunSync()
+
+    assertEquals(response.status, Status.Ok)
+    assert(body.noSpaces.contains("The last board member cannot be removed"))
   }
 
   test("POST /graphql returns an error when the current user cannot read the dashboard") {
@@ -825,14 +926,14 @@ class BoardGraphQLRoutesSpec extends FunSuite {
       |  }
       |}""".stripMargin
 
-  private val inviteDashboardMemberMutation =
+  private val inviteBoardMemberMutation =
     """mutation {
-      |  inviteDashboardMember(
-      |    dashboardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
-      |    userId: "44444444-4444-4444-4444-444444444444"
+      |  inviteBoardMember(
+      |    boardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+      |    user: "diana"
       |    roleId: 3
       |  ) {
-      |    dashboardId
+      |    boardId
       |    userId
       |    role {
       |      id
@@ -845,6 +946,21 @@ class BoardGraphQLRoutesSpec extends FunSuite {
     """mutation {
       |  changeDashboardMemberRole(
       |    dashboardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+      |    userId: "22222222-2222-2222-2222-222222222222"
+      |    roleId: 3
+      |  ) {
+      |    userId
+      |    role {
+      |      id
+      |      name
+      |    }
+      |  }
+      |}""".stripMargin
+
+  private val changeBoardMemberRoleMutation =
+    """mutation {
+      |  changeBoardMemberRole(
+      |    boardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
       |    userId: "22222222-2222-2222-2222-222222222222"
       |    roleId: 3
       |  ) {
@@ -876,6 +992,30 @@ class BoardGraphQLRoutesSpec extends FunSuite {
     """mutation {
       |  removeDashboardMember(
       |    dashboardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+      |    userId: "22222222-2222-2222-2222-222222222222"
+      |  )
+      |}""".stripMargin
+
+  private val removeBoardMemberMutation =
+    """mutation {
+      |  removeBoardMember(
+      |    boardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+      |    userId: "22222222-2222-2222-2222-222222222222"
+      |  )
+      |}""".stripMargin
+
+  private val removeCurrentBoardMemberMutation =
+    """mutation {
+      |  removeBoardMember(
+      |    boardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+      |    userId: "11111111-1111-1111-1111-111111111111"
+      |  )
+      |}""".stripMargin
+
+  private val removeCurrentBoardMemberMutationAsAdminForSingleMemberBoard =
+    """mutation {
+      |  removeBoardMember(
+      |    boardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
       |    userId: "22222222-2222-2222-2222-222222222222"
       |  )
       |}""".stripMargin

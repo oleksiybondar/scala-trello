@@ -9,6 +9,17 @@ export interface BoardRoleResponse {
   description: string | null;
   id: string;
   name: string;
+  permissions: BoardPermissionResponse[];
+}
+
+export interface BoardPermissionResponse {
+  area: string;
+  canCreate: boolean;
+  canDelete: boolean;
+  canModify: boolean;
+  canRead: boolean;
+  canReassign: boolean;
+  id: string;
 }
 
 export interface BoardMemberResponse {
@@ -24,6 +35,7 @@ export interface BoardResponse {
   createdAt: string;
   createdBy: BoardUserSummaryResponse | null;
   createdByUserId: string;
+  currentUserRole: BoardRoleResponse | null;
   description: string | null;
   id: string;
   lastModifiedByUserId: string;
@@ -48,7 +60,7 @@ export interface MyBoardsQueryResponse {
 }
 
 export interface BoardMembersQueryResponse {
-  dashboardMembers: BoardMemberResponse[];
+  boardMembers: BoardMemberResponse[];
 }
 
 export interface CreateBoardMutationResponse {
@@ -73,4 +85,16 @@ export interface DeactivateBoardMutationResponse {
 
 export interface ActivateBoardMutationResponse {
   activateBoard: BoardResponse;
+}
+
+export interface InviteBoardMemberMutationResponse {
+  inviteBoardMember: BoardMemberResponse;
+}
+
+export interface ChangeBoardMemberRoleMutationResponse {
+  changeBoardMemberRole: BoardMemberResponse;
+}
+
+export interface RemoveBoardMemberMutationResponse {
+  removeBoardMember: boolean;
 }

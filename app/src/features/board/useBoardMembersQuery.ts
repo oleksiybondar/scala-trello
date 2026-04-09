@@ -28,7 +28,7 @@ export const useBoardMembersQuery = (
             })
       });
 
-      return response.dashboardMembers.map(mapBoardMemberResponseToBoardMember);
+      return response.boardMembers.map(mapBoardMemberResponseToBoardMember);
     },
     queryKey: ["board-members", boardId]
   });

@@ -18,6 +18,21 @@ describe("BoardCard", () => {
             userId: "user-2"
           },
           createdByUserId: "user-2",
+          currentUserRole: {
+            description: "Board administrator",
+            permissions: [
+              {
+                area: "dashboard",
+                canCreate: true,
+                canDelete: true,
+                canModify: true,
+                canRead: true,
+                canReassign: true
+              }
+            ],
+            roleId: "1",
+            roleName: "admin"
+          },
           description: "Planning board for platform work.",
           lastModifiedByUserId: "user-3",
           membersCount: 2,

@@ -23,6 +23,20 @@ const BOARD_FIELDS = `
   createdAt
   modifiedAt
   lastModifiedByUserId
+  currentUserRole {
+    id
+    name
+    description
+    permissions {
+      id
+      area
+      canRead
+      canCreate
+      canModify
+      canDelete
+      canReassign
+    }
+  }
 `;
 
 const escapeGraphQLString = (value: string): string => {
@@ -84,7 +98,7 @@ export const buildBoardQuery = (boardId: string): string => {
 export const buildBoardMembersQuery = (boardId: string): string => {
   return /* GraphQL */ `
     query {
-      dashboardMembers(boardId: ${serializeGraphQLString(boardId)}) {
+      boardMembers(boardId: ${serializeGraphQLString(boardId)}) {
         boardId
         userId
         createdAt
@@ -98,8 +112,111 @@ export const buildBoardMembersQuery = (boardId: string): string => {
           id
           name
           description
+          permissions {
+            id
+            area
+            canRead
+            canCreate
+            canModify
+            canDelete
+            canReassign
+          }
         }
       }
+    }
+  `;
+};
+
+export const buildInviteBoardMemberMutation = (
+  boardId: string,
+  user: string,
+  roleId: string
+): string => {
+  return /* GraphQL */ `
+    mutation {
+      inviteBoardMember(
+        boardId: ${serializeGraphQLString(boardId)}
+        user: ${serializeGraphQLString(user)}
+        roleId: ${roleId}
+      ) {
+        boardId
+        userId
+        createdAt
+        user {
+          id
+          firstName
+          lastName
+          avatarUrl
+        }
+        role {
+          id
+          name
+          description
+          permissions {
+            id
+            area
+            canRead
+            canCreate
+            canModify
+            canDelete
+            canReassign
+          }
+        }
+      }
+    }
+  `;
+};
+
+export const buildChangeBoardMemberRoleMutation = (
+  boardId: string,
+  userId: string,
+  roleId: string
+): string => {
+  return /* GraphQL */ `
+    mutation {
+      changeBoardMemberRole(
+        boardId: ${serializeGraphQLString(boardId)}
+        userId: ${serializeGraphQLString(userId)}
+        roleId: ${roleId}
+      ) {
+        boardId
+        userId
+        createdAt
+        user {
+          id
+          firstName
+          lastName
+          avatarUrl
+        }
+        role {
+          id
+          name
+          description
+          permissions {
+            id
+            area
+            canRead
+            canCreate
+            canModify
+            canDelete
+            canReassign
+          }
+        }
+      }
+    }
+  `;
+};
+
+export const buildRemoveBoardMemberMutation = (
+  boardId: string,
+  userId: string
+): string => {
+  return /* GraphQL */ `
+    mutation {
+      removeBoardMember(
+        boardId: ${serializeGraphQLString(boardId)}
+        userId: ${serializeGraphQLString(userId)}
+      )
     }
   `;
 };

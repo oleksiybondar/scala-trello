@@ -7,7 +7,11 @@ import { BoardTitleForm } from "@components/boards/board-settings/general/BoardT
 import { useBoard } from "@hooks/useBoard";
 
 export const BoardGeneralDetailsCard = (): ReactElement => {
-  const { isLoadingBoard } = useBoard();
+  const { boardPermissionAccess, isLoadingBoard } = useBoard();
+
+  if (!boardPermissionAccess.canModify) {
+    return <></>;
+  }
 
   return (
     <Stack spacing={3}>

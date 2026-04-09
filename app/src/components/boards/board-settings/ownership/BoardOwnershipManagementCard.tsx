@@ -7,13 +7,25 @@ import { BoardStatusForm } from "@components/boards/board-settings/ownership/Boa
 import { useBoard } from "@hooks/useBoard";
 
 export const BoardOwnershipManagementCard = (): ReactElement => {
-  const { isLoadingBoard } = useBoard();
+  const { boardPermissionAccess, isLoadingBoard } = useBoard();
+
+  if (
+    !boardPermissionAccess.canModify &&
+    !boardPermissionAccess.canDelete &&
+    !boardPermissionAccess.canReassign
+  ) {
+    return <></>;
+  }
 
   return (
     <Stack spacing={3}>
-      <BoardChangeOwnerForm disabled={isLoadingBoard} />
-      <Divider />
-      <BoardStatusForm disabled={isLoadingBoard} />
+      {boardPermissionAccess.canModify || boardPermissionAccess.canReassign ? (
+        <>
+          <BoardChangeOwnerForm disabled={isLoadingBoard} />
+          {boardPermissionAccess.canDelete ? <Divider /> : null}
+        </>
+      ) : null}
+      {boardPermissionAccess.canDelete ? <BoardStatusForm disabled={isLoadingBoard} /> : null}
     </Stack>
   );
 };

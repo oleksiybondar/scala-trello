@@ -8,6 +8,7 @@ import { BoardCardHeader } from "@components/boards/BoardCardHeader";
 import { BoardInfo } from "@components/boards/BoardInfo";
 import { TicketsInfo } from "@components/boards/TicketsInfo";
 import { TimeTrackingInfo } from "@components/boards/TimeTrackingInfo";
+import { canManageBoardSettings } from "@features/board/boardPermissions";
 import type { Board } from "@models/board";
 import type { TicketStateCounts } from "@components/boards/tickets-info/types";
 import type { TimeTrackingStats } from "@components/boards/time-tracking-info/types";
@@ -56,6 +57,7 @@ export const BoardCard = ({ board }: BoardCardProps): ReactElement => {
   const navigate = useNavigate();
   const boardPath = "/boards/" + board.boardId;
   const boardSettingsPath = boardPath + "/settings";
+  const showSettingsButton = canManageBoardSettings(board);
 
   const openBoard = (): void => {
     void navigate(boardPath);
@@ -85,6 +87,7 @@ export const BoardCard = ({ board }: BoardCardProps): ReactElement => {
           onOpenSettings={() => {
             void navigate(boardSettingsPath);
           }}
+          showSettingsButton={showSettingsButton}
         />
         <Stack
           direction="row"

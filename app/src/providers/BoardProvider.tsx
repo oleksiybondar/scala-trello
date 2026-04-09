@@ -2,6 +2,10 @@ import type { PropsWithChildren, ReactElement } from "react";
 import { useParams } from "react-router-dom";
 
 import { BoardContext } from "@contexts/board-context";
+import {
+  canManageBoardSettings,
+  getBoardPermissionAccess
+} from "@features/board/boardPermissions";
 import { useBoardMetadataMutation } from "@features/board/useBoardMetadataMutation";
 import { useBoardQuery } from "@features/board/useBoardQuery";
 
@@ -17,6 +21,8 @@ export const BoardProvider = ({
     changeBoardTitleMutation,
     deactivateBoardMutation
   } = useBoardMetadataMutation();
+  const board = boardQuery.data ?? null;
+  const boardPermissionAccess = getBoardPermissionAccess(board);
 
   return (
     <BoardContext.Provider
@@ -26,8 +32,10 @@ export const BoardProvider = ({
             boardId
           });
         },
-        board: boardQuery.data ?? null,
+        board,
         boardError: boardQuery.error instanceof Error ? boardQuery.error : null,
+        boardPermissionAccess,
+        canManageBoardSettings: canManageBoardSettings(board),
         changeBoardDescription: async (description: string | null) => {
           await changeBoardDescriptionMutation.mutateAsync({
             boardId,

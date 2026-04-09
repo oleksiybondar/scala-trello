@@ -5,12 +5,29 @@ export interface BoardUserSummary {
   userId: string;
 }
 
+export interface BoardPermission {
+  area: string;
+  canCreate: boolean;
+  canDelete: boolean;
+  canModify: boolean;
+  canRead: boolean;
+  canReassign: boolean;
+}
+
+export interface BoardRole {
+  description: string | null;
+  permissions: BoardPermission[];
+  roleId: string;
+  roleName: string;
+}
+
 export interface Board {
   active: boolean;
   boardId: string;
   createdAt: string;
   createdBy: BoardUserSummary | null;
   createdByUserId: string;
+  currentUserRole: BoardRole | null;
   description: string | null;
   lastModifiedByUserId: string;
   membersCount: number;
@@ -23,12 +40,6 @@ export interface Board {
 export interface CreateBoardInput {
   description: string | null;
   name: string;
-}
-
-export interface BoardRole {
-  description: string | null;
-  roleId: string;
-  roleName: string;
 }
 
 export interface BoardMember {

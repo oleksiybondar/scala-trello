@@ -6,6 +6,8 @@ import type {
 import type {
   Board,
   BoardMember,
+  BoardPermission,
+  BoardRole,
   BoardUserSummary,
   CreateBoardInput
 } from "@models/board/types";
@@ -25,6 +27,32 @@ const mapBoardUserSummary = (
   };
 };
 
+const mapBoardPermission = (
+  response: BoardMemberResponse["role"]["permissions"][number]
+): BoardPermission => {
+  return {
+    area: response.area,
+    canCreate: response.canCreate,
+    canDelete: response.canDelete,
+    canModify: response.canModify,
+    canRead: response.canRead,
+    canReassign: response.canReassign
+  };
+};
+
+const mapBoardRole = (response: BoardResponse["currentUserRole"]): BoardRole | null => {
+  if (response === null) {
+    return null;
+  }
+
+  return {
+    description: response.description,
+    permissions: response.permissions.map(mapBoardPermission),
+    roleId: response.id,
+    roleName: response.name
+  };
+};
+
 export const mapBoardResponseToBoard = (
   response: BoardResponse
 ): Board => {
@@ -34,6 +62,7 @@ export const mapBoardResponseToBoard = (
     createdAt: response.createdAt,
     createdBy: mapBoardUserSummary(response.createdBy),
     createdByUserId: response.createdByUserId,
+    currentUserRole: mapBoardRole(response.currentUserRole),
     description: response.description,
     lastModifiedByUserId: response.lastModifiedByUserId,
     membersCount: response.membersCount,
@@ -52,6 +81,7 @@ export const mapBoardMemberResponseToBoardMember = (
     createdAt: response.createdAt,
     role: {
       description: response.role.description,
+      permissions: response.role.permissions.map(mapBoardPermission),
       roleId: response.role.id,
       roleName: response.role.name
     },
