@@ -22,6 +22,7 @@ export const useBoardsQuery = (
       const response = await requestGraphQL<MyBoardsQueryResponse>({
         accessToken,
         document: buildMyBoardsQuery({
+          active: params.active,
           keyword: params.keyword,
           ownerUserId: params.owner
         }),
@@ -33,6 +34,11 @@ export const useBoardsQuery = (
       });
       return response.myBoards.map(mapBoardResponseToBoard);
     },
-    queryKey: ["boards", params.keyword ?? "", params.owner ?? ""]
+    queryKey: [
+      "boards",
+      params.active === undefined ? "all" : String(params.active),
+      params.keyword ?? "",
+      params.owner ?? ""
+    ]
   });
 };

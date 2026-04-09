@@ -234,6 +234,7 @@ final class BoardServiceLive[F[_]: Temporal](
     }
 
   private def matchesFilters(board: Board, filters: BoardQueryFilters): Boolean = {
+    val matchesActive     = filters.active.forall(_ == board.active)
     val normalizedKeyword = filters.keyword.map(_.trim.toLowerCase).filter(_.nonEmpty)
     val matchesKeyword    = normalizedKeyword.forall { keyword =>
       board.name.value.toLowerCase.contains(keyword) ||
@@ -241,6 +242,6 @@ final class BoardServiceLive[F[_]: Temporal](
     }
     val matchesOwner      = filters.ownerUserId.forall(_ == board.ownerUserId)
 
-    matchesKeyword && matchesOwner
+    matchesActive && matchesKeyword && matchesOwner
   }
 }

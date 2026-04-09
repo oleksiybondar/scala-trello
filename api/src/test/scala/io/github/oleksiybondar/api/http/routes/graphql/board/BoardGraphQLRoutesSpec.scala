@@ -115,6 +115,51 @@ class BoardGraphQLRoutesSpec extends FunSuite {
     assertEquals(dashboards.head.hcursor.get[String]("name").toOption, Some("Platform Board"))
   }
 
+  test("POST /graphql can include inactive boards when active filter is null") {
+    val inactiveBoard =
+      io.github.oleksiybondar.api.testkit.fixtures.BoardFixtures.dashboard(
+        id = BoardId(UUID.fromString("dddddddd-dddd-dddd-dddd-dddddddddddd")),
+        name = BoardName("Archived Board"),
+        active = false
+      )
+    val memberships   = List(
+      io.github.oleksiybondar.api.testkit.fixtures.BoardMemberFixtures.sampleMember.copy(
+        boardId = io.github.oleksiybondar.api.testkit.fixtures.BoardFixtures.sampleDashboard.id
+      ),
+      io.github.oleksiybondar.api.testkit.fixtures.BoardMemberFixtures.sampleMember.copy(
+        boardId = inactiveBoard.id
+      )
+    )
+
+    val response = withGraphQLRoutes(
+      users = List(UserFixtures.sampleUser),
+      dashboards = List(
+        io.github.oleksiybondar.api.testkit.fixtures.BoardFixtures.sampleDashboard,
+        inactiveBoard
+      ),
+      members = memberships
+    ) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        boardsIncludingInactiveQuery,
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body       = response.as[Json].unsafeRunSync()
+    val dashboards =
+      body.hcursor.downField(
+        "data"
+      ).downField("myBoards").focus.flatMap(_.asArray).getOrElse(Vector.empty)
+
+    assertEquals(response.status, Status.Ok)
+    assertEquals(dashboards.size, 2)
+  }
+
   test("POST /graphql creates a board and returns it") {
     val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
       for {
@@ -675,6 +720,15 @@ class BoardGraphQLRoutesSpec extends FunSuite {
       |    keyword: "platform"
       |    ownerUserId: "11111111-1111-1111-1111-111111111111"
       |  ) {
+      |    id
+      |    name
+      |    active
+      |  }
+      |}""".stripMargin
+
+  private val boardsIncludingInactiveQuery =
+    """query {
+      |  myBoards(active: null) {
       |    id
       |    name
       |    active

@@ -38,15 +38,18 @@ const serializeNullableGraphQLString = (value: string | undefined): string => {
 };
 
 interface BuildMyBoardsQueryParams {
+  active?: boolean | undefined;
   keyword?: string | undefined;
   ownerUserId?: string | undefined;
 }
 
 const buildMyBoardsArguments = ({
+  active,
   keyword,
   ownerUserId
 }: BuildMyBoardsQueryParams): string => {
   const args = [
+    `active: ${active === undefined ? "null" : String(active)}`,
     `keyword: ${serializeNullableGraphQLString(keyword)}`,
     `ownerUserId: ${serializeNullableGraphQLString(ownerUserId)}`
   ];

@@ -4,6 +4,7 @@ import Stack from "@mui/material/Stack";
 
 import { BoardsOwnerFilter } from "@components/boards/boards-toolbar/BoardsOwnerFilter";
 import { BoardsSearchInput } from "@components/boards/boards-toolbar/BoardsSearchInput";
+import { BoardsShowInactiveToggle } from "@components/boards/boards-toolbar/BoardsShowInactiveToggle";
 import { CreateBoardToolbarButton } from "@components/boards/boards-toolbar/CreateBoardToolbarButton";
 import type { BoardsToolbarOwnerOption } from "@components/boards/boards-toolbar/types";
 import { useBoards } from "@hooks/useBoards";
@@ -66,6 +67,15 @@ export const BoardsToolbar = ({ onCreateBoard }: BoardsToolbarProps): ReactEleme
           }}
           options={toolbarOwnerOptions}
           value={currentParams.owner}
+        />
+        <BoardsShowInactiveToggle
+          checked={currentParams.showInactive}
+          onChange={checked => {
+            queryBoards({
+              page: 1,
+              showInactive: checked
+            });
+          }}
         />
       </Stack>
       <CreateBoardToolbarButton onClick={onCreateBoard} />

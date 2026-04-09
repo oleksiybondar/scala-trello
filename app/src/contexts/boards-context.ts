@@ -13,13 +13,14 @@ export interface QueryBoardsParams {
   keyword?: string | undefined;
   owner?: string | undefined;
   page?: number | undefined;
+  showInactive?: boolean | undefined;
 }
 
 export interface NormalizedQueryBoardsParams {
-  active: boolean;
   keyword?: string | undefined;
   owner?: string | undefined;
   page: number;
+  showInactive: boolean;
 }
 
 export interface BoardsContextValue {
@@ -42,8 +43,8 @@ export const BoardsContext = createContext<BoardsContextValue>({
   boardsError: null,
   createBoard: missingBoardsProvider,
   currentParams: {
-    active: true,
-    page: 1
+    page: 1,
+    showInactive: false
   },
   isCreatingBoard: false,
   isLoadingBoards: false,

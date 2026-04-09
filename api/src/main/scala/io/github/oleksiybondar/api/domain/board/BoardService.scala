@@ -4,6 +4,7 @@ import io.github.oleksiybondar.api.domain.permission.RoleId
 import io.github.oleksiybondar.api.domain.user.UserId
 
 final case class BoardQueryFilters(
+    active: Option[Boolean] = Some(true),
     keyword: Option[String] = None,
     ownerUserId: Option[UserId] = None
 )

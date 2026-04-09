@@ -36,10 +36,10 @@ describe("MyBoardsPage", () => {
       boardsError: null,
       createBoard,
       currentParams: {
-        active: true,
         keyword: undefined,
         owner: undefined,
-        page: 1
+        page: 1,
+        showInactive: false
       },
       isCreatingBoard: false,
       isLoadingBoards: false,
@@ -87,10 +87,10 @@ describe("MyBoardsPage", () => {
       boardsError: null,
       createBoard: vi.fn(),
       currentParams: {
-        active: true,
         keyword: "sprint",
         owner: undefined,
-        page: 1
+        page: 1,
+        showInactive: false
       },
       isCreatingBoard: false,
       isLoadingBoards: false,

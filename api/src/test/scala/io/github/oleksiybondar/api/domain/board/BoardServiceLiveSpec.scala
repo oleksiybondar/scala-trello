@@ -134,6 +134,34 @@ class BoardServiceLiveSpec extends FunSuite {
     assertEquals(result, List(matchingDashboard))
   }
 
+  test("listDashboardsForUser can include inactive dashboards when active filter is unset") {
+    val activeBoard   = BoardFixtures.sampleDashboard
+    val inactiveBoard =
+      BoardFixtures.dashboard(
+        id = BoardId(UUID.fromString("dddddddd-dddd-dddd-dddd-dddddddddddd")),
+        name = BoardName("Archived Board"),
+        active = false
+      )
+    val memberships   = List(
+      BoardMemberFixtures.sampleMember.copy(boardId = activeBoard.id),
+      BoardMemberFixtures.sampleMember.copy(boardId = inactiveBoard.id)
+    )
+
+    val result = BoardServiceFixtures.withBoardService(
+      dashboards = List(activeBoard, inactiveBoard),
+      members = memberships,
+      roles = List(RoleFixtures.adminRole),
+      permissions = List(PermissionFixtures.adminDashboardPermission)
+    ) { ctx =>
+      ctx.dashboardService.listDashboardsForUser(
+        BoardMemberFixtures.sampleMember.userId,
+        BoardQueryFilters(active = None)
+      )
+    }
+
+    assertEquals(result.map(_.id), List(activeBoard.id, inactiveBoard.id))
+  }
+
   test("deactivate marks the dashboard inactive when the actor has access") {
     val dashboard = BoardFixtures.sampleDashboard
 

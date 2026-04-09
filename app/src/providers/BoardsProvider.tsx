@@ -12,18 +12,18 @@ import { useBoardsQuery } from "@features/board/useBoardsQuery";
 import type { CreateBoardInput } from "@models/board";
 
 const DEFAULT_QUERY_BOARDS_PARAMS = {
-  active: true as const,
-  page: 1
+  page: 1,
+  showInactive: false
 } as const;
 
 const normalizeQueryBoardsParams = (
   params: QueryBoardsParams
 ): NormalizedQueryBoardsParams => {
   return {
-    active: params.active ?? DEFAULT_QUERY_BOARDS_PARAMS.active,
     keyword: params.keyword,
     owner: params.owner,
-    page: params.page ?? DEFAULT_QUERY_BOARDS_PARAMS.page
+    page: params.page ?? DEFAULT_QUERY_BOARDS_PARAMS.page,
+    showInactive: params.showInactive ?? DEFAULT_QUERY_BOARDS_PARAMS.showInactive
   };
 };
 
@@ -37,17 +37,19 @@ export const BoardsProvider = ({
     normalizeQueryBoardsParams(DEFAULT_QUERY_BOARDS_PARAMS)
   );
   const boardsQuery = useBoardsQuery({
+    active: currentParams.showInactive ? undefined : true,
     keyword: currentParams.keyword,
     owner: currentParams.owner
   });
-  const ownerOptionsQuery = useBoardsQuery({});
+  const ownerOptionsQuery = useBoardsQuery({
+    active: undefined
+  });
   const createBoardMutation = useCreateBoardMutation();
   const visibleBoards = boardsQuery.data ?? [];
   const allBoards = ownerOptionsQuery.data ?? [];
 
   const value = {
     boards: filterBoards(visibleBoards, {
-      active: currentParams.active,
       page: currentParams.page
     }),
     boardsError:

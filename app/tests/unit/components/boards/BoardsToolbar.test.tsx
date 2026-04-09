@@ -32,10 +32,10 @@ describe("BoardsToolbar", () => {
       boardsError: null,
       createBoard: vi.fn(),
       currentParams: {
-        active: true,
         keyword: undefined,
         owner: undefined,
-        page: 1
+        page: 1,
+        showInactive: false
       },
       isCreatingBoard: false,
       isLoadingBoards: false,
@@ -84,6 +84,13 @@ describe("BoardsToolbar", () => {
     expect(queryBoards).toHaveBeenLastCalledWith({
       owner: "user-a",
       page: 1
+    });
+
+    await user.click(screen.getByRole("switch", { name: "Show inactive" }));
+
+    expect(queryBoards).toHaveBeenLastCalledWith({
+      page: 1,
+      showInactive: true
     });
 
     await user.click(screen.getByRole("button", { name: "New board" }));

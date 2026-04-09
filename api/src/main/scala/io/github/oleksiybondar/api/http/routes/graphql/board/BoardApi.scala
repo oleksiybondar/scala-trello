@@ -41,6 +41,7 @@ object BoardApi {
 
   private val BoardIdArg          = Argument("boardId", OptionInputType(StringType))
   private val LegacyBoardIdArg    = Argument("dashboardId", OptionInputType(StringType))
+  private val ActiveArg           = Argument("active", OptionInputType(BooleanType))
   private val KeywordArg          = Argument("keyword", OptionInputType(StringType))
   private val NameArg             = Argument("name", StringType)
   private val OwnerUserIdArg      = Argument("ownerUserId", OptionInputType(StringType))
@@ -367,7 +368,7 @@ object BoardApi {
     Field(
       name = name,
       fieldType = ListType(BoardType),
-      arguments = KeywordArg :: OwnerUserIdArg :: Nil,
+      arguments = ActiveArg :: KeywordArg :: OwnerUserIdArg :: Nil,
       resolve = ctx =>
         withCurrentUser(ctx) { currentUserId =>
           for {
@@ -580,17 +581,35 @@ object BoardApi {
   private def buildBoardQueryFilters(
       ctx: sangria.schema.Context[GraphQLContext, Unit]
   ): IO[BoardQueryFilters] =
-    optionalStringArg(ctx, KeywordArg)
-      .traverse(_.trim match {
-        case ""      => IO.pure(None)
-        case keyword => IO.pure(Some(keyword))
-      })
-      .map(_.flatten)
-      .flatMap { keyword =>
-        optionalStringArg(ctx, OwnerUserIdArg)
-          .traverse(parseUserId(_).liftTo[IO])
-          .map(ownerUserId => BoardQueryFilters(keyword = keyword, ownerUserId = ownerUserId))
+    optionalBooleanArg(ctx, ActiveArg).flatMap { active =>
+      optionalStringArg(ctx, KeywordArg)
+        .traverse(_.trim match {
+          case ""      => IO.pure(None)
+          case keyword => IO.pure(Some(keyword))
+        })
+        .map(_.flatten)
+        .flatMap { keyword =>
+          optionalStringArg(ctx, OwnerUserIdArg)
+            .traverse(parseUserId(_).liftTo[IO])
+            .map(ownerUserId =>
+              BoardQueryFilters(active = active, keyword = keyword, ownerUserId = ownerUserId)
+            )
+        }
+    }
+
+  private def optionalBooleanArg(
+      ctx: sangria.schema.Context[GraphQLContext, Unit],
+      argument: Argument[?]
+  ): IO[Option[Boolean]] =
+    IO.pure(
+      Option(ctx.arg(argument): Any) match {
+        case Some(value: Boolean)       => Some(value)
+        case Some(Some(value: Boolean)) => Some(value)
+        case Some(None)                 => None
+        case Some(_)                    => None
+        case None                       => None
       }
+    )
 
   private def optionalStringArg(
       ctx: sangria.schema.Context[GraphQLContext, Unit],
