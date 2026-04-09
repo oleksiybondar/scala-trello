@@ -27,6 +27,16 @@ final class InMemoryAuthRepo[F[_]: Sync] private (
       )
     )
 
+  override def deleteExpiredOrRevoked(now: Instant): F[Int] =
+    sessions.modify { currentSessions =>
+      val (sessionsToDelete, sessionsToKeep) =
+        currentSessions.partition { case (_, session) =>
+          session.revokedAt.nonEmpty || !session.expiresAt.isAfter(now)
+        }
+
+      (sessionsToKeep, sessionsToDelete.size)
+    }
+
   override def rotateRefreshToken(
       sessionId: SessionId,
       currentRefreshToken: RefreshToken,
