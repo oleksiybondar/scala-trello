@@ -88,6 +88,9 @@ final class SlickTicketRepo[F[_]: Async](db: Database) extends TicketRepo[F] {
 
   private val tickets = TableQuery[TicketsTable]
 
+  override def nextId: F[TicketId] =
+    run(tickets.map(_.id).max.result).map(id => TicketId(id.getOrElse(0L) + 1L))
+
   override def create(ticket: Ticket): F[Unit] =
     run(tickets += toRow(ticket)).void
 

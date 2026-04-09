@@ -79,6 +79,8 @@ object Main extends IOApp.Simple {
                          modules.board.boardAccessService,
                          modules.permission.roleService,
                          modules.permission.permissionService,
+                         modules.ticket.ticketService,
+                         modules.dictionary.ticketStateRepo,
                          modules.auth.authService
                        )
     } yield {
@@ -95,6 +97,8 @@ object Main extends IOApp.Simple {
       dashboardAccessService: BoardAccessService[IO],
       roleService: RoleService[IO],
       permissionService: PermissionService[IO],
+      ticketService: io.github.oleksiybondar.api.domain.ticket.TicketService[IO],
+      ticketStateRepo: io.github.oleksiybondar.api.infrastructure.db.ticket.TicketStateRepo[IO],
       authService: io.github.oleksiybondar.api.domain.auth.AuthService[IO]
   ): Resource[IO, HttpRoutes[IO]] =
     Resource.eval(
@@ -106,6 +110,8 @@ object Main extends IOApp.Simple {
           dashboardAccessService = dashboardAccessService,
           roleService = roleService,
           permissionService = permissionService,
+          ticketService = ticketService,
+          ticketStateRepo = ticketStateRepo,
           authService = authService,
           currentUserId = None
         )

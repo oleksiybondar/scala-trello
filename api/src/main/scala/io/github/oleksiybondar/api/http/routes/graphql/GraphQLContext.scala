@@ -8,7 +8,9 @@ import io.github.oleksiybondar.api.domain.board.{
   BoardService
 }
 import io.github.oleksiybondar.api.domain.permission.{PermissionService, RoleService}
+import io.github.oleksiybondar.api.domain.ticket.TicketService
 import io.github.oleksiybondar.api.domain.user.{UserId, UserService}
+import io.github.oleksiybondar.api.infrastructure.db.ticket.TicketStateRepo
 
 /** Per-request GraphQL context carrying services and the authenticated user identity. */
 final case class GraphQLContext(
@@ -24,6 +26,10 @@ final case class GraphQLContext(
     roleService: RoleService[IO],
     /** Permission service exposed to GraphQL dictionary queries. */
     permissionService: PermissionService[IO],
+    /** Ticket service exposed to ticket queries and mutations. */
+    ticketService: TicketService[IO],
+    /** Ticket state repo used for status/name expansion in GraphQL views. */
+    ticketStateRepo: TicketStateRepo[IO],
     /** Authentication service available for GraphQL flows that need token-related behavior. */
     authService: AuthService[IO],
     /** User id extracted from the already verified bearer token, when present. */

@@ -9,6 +9,7 @@ final case class ApplicationModules[F[_]](
     permission: PermissionModule[F],
     board: BoardModule[F],
     dictionary: DictionaryModule[F],
+    ticket: TicketModule[F],
     auth: AuthModule[F]
 )
 
@@ -22,6 +23,8 @@ object ApplicationModules {
     val permissionModule = PermissionModule.make[F](db)
     val boardModule      = BoardModule.make[F](db, permissionModule.roleService)
     val dictionaryModule = DictionaryModule.make[F](db)
+    val ticketModule     =
+      TicketModule.make[F](db, boardModule.boardAccessService, boardModule.boardMembershipService)
     val authModule       =
       AuthModule.make[F](
         config.auth,
@@ -36,6 +39,7 @@ object ApplicationModules {
       permission = permissionModule,
       board = boardModule,
       dictionary = dictionaryModule,
+      ticket = ticketModule,
       auth = authModule
     )
   }

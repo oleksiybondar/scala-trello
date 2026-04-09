@@ -2,64 +2,92 @@ package io.github.oleksiybondar.api.domain.ticket
 
 import cats.effect.kernel.Temporal
 import cats.syntax.all._
-import io.github.oleksiybondar.api.domain.board.BoardAccessService
+import io.github.oleksiybondar.api.domain.board.{BoardAccessService, BoardMembershipService}
 import io.github.oleksiybondar.api.domain.user.UserId
 import io.github.oleksiybondar.api.infrastructure.db.ticket.TicketRepo
 
 final class TicketServiceLive[F[_]: Temporal](
     ticketRepo: TicketRepo[F],
-    boardAccessService: BoardAccessService[F]
+    boardAccessService: BoardAccessService[F],
+    boardMembershipService: BoardMembershipService[F]
 ) extends TicketService[F] {
 
-  override def createTicket(ticket: Ticket, actorUserId: UserId): F[Boolean] =
-    boardAccessService.canCreateTicket(ticket.boardId, actorUserId).flatMap {
-      case false => false.pure[F]
+  override def createTicket(
+      command: CreateTicketCommand,
+      actorUserId: UserId
+  ): F[Option[Ticket]] =
+    boardAccessService.canCreateTicket(command.boardId, actorUserId).flatMap {
+      case false => none[Ticket].pure[F]
       case true  =>
-        Temporal[F].realTimeInstant.flatMap { now =>
-          ticketRepo
-            .create(
-              ticket.copy(
-                createdByUserId = actorUserId,
-                lastModifiedByUserId = actorUserId,
-                createdAt = now,
-                modifiedAt = now
-              )
-            )
-            .as(true)
+        ensureAssignableMember(command.boardId, command.assignedToUserId).flatMap {
+          case false => none[Ticket].pure[F]
+          case true  =>
+            for {
+              id    <- ticketRepo.nextId
+              now   <- Temporal[F].realTimeInstant
+              ticket = Ticket(
+                         id = id,
+                         boardId = command.boardId,
+                         name = command.name,
+                         description = command.description,
+                         component = command.component,
+                         scope = command.scope,
+                         acceptanceCriteria = command.acceptanceCriteria,
+                         createdByUserId = actorUserId,
+                         assignedToUserId = command.assignedToUserId,
+                         lastModifiedByUserId = actorUserId,
+                         createdAt = now,
+                         modifiedAt = now,
+                         originalEstimatedMinutes = command.originalEstimatedMinutes,
+                         priority = command.priority,
+                         severityId = command.severityId,
+                         stateId = command.stateId,
+                         commentsEnabled = true
+                       )
+              _     <- ticketRepo.create(ticket)
+            } yield Some(ticket)
         }
     }
 
   override def getTicket(id: TicketId): F[Option[Ticket]] =
     ticketRepo.findById(id)
 
-  override def modifyTicket(ticket: Ticket, actorUserId: UserId): F[Boolean] =
-    ticketRepo.findById(ticket.id).flatMap {
-      case None           => false.pure[F]
-      case Some(existing) =>
-        boardAccessService.canModifyTicket(existing.boardId, actorUserId).flatMap {
-          case false => false.pure[F]
-          case true  =>
-            Temporal[F].realTimeInstant.flatMap { now =>
-              ticketRepo.update(
-                existing.copy(
-                  name = ticket.name,
-                  description = ticket.description,
-                  component = ticket.component,
-                  scope = ticket.scope,
-                  acceptanceCriteria = ticket.acceptanceCriteria,
-                  assignedToUserId = ticket.assignedToUserId,
-                  originalEstimatedMinutes = ticket.originalEstimatedMinutes,
-                  priority = ticket.priority,
-                  severityId = ticket.severityId,
-                  stateId = ticket.stateId,
-                  commentsEnabled = ticket.commentsEnabled,
-                  modifiedAt = now,
-                  lastModifiedByUserId = actorUserId
-                )
-              )
-            }
-        }
+  override def listTickets(
+      boardId: io.github.oleksiybondar.api.domain.board.BoardId,
+      actorUserId: UserId
+  ): F[List[Ticket]] =
+    boardAccessService.canReadTicket(boardId, actorUserId).flatMap {
+      case false => List.empty[Ticket].pure[F]
+      case true  => ticketRepo.listByBoard(boardId)
     }
+
+  override def changeTitle(
+      ticketId: TicketId,
+      actorUserId: UserId,
+      title: TicketName
+  ): F[Boolean] =
+    updateTicket(ticketId, actorUserId)(_.copy(name = title))
+
+  override def changeDescription(
+      ticketId: TicketId,
+      actorUserId: UserId,
+      description: Option[TicketDescription]
+  ): F[Boolean] =
+    updateTicket(ticketId, actorUserId)(_.copy(description = description))
+
+  override def changeAcceptanceCriteria(
+      ticketId: TicketId,
+      actorUserId: UserId,
+      acceptanceCriteria: Option[TicketAcceptanceCriteria]
+  ): F[Boolean] =
+    updateTicket(ticketId, actorUserId)(_.copy(acceptanceCriteria = acceptanceCriteria))
+
+  override def changeEstimatedTime(
+      ticketId: TicketId,
+      actorUserId: UserId,
+      estimatedMinutes: Option[Int]
+  ): F[Boolean] =
+    updateTicket(ticketId, actorUserId)(_.copy(originalEstimatedMinutes = estimatedMinutes))
 
   override def reassignTicket(
       ticketId: TicketId,
@@ -72,14 +100,18 @@ final class TicketServiceLive[F[_]: Temporal](
         boardAccessService.canReassignTicket(existing.boardId, actorUserId).flatMap {
           case false => false.pure[F]
           case true  =>
-            Temporal[F].realTimeInstant.flatMap { now =>
-              ticketRepo.update(
-                existing.copy(
-                  assignedToUserId = assignedToUserId,
-                  modifiedAt = now,
-                  lastModifiedByUserId = actorUserId
-                )
-              )
+            ensureAssignableMember(existing.boardId, assignedToUserId).flatMap {
+              case false => false.pure[F]
+              case true  =>
+                Temporal[F].realTimeInstant.flatMap { now =>
+                  ticketRepo.update(
+                    existing.copy(
+                      assignedToUserId = assignedToUserId,
+                      modifiedAt = now,
+                      lastModifiedByUserId = actorUserId
+                    )
+                  )
+                }
             }
         }
     }
@@ -92,5 +124,36 @@ final class TicketServiceLive[F[_]: Temporal](
           case false => false.pure[F]
           case true  => ticketRepo.delete(ticketId)
         }
+    }
+
+  private def updateTicket(
+      ticketId: TicketId,
+      actorUserId: UserId
+  )(update: Ticket => Ticket): F[Boolean] =
+    ticketRepo.findById(ticketId).flatMap {
+      case None           => false.pure[F]
+      case Some(existing) =>
+        boardAccessService.canModifyTicket(existing.boardId, actorUserId).flatMap {
+          case false => false.pure[F]
+          case true  =>
+            Temporal[F].realTimeInstant.flatMap { now =>
+              ticketRepo.update(
+                update(existing).copy(
+                  modifiedAt = now,
+                  lastModifiedByUserId = actorUserId
+                )
+              )
+            }
+        }
+    }
+
+  private def ensureAssignableMember(
+      boardId: io.github.oleksiybondar.api.domain.board.BoardId,
+      assignedToUserId: Option[UserId]
+  ): F[Boolean] =
+    assignedToUserId match {
+      case None         => true.pure[F]
+      case Some(userId) =>
+        boardMembershipService.findMember(boardId, userId).map(_.nonEmpty)
     }
 }

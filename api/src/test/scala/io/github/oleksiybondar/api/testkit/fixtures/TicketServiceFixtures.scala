@@ -38,7 +38,8 @@ object TicketServiceFixtures {
                               boardAccessFixtures = accessCtx,
                               ticketService = new TicketServiceLive[IO](
                                 ticketRepo,
-                                accessCtx.dashboardAccessService
+                                accessCtx.dashboardAccessService,
+                                accessCtx.membershipFixtures.dashboardMembershipService
                               )
                             )
                           )

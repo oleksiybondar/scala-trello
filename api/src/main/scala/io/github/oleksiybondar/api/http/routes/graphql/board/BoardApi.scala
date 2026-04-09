@@ -14,6 +14,7 @@ import io.github.oleksiybondar.api.domain.permission.RoleId
 import io.github.oleksiybondar.api.domain.user.{Email, Username}
 import io.github.oleksiybondar.api.http.routes.graphql.GraphQLContext
 import io.github.oleksiybondar.api.http.routes.graphql.permission.RoleApi.PermissionType
+import io.github.oleksiybondar.api.http.routes.graphql.ticket.TicketApi
 import io.github.oleksiybondar.api.http.routes.graphql.user.UserApi.InvalidUserInput
 import io.github.oleksiybondar.api.http.routes.graphql.user.{UserApi, UserView}
 import sangria.execution.UserFacingError
@@ -137,6 +138,15 @@ object BoardApi {
                     )
                   )
               }.unsafeToFuture()
+        ),
+        Field(
+          "tickets",
+          ListType(TicketApi.TicketType),
+          resolve =
+            ctx =>
+              TicketApi
+                .ticketsForBoard(ctx.ctx, BoardId(UUID.fromString(ctx.value.id)))
+                .unsafeToFuture()
         )
       )
     )

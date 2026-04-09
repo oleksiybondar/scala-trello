@@ -9,6 +9,7 @@ import io.github.oleksiybondar.api.domain.board.{
   BoardServiceLive
 }
 import io.github.oleksiybondar.api.domain.permission.{PermissionServiceLive, RoleServiceLive}
+import io.github.oleksiybondar.api.domain.ticket.TicketServiceLive
 import io.github.oleksiybondar.api.domain.user.{User, UserId, UserServiceLive}
 import io.github.oleksiybondar.api.http.middleware.AuthMiddleware
 import io.github.oleksiybondar.api.http.routes.graphql.{GraphQLContext, GraphQLRoutes}
@@ -19,6 +20,8 @@ import io.github.oleksiybondar.api.testkit.support.{
   InMemoryBoardRepo,
   InMemoryPermissionRepo,
   InMemoryRoleRepo,
+  InMemoryTicketRepo,
+  InMemoryTicketStateRepo,
   InMemoryUserRepo
 }
 import org.http4s.HttpApp
@@ -61,12 +64,23 @@ object GraphQLFixtures {
           roleId = io.github.oleksiybondar.api.domain.permission.RoleId(2),
           createdAt = java.time.Instant.parse("2026-04-06T08:05:00Z")
         )
-      )
+      ),
+      tickets: List[io.github.oleksiybondar.api.domain.ticket.Ticket] = Nil
   )(run: GraphQLTestContext => IO[A]): A =
     (for {
       userRepo                  <- InMemoryUserRepo.create[IO](users)
       dashboardRepo             <- InMemoryBoardRepo.create[IO](dashboards)
       dashboardMemberRepo       <- InMemoryBoardMemberRepo.create[IO](members)
+      ticketRepo                <- InMemoryTicketRepo.create[IO](tickets)
+      ticketStateRepo           <- InMemoryTicketStateRepo.create[IO](
+                                     List(
+                                       TicketStateFixtures.newState,
+                                       TicketStateFixtures.inProgressState,
+                                       TicketStateFixtures.codeReviewState,
+                                       TicketStateFixtures.inTestingState,
+                                       TicketStateFixtures.doneState
+                                     )
+                                   )
       authRepo                  <- InMemoryAuthRepo.create[IO]()
       roleRepo                  <- InMemoryRoleRepo.create[IO](
                                      List(
@@ -128,6 +142,11 @@ object GraphQLFixtures {
                                      dashboardMembershipService,
                                      roleService
                                    )
+      ticketService              = new TicketServiceLive[IO](
+                                     ticketRepo,
+                                     dashboardAccessService,
+                                     dashboardMembershipService
+                                   )
       graphqlRoutes             <- GraphQLRoutes.routes(
                                      GraphQLContext(
                                        userService = userService,
@@ -136,6 +155,8 @@ object GraphQLFixtures {
                                        dashboardAccessService = dashboardAccessService,
                                        roleService = roleService,
                                        permissionService = permissionService,
+                                       ticketService = ticketService,
+                                       ticketStateRepo = ticketStateRepo,
                                        authService = authService,
                                        currentUserId = None
                                      )

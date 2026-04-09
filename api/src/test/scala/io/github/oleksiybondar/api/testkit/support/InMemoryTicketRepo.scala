@@ -11,6 +11,9 @@ final class InMemoryTicketRepo[F[_]: Sync] private (
     state: Ref[F, Map[TicketId, Ticket]]
 ) extends TicketRepo[F] {
 
+  override def nextId: F[TicketId] =
+    state.get.map(current => TicketId(current.keys.map(_.value).maxOption.getOrElse(0L) + 1L))
+
   override def create(ticket: Ticket): F[Unit] =
     state.update(_.updated(ticket.id, ticket))
 
