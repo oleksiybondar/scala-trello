@@ -9,9 +9,13 @@ import type { Board } from "@models/board";
 
 interface BoardCardHeaderProps {
   board: Board;
+  onOpenSettings: () => void;
 }
 
-export const BoardCardHeader = ({ board }: BoardCardHeaderProps): ReactElement => {
+export const BoardCardHeader = ({
+  board,
+  onOpenSettings
+}: BoardCardHeaderProps): ReactElement => {
   return (
     <Stack
       alignItems="center"
@@ -34,6 +38,10 @@ export const BoardCardHeader = ({ board }: BoardCardHeaderProps): ReactElement =
       </Typography>
       <IconButton
         aria-label="Board settings"
+        onClick={event => {
+          event.stopPropagation();
+          onOpenSettings();
+        }}
         size="small"
       >
         <SettingsOutlinedIcon fontSize="small" />

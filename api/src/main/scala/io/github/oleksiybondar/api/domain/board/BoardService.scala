@@ -51,6 +51,9 @@ trait BoardService[F[_]] {
   /** Deactivates a dashboard when the acting user has sufficient dashboard rights. */
   def deactivate(dashboardId: BoardId, actorUserId: UserId): F[Boolean]
 
+  /** Activates a dashboard when the acting user has sufficient dashboard rights. */
+  def activate(dashboardId: BoardId, actorUserId: UserId): F[Boolean]
+
   /** Adds a new dashboard member when the acting user has sufficient dashboard rights. */
   def addMember(
       dashboardId: BoardId,

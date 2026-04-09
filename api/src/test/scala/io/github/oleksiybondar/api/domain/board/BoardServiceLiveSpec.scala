@@ -152,6 +152,24 @@ class BoardServiceLiveSpec extends FunSuite {
     assertEquals(result, (true, Some(false)))
   }
 
+  test("activate marks the dashboard active when the actor has access") {
+    val dashboard = BoardFixtures.sampleDashboard.copy(active = false)
+
+    val result = BoardServiceFixtures.withBoardService(
+      dashboards = List(dashboard),
+      members = List(BoardMemberFixtures.sampleMember),
+      roles = List(RoleFixtures.adminRole),
+      permissions = List(PermissionFixtures.adminDashboardPermission)
+    ) { ctx =>
+      for {
+        activated <- ctx.dashboardService.activate(dashboard.id, dashboard.ownerUserId)
+        updated   <- ctx.dashboardRepo.findById(dashboard.id)
+      } yield (activated, updated.map(_.active))
+    }
+
+    assertEquals(result, (true, Some(true)))
+  }
+
   test("changeTitle updates the dashboard name when the actor has access") {
     val dashboard = BoardFixtures.sampleDashboard
 

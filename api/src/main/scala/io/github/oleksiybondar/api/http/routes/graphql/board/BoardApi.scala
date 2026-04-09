@@ -11,6 +11,7 @@ import io.github.oleksiybondar.api.domain.board.{
   BoardQueryFilters
 }
 import io.github.oleksiybondar.api.domain.permission.RoleId
+import io.github.oleksiybondar.api.domain.user.{Email, Username}
 import io.github.oleksiybondar.api.http.routes.graphql.GraphQLContext
 import io.github.oleksiybondar.api.http.routes.graphql.permission.RoleApi.PermissionType
 import io.github.oleksiybondar.api.http.routes.graphql.user.UserApi.InvalidUserInput
@@ -38,13 +39,16 @@ object BoardApi {
       extends IllegalArgumentException(getMessage)
       with UserFacingError
 
-  private val BoardIdArg     = Argument("dashboardId", StringType)
-  private val KeywordArg     = Argument("keyword", OptionInputType(StringType))
-  private val NameArg        = Argument("name", StringType)
-  private val OwnerUserIdArg = Argument("ownerUserId", OptionInputType(StringType))
-  private val DescriptionArg = Argument("description", OptionInputType(StringType))
-  private val UserIdArg      = Argument("userId", StringType)
-  private val RoleIdArg      = Argument("roleId", LongType)
+  private val BoardIdArg          = Argument("boardId", OptionInputType(StringType))
+  private val LegacyBoardIdArg    = Argument("dashboardId", OptionInputType(StringType))
+  private val KeywordArg          = Argument("keyword", OptionInputType(StringType))
+  private val NameArg             = Argument("name", StringType)
+  private val OwnerUserIdArg      = Argument("ownerUserId", OptionInputType(StringType))
+  private val DescriptionArg      = Argument("description", OptionInputType(StringType))
+  private val OwnerBoardUserIdArg = Argument("ownerUserId", OptionInputType(StringType))
+  private val OwnerLoginArg       = Argument("owner", OptionInputType(StringType))
+  private val UserIdArg           = Argument("userId", StringType)
+  private val RoleIdArg           = Argument("roleId", LongType)
 
   val BoardRoleType: ObjectType[GraphQLContext, BoardRoleView] =
     ObjectType(
@@ -124,30 +128,39 @@ object BoardApi {
         Field("dashboardId", StringType, resolve = _.value.boardId),
         Field("userId", StringType, resolve = _.value.userId),
         Field("createdAt", StringType, resolve = _.value.createdAt),
-        Field("role", BoardRoleType, resolve = _.value.role)
+        Field("role", BoardRoleType, resolve = _.value.role),
+        Field(
+          "user",
+          sangria.schema.OptionType(UserApi.UserType),
+          resolve = _.value.user
+        )
       )
     )
 
   val queryFields: List[Field[GraphQLContext, Unit]] =
     List(
+      boardField("board"),
+      // TODO: remove this legacy alias after the UI migrates to `board`.
+      boardField("dashboard"),
       boardListField("myBoards"),
       // TODO: remove this legacy alias after the UI migrates to `myBoards`.
       boardListField("myDashboards"),
       Field(
         name = "dashboardMembers",
         fieldType = ListType(BoardMemberType),
-        arguments = BoardIdArg :: Nil,
+        arguments = BoardIdArg :: LegacyBoardIdArg :: Nil,
         resolve = ctx =>
           withCurrentUser(ctx) { currentUserId =>
             for {
-              dashboardId <- IO.fromEither(parseBoardId(ctx.arg(BoardIdArg)))
+              dashboardId <- IO.fromEither(parseRequiredBoardId(ctx))
               canRead     <- ctx.ctx.dashboardAccessService.canReadDashboard(dashboardId, currentUserId)
               _           <-
                 if (canRead) IO.unit
                 else
                   IO.raiseError(BoardAccessDenied("You do not have access to this dashboard"))
               members     <- ctx.ctx.dashboardMembershipService.listMembers(dashboardId)
-            } yield members.map(toMemberView)
+              views       <- members.traverse(toMemberView(ctx.ctx, _))
+            } yield views
           }.unsafeToFuture()
       )
     )
@@ -157,14 +170,36 @@ object BoardApi {
       createBoardField("createBoard"),
       // TODO: remove this legacy alias after the UI migrates to `createBoard`.
       createBoardField("createDashboard"),
+      changeBoardOwnershipField("changeBoardOwnership"),
       Field(
-        name = "changeDashboardTitle",
+        name = "changeDashboardOwnership",
         fieldType = BoardType,
-        arguments = BoardIdArg :: NameArg :: Nil,
+        arguments = BoardIdArg :: LegacyBoardIdArg :: OwnerBoardUserIdArg :: OwnerLoginArg :: Nil,
         resolve = ctx =>
           withCurrentUser(ctx) { currentUserId =>
             for {
-              dashboardId <- IO.fromEither(parseBoardId(ctx.arg(BoardIdArg)))
+              boardId     <- IO.fromEither(parseRequiredBoardId(ctx))
+              ownerUserId <- resolveOwnerUserId(ctx)
+              changed     <-
+                ctx.ctx.dashboardService.changeOwnership(boardId, currentUserId, ownerUserId)
+              _           <-
+                if (changed) IO.unit
+                else IO.raiseError(BoardAccessDenied("Board ownership could not be changed"))
+              board       <- ctx.ctx.dashboardService.getDashboard(boardId).flatMap(
+                               _.liftTo[IO](InvalidUserInput("Board was not found"))
+                             )
+            } yield toDashboardView(board)
+          }.unsafeToFuture()
+      ),
+      changeBoardTitleField("changeBoardTitle"),
+      Field(
+        name = "changeDashboardTitle",
+        fieldType = BoardType,
+        arguments = BoardIdArg :: LegacyBoardIdArg :: NameArg :: Nil,
+        resolve = ctx =>
+          withCurrentUser(ctx) { currentUserId =>
+            for {
+              dashboardId <- IO.fromEither(parseRequiredBoardId(ctx))
               changed     <-
                 ctx.ctx.dashboardService.changeTitle(
                   dashboardId,
@@ -180,14 +215,15 @@ object BoardApi {
             } yield toDashboardView(dashboard)
           }.unsafeToFuture()
       ),
+      changeBoardDescriptionField("changeBoardDescription"),
       Field(
         name = "changeDashboardDescription",
         fieldType = BoardType,
-        arguments = BoardIdArg :: DescriptionArg :: Nil,
+        arguments = BoardIdArg :: LegacyBoardIdArg :: DescriptionArg :: Nil,
         resolve = ctx =>
           withCurrentUser(ctx) { currentUserId =>
             for {
-              dashboardId <- IO.fromEither(parseBoardId(ctx.arg(BoardIdArg)))
+              dashboardId <- IO.fromEither(parseRequiredBoardId(ctx))
               changed     <-
                 ctx.ctx.dashboardService.changeDescription(
                   dashboardId,
@@ -203,14 +239,34 @@ object BoardApi {
             } yield toDashboardView(dashboard)
           }.unsafeToFuture()
       ),
+      deactivateBoardField("deactivateBoard"),
+      activateBoardField("activateBoard"),
       Field(
-        name = "deactivateDashboard",
+        name = "activateDashboard",
         fieldType = BoardType,
-        arguments = BoardIdArg :: Nil,
+        arguments = BoardIdArg :: LegacyBoardIdArg :: Nil,
         resolve = ctx =>
           withCurrentUser(ctx) { currentUserId =>
             for {
-              dashboardId <- IO.fromEither(parseBoardId(ctx.arg(BoardIdArg)))
+              boardId <- IO.fromEither(parseRequiredBoardId(ctx))
+              updated <- ctx.ctx.dashboardService.activate(boardId, currentUserId)
+              _       <-
+                if (updated) IO.unit
+                else IO.raiseError(BoardAccessDenied("Board could not be activated"))
+              board   <- ctx.ctx.dashboardService.getDashboard(boardId).flatMap(
+                           _.liftTo[IO](InvalidUserInput("Board was not found"))
+                         )
+            } yield toDashboardView(board)
+          }.unsafeToFuture()
+      ),
+      Field(
+        name = "deactivateDashboard",
+        fieldType = BoardType,
+        arguments = BoardIdArg :: LegacyBoardIdArg :: Nil,
+        resolve = ctx =>
+          withCurrentUser(ctx) { currentUserId =>
+            for {
+              dashboardId <- IO.fromEither(parseRequiredBoardId(ctx))
               updated     <- ctx.ctx.dashboardService.deactivate(dashboardId, currentUserId)
               _           <-
                 if (updated) IO.unit
@@ -224,11 +280,11 @@ object BoardApi {
       Field(
         name = "inviteDashboardMember",
         fieldType = BoardMemberType,
-        arguments = BoardIdArg :: UserIdArg :: RoleIdArg :: Nil,
+        arguments = BoardIdArg :: LegacyBoardIdArg :: UserIdArg :: RoleIdArg :: Nil,
         resolve = ctx =>
           withCurrentUser(ctx) { currentUserId =>
             for {
-              dashboardId  <- IO.fromEither(parseBoardId(ctx.arg(BoardIdArg)))
+              dashboardId  <- IO.fromEither(parseRequiredBoardId(ctx))
               memberUserId <- IO.fromEither(parseUserId(ctx.arg(UserIdArg)))
               changed      <- ctx.ctx.dashboardService.addMember(
                                 dashboardId,
@@ -244,17 +300,18 @@ object BoardApi {
                 ctx.ctx.dashboardMembershipService.findMember(dashboardId, memberUserId).flatMap(
                   _.liftTo[IO](InvalidUserInput("Board member was not found"))
                 )
-            } yield toMemberView(member)
+              view         <- toMemberView(ctx.ctx, member)
+            } yield view
           }.unsafeToFuture()
       ),
       Field(
         name = "changeDashboardMemberRole",
         fieldType = BoardMemberType,
-        arguments = BoardIdArg :: UserIdArg :: RoleIdArg :: Nil,
+        arguments = BoardIdArg :: LegacyBoardIdArg :: UserIdArg :: RoleIdArg :: Nil,
         resolve = ctx =>
           withCurrentUser(ctx) { currentUserId =>
             for {
-              dashboardId  <- IO.fromEither(parseBoardId(ctx.arg(BoardIdArg)))
+              dashboardId  <- IO.fromEither(parseRequiredBoardId(ctx))
               memberUserId <- IO.fromEither(parseUserId(ctx.arg(UserIdArg)))
               changed      <- ctx.ctx.dashboardService.changeMemberRole(
                                 dashboardId,
@@ -269,23 +326,41 @@ object BoardApi {
                 ctx.ctx.dashboardMembershipService.findMember(dashboardId, memberUserId).flatMap(
                   _.liftTo[IO](InvalidUserInput("Board member was not found"))
                 )
-            } yield toMemberView(member)
+              view         <- toMemberView(ctx.ctx, member)
+            } yield view
           }.unsafeToFuture()
       ),
       Field(
         name = "removeDashboardMember",
         fieldType = BooleanType,
-        arguments = BoardIdArg :: UserIdArg :: Nil,
+        arguments = BoardIdArg :: LegacyBoardIdArg :: UserIdArg :: Nil,
         resolve = ctx =>
           withCurrentUser(ctx) { currentUserId =>
             for {
-              dashboardId  <- IO.fromEither(parseBoardId(ctx.arg(BoardIdArg)))
+              dashboardId  <- IO.fromEither(parseRequiredBoardId(ctx))
               memberUserId <- IO.fromEither(parseUserId(ctx.arg(UserIdArg)))
               removed      <-
                 ctx.ctx.dashboardService.removeMember(dashboardId, currentUserId, memberUserId)
             } yield removed
           }.unsafeToFuture()
       )
+    )
+
+  private def boardField(name: String): Field[GraphQLContext, Unit] =
+    Field(
+      name = name,
+      fieldType = sangria.schema.OptionType(BoardType),
+      arguments = BoardIdArg :: LegacyBoardIdArg :: Nil,
+      resolve = ctx =>
+        withCurrentUser(ctx) { currentUserId =>
+          for {
+            boardId <- IO.fromEither(parseRequiredBoardId(ctx))
+            canRead <- ctx.ctx.dashboardAccessService.canReadDashboard(boardId, currentUserId)
+            board   <-
+              if (canRead) ctx.ctx.dashboardService.getDashboard(boardId)
+              else IO.raiseError(BoardAccessDenied("You do not have access to this board"))
+          } yield board.map(toDashboardView)
+        }.unsafeToFuture()
     )
 
   private def boardListField(name: String): Field[GraphQLContext, Unit] =
@@ -328,6 +403,118 @@ object BoardApi {
         }.unsafeToFuture()
     )
 
+  private def changeBoardOwnershipField(name: String): Field[GraphQLContext, Unit] =
+    Field(
+      name = name,
+      fieldType = BoardType,
+      arguments = BoardIdArg :: LegacyBoardIdArg :: OwnerBoardUserIdArg :: OwnerLoginArg :: Nil,
+      resolve = ctx =>
+        withCurrentUser(ctx) { currentUserId =>
+          for {
+            boardId     <- IO.fromEither(parseRequiredBoardId(ctx))
+            ownerUserId <- resolveOwnerUserId(ctx)
+            changed     <-
+              ctx.ctx.dashboardService.changeOwnership(boardId, currentUserId, ownerUserId)
+            _           <-
+              if (changed) IO.unit
+              else IO.raiseError(BoardAccessDenied("Board ownership could not be changed"))
+            board       <- ctx.ctx.dashboardService.getDashboard(boardId).flatMap(
+                             _.liftTo[IO](InvalidUserInput("Board was not found"))
+                           )
+          } yield toDashboardView(board)
+        }.unsafeToFuture()
+    )
+
+  private def deactivateBoardField(name: String): Field[GraphQLContext, Unit] =
+    Field(
+      name = name,
+      fieldType = BoardType,
+      arguments = BoardIdArg :: LegacyBoardIdArg :: Nil,
+      resolve = ctx =>
+        withCurrentUser(ctx) { currentUserId =>
+          for {
+            boardId <- IO.fromEither(parseRequiredBoardId(ctx))
+            updated <- ctx.ctx.dashboardService.deactivate(boardId, currentUserId)
+            _       <-
+              if (updated) IO.unit
+              else IO.raiseError(BoardAccessDenied("Board could not be deactivated"))
+            board   <- ctx.ctx.dashboardService.getDashboard(boardId).flatMap(
+                         _.liftTo[IO](InvalidUserInput("Board was not found"))
+                       )
+          } yield toDashboardView(board)
+        }.unsafeToFuture()
+    )
+
+  private def activateBoardField(name: String): Field[GraphQLContext, Unit] =
+    Field(
+      name = name,
+      fieldType = BoardType,
+      arguments = BoardIdArg :: LegacyBoardIdArg :: Nil,
+      resolve = ctx =>
+        withCurrentUser(ctx) { currentUserId =>
+          for {
+            boardId <- IO.fromEither(parseRequiredBoardId(ctx))
+            updated <- ctx.ctx.dashboardService.activate(boardId, currentUserId)
+            _       <-
+              if (updated) IO.unit
+              else IO.raiseError(BoardAccessDenied("Board could not be activated"))
+            board   <- ctx.ctx.dashboardService.getDashboard(boardId).flatMap(
+                         _.liftTo[IO](InvalidUserInput("Board was not found"))
+                       )
+          } yield toDashboardView(board)
+        }.unsafeToFuture()
+    )
+
+  private def changeBoardTitleField(name: String): Field[GraphQLContext, Unit] =
+    Field(
+      name = name,
+      fieldType = BoardType,
+      arguments = BoardIdArg :: LegacyBoardIdArg :: NameArg :: Nil,
+      resolve = ctx =>
+        withCurrentUser(ctx) { currentUserId =>
+          for {
+            boardId <- IO.fromEither(parseRequiredBoardId(ctx))
+            changed <-
+              ctx.ctx.dashboardService.changeTitle(
+                boardId,
+                currentUserId,
+                BoardName(ctx.arg(NameArg).trim)
+              )
+            _       <-
+              if (changed) IO.unit
+              else IO.raiseError(BoardAccessDenied("Board title could not be changed"))
+            board   <- ctx.ctx.dashboardService.getDashboard(boardId).flatMap(
+                         _.liftTo[IO](InvalidUserInput("Board was not found"))
+                       )
+          } yield toDashboardView(board)
+        }.unsafeToFuture()
+    )
+
+  private def changeBoardDescriptionField(name: String): Field[GraphQLContext, Unit] =
+    Field(
+      name = name,
+      fieldType = BoardType,
+      arguments = BoardIdArg :: LegacyBoardIdArg :: DescriptionArg :: Nil,
+      resolve = ctx =>
+        withCurrentUser(ctx) { currentUserId =>
+          for {
+            boardId <- IO.fromEither(parseRequiredBoardId(ctx))
+            changed <-
+              ctx.ctx.dashboardService.changeDescription(
+                boardId,
+                currentUserId,
+                normalizeDescription(optionalDescriptionArg(ctx))
+              )
+            _       <-
+              if (changed) IO.unit
+              else IO.raiseError(BoardAccessDenied("Board description could not be changed"))
+            board   <- ctx.ctx.dashboardService.getDashboard(boardId).flatMap(
+                         _.liftTo[IO](InvalidUserInput("Board was not found"))
+                       )
+          } yield toDashboardView(board)
+        }.unsafeToFuture()
+    )
+
   private def withCurrentUser[A](
       ctx: sangria.schema.Context[GraphQLContext, Unit]
   )(run: io.github.oleksiybondar.api.domain.user.UserId => IO[A]): IO[A] =
@@ -343,6 +530,14 @@ object BoardApi {
       .map(_ => InvalidUserInput(s"Invalid UUID: $rawId"))
       .map(BoardId(_))
 
+  private def parseRequiredBoardId(
+      ctx: sangria.schema.Context[GraphQLContext, Unit]
+  ): Either[InvalidUserInput, BoardId] =
+    optionalStringArg(ctx, BoardIdArg)
+      .orElse(optionalStringArg(ctx, LegacyBoardIdArg))
+      .toRight(InvalidUserInput("Board id is required"))
+      .flatMap(parseBoardId)
+
   private def parseUserId(rawId: String)
       : Either[InvalidUserInput, io.github.oleksiybondar.api.domain.user.UserId] =
     Try(UUID.fromString(rawId))
@@ -350,6 +545,34 @@ object BoardApi {
       .left
       .map(_ => InvalidUserInput(s"Invalid UUID: $rawId"))
       .map(io.github.oleksiybondar.api.domain.user.UserId(_))
+
+  private def resolveOwnerUserId(
+      ctx: sangria.schema.Context[GraphQLContext, Unit]
+  ): IO[io.github.oleksiybondar.api.domain.user.UserId] =
+    optionalStringArg(ctx, OwnerLoginArg)
+      .map(_.trim)
+      .filter(_.nonEmpty) match {
+      case Some(ownerLogin) =>
+        resolveUserIdByLogin(ctx.ctx, ownerLogin)
+      case None             =>
+        optionalStringArg(ctx, OwnerBoardUserIdArg)
+          .toRight(InvalidUserInput("Owner is required"))
+          .flatMap(parseUserId)
+          .liftTo[IO]
+    }
+
+  private def resolveUserIdByLogin(
+      context: GraphQLContext,
+      ownerLogin: String
+  ): IO[io.github.oleksiybondar.api.domain.user.UserId] = {
+    val lookup =
+      if (ownerLogin.contains("@")) context.userService.getByEmail(Email(ownerLogin))
+      else context.userService.getByUsername(Username(ownerLogin))
+
+    lookup.flatMap(
+      _.map(_.id).liftTo[IO](InvalidUserInput("Owner user was not found"))
+    )
+  }
 
   private def normalizeDescription(rawDescription: Option[String]): Option[BoardDescription] =
     rawDescription.map(_.trim).filter(_.nonEmpty).map(BoardDescription(_))
@@ -393,18 +616,22 @@ object BoardApi {
       .map(_.map(toUserView))
 
   private def toMemberView(
+      context: GraphQLContext,
       member: io.github.oleksiybondar.api.domain.board.BoardMemberWithRole
-  ) =
-    BoardMemberView(
-      boardId = member.member.boardId.value.toString,
-      userId = member.member.userId.value.toString,
-      createdAt = member.member.createdAt.toString,
-      role = BoardRoleView(
-        id = member.role.role.id.value.toString,
-        name = member.role.role.name.value,
-        description = member.role.role.description
+  ): IO[BoardMemberView] =
+    loadUserView(context, member.member.userId.value.toString).map { user =>
+      BoardMemberView(
+        boardId = member.member.boardId.value.toString,
+        userId = member.member.userId.value.toString,
+        createdAt = member.member.createdAt.toString,
+        role = BoardRoleView(
+          id = member.role.role.id.value.toString,
+          name = member.role.role.name.value,
+          description = member.role.role.description
+        ),
+        user = user
       )
-    )
+    }
 
   private def toDashboardView(dashboard: io.github.oleksiybondar.api.domain.board.Board) =
     BoardView(

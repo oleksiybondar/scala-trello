@@ -1,12 +1,17 @@
-import type { CreateBoardRequest, DashboardResponse } from "@models/board/dto";
+import type {
+  BoardMemberResponse,
+  BoardResponse,
+  CreateBoardRequest
+} from "@models/board/dto";
 import type {
   Board,
+  BoardMember,
   BoardUserSummary,
   CreateBoardInput
 } from "@models/board/types";
 
 const mapBoardUserSummary = (
-  response: DashboardResponse["owner"]
+  response: BoardResponse["owner"]
 ): BoardUserSummary | null => {
   if (response === null) {
     return null;
@@ -20,8 +25,8 @@ const mapBoardUserSummary = (
   };
 };
 
-export const mapDashboardResponseToBoard = (
-  response: DashboardResponse
+export const mapBoardResponseToBoard = (
+  response: BoardResponse
 ): Board => {
   return {
     active: response.active,
@@ -36,6 +41,22 @@ export const mapDashboardResponseToBoard = (
     name: response.name,
     owner: mapBoardUserSummary(response.owner),
     ownerUserId: response.ownerUserId
+  };
+};
+
+export const mapBoardMemberResponseToBoardMember = (
+  response: BoardMemberResponse
+): BoardMember => {
+  return {
+    boardId: response.boardId,
+    createdAt: response.createdAt,
+    role: {
+      description: response.role.description,
+      roleId: response.role.id,
+      roleName: response.role.name
+    },
+    user: mapBoardUserSummary(response.user),
+    userId: response.userId
   };
 };
 

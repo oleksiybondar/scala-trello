@@ -1,12 +1,12 @@
 import {
   mapCreateBoardInputToRequest,
-  mapDashboardResponseToBoard
+  mapBoardResponseToBoard
 } from "@models/board";
 
 describe("board mappers", () => {
   test("maps a backend dashboard payload into the frontend board model", () => {
     expect(
-      mapDashboardResponseToBoard({
+      mapBoardResponseToBoard({
         active: true,
         createdAt: "2026-04-08T10:00:00Z",
         createdBy: {

@@ -3,7 +3,14 @@ package io.github.oleksiybondar.api.http.routes.graphql.board
 import cats.effect.unsafe.implicits.global
 import io.circe.Json
 import io.github.oleksiybondar.api.domain.board.{BoardId, BoardName}
-import io.github.oleksiybondar.api.domain.user.UserId
+import io.github.oleksiybondar.api.domain.user.{
+  Email,
+  FirstName,
+  LastName,
+  PasswordHash,
+  UserId,
+  Username
+}
 import io.github.oleksiybondar.api.testkit.fixtures.{GraphQLFixtures, UserFixtures}
 import io.github.oleksiybondar.api.testkit.support.GraphQLRequestSupport.graphqlRequest
 import munit.FunSuite
@@ -127,6 +134,30 @@ class BoardGraphQLRoutesSpec extends FunSuite {
     assertEquals(response.status, Status.Ok)
     assertEquals(cursor.get[String]("name").toOption, Some("Platform Board"))
     assertEquals(cursor.get[Boolean]("active").toOption, Some(true))
+  }
+
+  test("POST /graphql returns a single board for the current user") {
+    val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        boardQuery,
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body   = response.as[Json].unsafeRunSync()
+    val cursor = body.hcursor.downField("data").downField("board")
+
+    assertEquals(response.status, Status.Ok)
+    assertEquals(
+      cursor.get[String]("id").toOption,
+      Some("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+    )
+    assertEquals(cursor.get[String]("name").toOption, Some("Core Board"))
   }
 
   test("POST /graphql supports querying dashboards together with members and roles") {
@@ -255,6 +286,10 @@ class BoardGraphQLRoutesSpec extends FunSuite {
       Some(UserFixtures.sampleUser.id.value.toString)
     )
     assertEquals(
+      members.head.hcursor.downField("user").get[String]("firstName").toOption,
+      Some("Alice")
+    )
+    assertEquals(
       members.head.hcursor.downField("role").get[String]("name").toOption,
       Some("admin")
     )
@@ -280,13 +315,13 @@ class BoardGraphQLRoutesSpec extends FunSuite {
     assertEquals(cursor.get[Boolean]("active").toOption, Some(false))
   }
 
-  test("POST /graphql changes a dashboard title") {
+  test("POST /graphql changes a board title") {
     val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
       for {
         token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
         response <- ctx.httpApp.run(
                       graphqlRequest(
-                        changeDashboardTitleMutation,
+                        changeBoardTitleMutation,
                         accessToken = Some(token)
                       )
                     )
@@ -294,19 +329,19 @@ class BoardGraphQLRoutesSpec extends FunSuite {
     }
 
     val body   = response.as[Json].unsafeRunSync()
-    val cursor = body.hcursor.downField("data").downField("changeDashboardTitle")
+    val cursor = body.hcursor.downField("data").downField("changeBoardTitle")
 
     assertEquals(response.status, Status.Ok)
     assertEquals(cursor.get[String]("name").toOption, Some("Platform Board"))
   }
 
-  test("POST /graphql changes a dashboard description") {
+  test("POST /graphql changes a board description") {
     val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
       for {
         token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
         response <- ctx.httpApp.run(
                       graphqlRequest(
-                        changeDashboardDescriptionMutation,
+                        changeBoardDescriptionMutation,
                         accessToken = Some(token)
                       )
                     )
@@ -314,13 +349,94 @@ class BoardGraphQLRoutesSpec extends FunSuite {
     }
 
     val body   = response.as[Json].unsafeRunSync()
-    val cursor = body.hcursor.downField("data").downField("changeDashboardDescription")
+    val cursor = body.hcursor.downField("data").downField("changeBoardDescription")
 
     assertEquals(response.status, Status.Ok)
     assertEquals(
       cursor.get[Option[String]]("description").toOption.flatten,
       Some("Updated board description")
     )
+  }
+
+  test("POST /graphql changes board ownership by username") {
+    val newOwner =
+      UserFixtures.user(
+        id = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222")),
+        username = Some(Username("bob")),
+        email = Some(Email("bob@example.com")),
+        passwordHash = PasswordHash("hash:bob"),
+        firstName = FirstName("Bob"),
+        lastName = LastName("Owner")
+      )
+
+    val response = withGraphQLRoutes(users = List(UserFixtures.sampleUser, newOwner)) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        changeBoardOwnershipMutation,
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body   = response.as[Json].unsafeRunSync()
+    val cursor = body.hcursor.downField("data").downField("changeBoardOwnership")
+
+    assertEquals(response.status, Status.Ok)
+    assertEquals(
+      cursor.get[String]("ownerUserId").toOption,
+      Some("22222222-2222-2222-2222-222222222222")
+    )
+  }
+
+  test("POST /graphql deactivates a board") {
+    val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        deactivateBoardMutation,
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body   = response.as[Json].unsafeRunSync()
+    val cursor = body.hcursor.downField("data").downField("deactivateBoard")
+
+    assertEquals(response.status, Status.Ok)
+    assertEquals(cursor.get[Boolean]("active").toOption, Some(false))
+  }
+
+  test("POST /graphql activates a board") {
+    val inactiveBoard =
+      io.github.oleksiybondar.api.testkit.fixtures.BoardFixtures.sampleDashboard.copy(
+        active = false
+      )
+
+    val response = withGraphQLRoutes(
+      users = List(UserFixtures.sampleUser),
+      dashboards = List(inactiveBoard)
+    ) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        activateBoardMutation,
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body   = response.as[Json].unsafeRunSync()
+    val cursor = body.hcursor.downField("data").downField("activateBoard")
+
+    assertEquals(response.status, Status.Ok)
+    assertEquals(cursor.get[Boolean]("active").toOption, Some(true))
   }
 
   test("POST /graphql invites a dashboard member") {
@@ -512,6 +628,12 @@ class BoardGraphQLRoutesSpec extends FunSuite {
       |    dashboardId
       |    userId
       |    createdAt
+      |    user {
+      |      id
+      |      firstName
+      |      lastName
+      |      avatarUrl
+      |    }
       |    role {
       |      id
       |      name
@@ -523,6 +645,15 @@ class BoardGraphQLRoutesSpec extends FunSuite {
   private val myBoardsQuery =
     """query {
       |  myBoards {
+      |    id
+      |    name
+      |    active
+      |  }
+      |}""".stripMargin
+
+  private val boardQuery =
+    """query {
+      |  board(boardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa") {
       |    id
       |    name
       |    active
@@ -591,10 +722,10 @@ class BoardGraphQLRoutesSpec extends FunSuite {
       |  }
       |}""".stripMargin
 
-  private val changeDashboardTitleMutation =
+  private val changeBoardTitleMutation =
     """mutation {
-      |  changeDashboardTitle(
-      |    dashboardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+      |  changeBoardTitle(
+      |    boardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
       |    name: "Platform Board"
       |  ) {
       |    id
@@ -602,14 +733,41 @@ class BoardGraphQLRoutesSpec extends FunSuite {
       |  }
       |}""".stripMargin
 
-  private val changeDashboardDescriptionMutation =
+  private val changeBoardDescriptionMutation =
     """mutation {
-      |  changeDashboardDescription(
-      |    dashboardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+      |  changeBoardDescription(
+      |    boardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
       |    description: "Updated board description"
       |  ) {
       |    id
       |    description
+      |  }
+      |}""".stripMargin
+
+  private val changeBoardOwnershipMutation =
+    """mutation {
+      |  changeBoardOwnership(
+      |    boardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+      |    owner: "bob"
+      |  ) {
+      |    id
+      |    ownerUserId
+      |  }
+      |}""".stripMargin
+
+  private val deactivateBoardMutation =
+    """mutation {
+      |  deactivateBoard(boardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa") {
+      |    id
+      |    active
+      |  }
+      |}""".stripMargin
+
+  private val activateBoardMutation =
+    """mutation {
+      |  activateBoard(boardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa") {
+      |    id
+      |    active
       |  }
       |}""".stripMargin
 
@@ -678,6 +836,11 @@ class BoardGraphQLRoutesSpec extends FunSuite {
       |  dashboardMembers(dashboardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa") {
       |    dashboardId
       |    userId
+      |    user {
+      |      id
+      |      firstName
+      |      lastName
+      |    }
       |    role {
       |      id
       |      name

@@ -131,6 +131,25 @@ final class BoardServiceLive[F[_]: Temporal](
         }
     }
 
+  override def activate(dashboardId: BoardId, actorUserId: UserId): F[Boolean] =
+    dashboardAccessService.canModifyDashboard(dashboardId, actorUserId).flatMap {
+      case false => false.pure[F]
+      case true  =>
+        dashboardRepo.findById(dashboardId).flatMap {
+          case None            => false.pure[F]
+          case Some(dashboard) =>
+            Temporal[F].realTimeInstant.flatMap { now =>
+              dashboardRepo.update(
+                dashboard.copy(
+                  active = true,
+                  modifiedAt = now,
+                  lastModifiedByUserId = actorUserId
+                )
+              )
+            }
+        }
+    }
+
   override def addMember(
       dashboardId: BoardId,
       actorUserId: UserId,

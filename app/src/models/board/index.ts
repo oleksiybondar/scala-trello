@@ -1,10 +1,39 @@
-export { buildCreateDashboardMutation, buildMyDashboardsQuery } from "./graphql";
-export { mapCreateBoardInputToRequest, mapDashboardResponseToBoard } from "./mappers";
+export {
+  buildActivateBoardMutation,
+  buildBoardQuery,
+  buildBoardMembersQuery,
+  buildChangeBoardDescriptionMutation,
+  buildChangeBoardOwnershipMutation,
+  buildChangeBoardTitleMutation,
+  buildCreateBoardMutation,
+  buildDeactivateBoardMutation,
+  buildMyBoardsQuery
+} from "./graphql";
+export {
+  mapBoardMemberResponseToBoardMember,
+  mapBoardResponseToBoard,
+  mapCreateBoardInputToRequest
+} from "./mappers";
 export type {
+  ActivateBoardMutationResponse,
+  BoardMemberResponse,
+  BoardMembersQueryResponse,
+  BoardRoleResponse,
   BoardUserSummaryResponse,
+  BoardQueryResponse,
+  BoardResponse,
+  ChangeBoardDescriptionMutationResponse,
+  ChangeBoardOwnershipMutationResponse,
+  ChangeBoardTitleMutationResponse,
   CreateBoardRequest,
-  CreateDashboardMutationResponse,
-  DashboardResponse,
-  MyDashboardsQueryResponse
+  CreateBoardMutationResponse,
+  DeactivateBoardMutationResponse,
+  MyBoardsQueryResponse
 } from "./dto";
-export type { Board, BoardUserSummary, CreateBoardInput } from "./types";
+export type {
+  Board,
+  BoardMember,
+  BoardRole,
+  BoardUserSummary,
+  CreateBoardInput
+} from "./types";

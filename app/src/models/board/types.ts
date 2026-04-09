@@ -24,3 +24,17 @@ export interface CreateBoardInput {
   description: string | null;
   name: string;
 }
+
+export interface BoardRole {
+  description: string | null;
+  roleId: string;
+  roleName: string;
+}
+
+export interface BoardMember {
+  boardId: string;
+  createdAt: string;
+  role: BoardRole;
+  user: BoardUserSummary | null;
+  userId: string;
+}

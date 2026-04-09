@@ -5,11 +5,11 @@ import type { QueryBoardsParams } from "@contexts/boards-context";
 import { useAuth } from "@hooks/useAuth";
 import { requestGraphQL } from "@helpers/requestGraphQL";
 import {
-  buildMyDashboardsQuery,
-  mapDashboardResponseToBoard
+  buildMyBoardsQuery,
+  mapBoardResponseToBoard
 } from "@models/board";
 import type { Board } from "@models/board";
-import type { MyDashboardsQueryResponse } from "@models/board";
+import type { MyBoardsQueryResponse } from "@models/board";
 
 export const useBoardsQuery = (
   params: QueryBoardsParams
@@ -19,9 +19,9 @@ export const useBoardsQuery = (
   return useQuery({
     enabled: accessToken !== null && session !== null,
     queryFn: async () => {
-      const response = await requestGraphQL<MyDashboardsQueryResponse>({
+      const response = await requestGraphQL<MyBoardsQueryResponse>({
         accessToken,
-        document: buildMyDashboardsQuery({
+        document: buildMyBoardsQuery({
           keyword: params.keyword,
           ownerUserId: params.owner
         }),
@@ -31,7 +31,7 @@ export const useBoardsQuery = (
               tokenType: session.tokenType
             })
       });
-      return response.myDashboards.map(mapDashboardResponseToBoard);
+      return response.myBoards.map(mapBoardResponseToBoard);
     },
     queryKey: ["boards", params.keyword ?? "", params.owner ?? ""]
   });

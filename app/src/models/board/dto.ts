@@ -5,7 +5,21 @@ export interface BoardUserSummaryResponse {
   lastName: string;
 }
 
-export interface DashboardResponse {
+export interface BoardRoleResponse {
+  description: string | null;
+  id: string;
+  name: string;
+}
+
+export interface BoardMemberResponse {
+  boardId: string;
+  createdAt: string;
+  role: BoardRoleResponse;
+  user: BoardUserSummaryResponse | null;
+  userId: string;
+}
+
+export interface BoardResponse {
   active: boolean;
   createdAt: string;
   createdBy: BoardUserSummaryResponse | null;
@@ -25,10 +39,38 @@ export interface CreateBoardRequest {
   name: string;
 }
 
-export interface MyDashboardsQueryResponse {
-  myDashboards: DashboardResponse[];
+export interface BoardQueryResponse {
+  board: BoardResponse | null;
 }
 
-export interface CreateDashboardMutationResponse {
-  createDashboard: DashboardResponse;
+export interface MyBoardsQueryResponse {
+  myBoards: BoardResponse[];
+}
+
+export interface BoardMembersQueryResponse {
+  dashboardMembers: BoardMemberResponse[];
+}
+
+export interface CreateBoardMutationResponse {
+  createBoard: BoardResponse;
+}
+
+export interface ChangeBoardTitleMutationResponse {
+  changeBoardTitle: BoardResponse;
+}
+
+export interface ChangeBoardDescriptionMutationResponse {
+  changeBoardDescription: BoardResponse;
+}
+
+export interface ChangeBoardOwnershipMutationResponse {
+  changeBoardOwnership: BoardResponse;
+}
+
+export interface DeactivateBoardMutationResponse {
+  deactivateBoard: BoardResponse;
+}
+
+export interface ActivateBoardMutationResponse {
+  activateBoard: BoardResponse;
 }

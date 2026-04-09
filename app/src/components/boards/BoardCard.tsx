@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import { useNavigate } from "react-router-dom";
 
 import { BoardCardHeader } from "@components/boards/BoardCardHeader";
 import { BoardInfo } from "@components/boards/BoardInfo";
@@ -52,17 +53,39 @@ const getStubTimeTrackingStats = (board: Board): TimeTrackingStats => {
 export const BoardCard = ({ board }: BoardCardProps): ReactElement => {
   const ticketCounts = getStubTicketCounts(board);
   const timeTrackingStats = getStubTimeTrackingStats(board);
+  const navigate = useNavigate();
+  const boardPath = "/boards/" + board.boardId;
+  const boardSettingsPath = boardPath + "/settings";
+
+  const openBoard = (): void => {
+    void navigate(boardPath);
+  };
 
   return (
     <Paper
+      onClick={openBoard}
+      onKeyDown={event => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openBoard();
+        }
+      }}
+      role="link"
       sx={{
         borderRadius: 0.5,
+        cursor: "pointer",
         p: 1
       }}
+      tabIndex={0}
       variant="outlined"
     >
       <Stack spacing={2}>
-        <BoardCardHeader board={board} />
+        <BoardCardHeader
+          board={board}
+          onOpenSettings={() => {
+            void navigate(boardSettingsPath);
+          }}
+        />
         <Stack
           direction="row"
           flexWrap="wrap"
