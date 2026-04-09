@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import type { UseQueryResult } from "@tanstack/react-query";
 
 import type { QueryBoardsParams } from "@contexts/boards-context";
-import { filterBoards } from "@features/board/boardsApi";
 import { useAuth } from "@hooks/useAuth";
 import { requestGraphQL } from "@helpers/requestGraphQL";
 import {
@@ -22,17 +21,18 @@ export const useBoardsQuery = (
     queryFn: async () => {
       const response = await requestGraphQL<MyDashboardsQueryResponse>({
         accessToken,
-        document: buildMyDashboardsQuery(),
+        document: buildMyDashboardsQuery({
+          keyword: params.keyword,
+          ownerUserId: params.owner
+        }),
         ...(session?.tokenType === undefined
           ? {}
           : {
               tokenType: session.tokenType
             })
       });
-      const boards = response.myDashboards.map(mapDashboardResponseToBoard);
-
-      return filterBoards(boards, params);
+      return response.myDashboards.map(mapDashboardResponseToBoard);
     },
-    queryKey: ["boards", params]
+    queryKey: ["boards", params.keyword ?? "", params.owner ?? ""]
   });
 };

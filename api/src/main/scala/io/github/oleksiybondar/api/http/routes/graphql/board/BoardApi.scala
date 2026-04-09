@@ -3,7 +3,13 @@ package io.github.oleksiybondar.api.http.routes.graphql.board
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import cats.syntax.all._
-import io.github.oleksiybondar.api.domain.board.{Board, BoardDescription, BoardId, BoardName}
+import io.github.oleksiybondar.api.domain.board.{
+  Board,
+  BoardDescription,
+  BoardId,
+  BoardName,
+  BoardQueryFilters
+}
 import io.github.oleksiybondar.api.domain.permission.RoleId
 import io.github.oleksiybondar.api.http.routes.graphql.GraphQLContext
 import io.github.oleksiybondar.api.http.routes.graphql.permission.RoleApi.PermissionType
@@ -33,7 +39,9 @@ object BoardApi {
       with UserFacingError
 
   private val BoardIdArg     = Argument("dashboardId", StringType)
+  private val KeywordArg     = Argument("keyword", OptionInputType(StringType))
   private val NameArg        = Argument("name", StringType)
+  private val OwnerUserIdArg = Argument("ownerUserId", OptionInputType(StringType))
   private val DescriptionArg = Argument("description", OptionInputType(StringType))
   private val UserIdArg      = Argument("userId", StringType)
   private val RoleIdArg      = Argument("roleId", LongType)
@@ -238,11 +246,13 @@ object BoardApi {
     Field(
       name = name,
       fieldType = ListType(BoardType),
+      arguments = KeywordArg :: OwnerUserIdArg :: Nil,
       resolve = ctx =>
         withCurrentUser(ctx) { currentUserId =>
-          ctx.ctx.dashboardService
-            .listDashboardsForUser(currentUserId)
-            .map(_.map(toDashboardView))
+          for {
+            filters <- buildBoardQueryFilters(ctx)
+            boards  <- ctx.ctx.dashboardService.listDashboardsForUser(currentUserId, filters)
+          } yield boards.map(toDashboardView)
         }.unsafeToFuture()
     )
 
@@ -298,17 +308,37 @@ object BoardApi {
   private def normalizeDescription(rawDescription: Option[String]): Option[BoardDescription] =
     rawDescription.map(_.trim).filter(_.nonEmpty).map(BoardDescription(_))
 
-  private def optionalDescriptionArg(
+  private def buildBoardQueryFilters(
       ctx: sangria.schema.Context[GraphQLContext, Unit]
-  ): Option[String] = {
-    Option(ctx.arg(DescriptionArg): Any) match {
+  ): IO[BoardQueryFilters] =
+    optionalStringArg(ctx, KeywordArg)
+      .traverse(_.trim match {
+        case ""      => IO.pure(None)
+        case keyword => IO.pure(Some(keyword))
+      })
+      .map(_.flatten)
+      .flatMap { keyword =>
+        optionalStringArg(ctx, OwnerUserIdArg)
+          .traverse(parseUserId(_).liftTo[IO])
+          .map(ownerUserId => BoardQueryFilters(keyword = keyword, ownerUserId = ownerUserId))
+      }
+
+  private def optionalStringArg(
+      ctx: sangria.schema.Context[GraphQLContext, Unit],
+      argument: Argument[?]
+  ): Option[String] =
+    Option(ctx.arg(argument): Any) match {
       case Some(text: String)       => Some(text)
       case Some(Some(text: String)) => Some(text)
       case Some(None)               => None
       case Some(_)                  => None
       case None                     => None
     }
-  }
+
+  private def optionalDescriptionArg(
+      ctx: sangria.schema.Context[GraphQLContext, Unit]
+  ): Option[String] =
+    optionalStringArg(ctx, DescriptionArg)
 
   private def loadUserView(context: GraphQLContext, rawUserId: String): IO[Option[UserView]] =
     parseUserId(rawUserId)

@@ -2,11 +2,15 @@ package io.github.oleksiybondar.api.http.routes.graphql.board
 
 import cats.effect.unsafe.implicits.global
 import io.circe.Json
+import io.github.oleksiybondar.api.domain.board.{BoardId, BoardName}
+import io.github.oleksiybondar.api.domain.user.UserId
 import io.github.oleksiybondar.api.testkit.fixtures.{GraphQLFixtures, UserFixtures}
 import io.github.oleksiybondar.api.testkit.support.GraphQLRequestSupport.graphqlRequest
 import munit.FunSuite
 import org.http4s.Status
 import org.http4s.circe.CirceEntityCodec._
+
+import java.util.UUID
 
 class BoardGraphQLRoutesSpec extends FunSuite {
 
@@ -44,6 +48,64 @@ class BoardGraphQLRoutesSpec extends FunSuite {
       dashboards.head.hcursor.get[String]("name").toOption,
       Some("Core Board")
     )
+  }
+
+  test("POST /graphql filters boards by keyword and owner") {
+    val otherOwnerId       = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222"))
+    val matchingDashboard  =
+      io.github.oleksiybondar.api.testkit.fixtures.BoardFixtures.sampleDashboard.copy(
+        name = BoardName("Platform Board")
+      )
+    val filteredOutByName  =
+      io.github.oleksiybondar.api.testkit.fixtures.BoardFixtures.dashboard(
+        id = BoardId(UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")),
+        name = BoardName("Infrastructure Board")
+      )
+    val filteredOutByOwner =
+      io.github.oleksiybondar.api.testkit.fixtures.BoardFixtures.dashboard(
+        id = BoardId(UUID.fromString("cccccccc-cccc-cccc-cccc-cccccccccccc")),
+        name = BoardName("Platform Ops"),
+        ownerUserId = otherOwnerId,
+        createdByUserId = otherOwnerId,
+        lastModifiedByUserId = otherOwnerId
+      )
+    val memberships        = List(
+      io.github.oleksiybondar.api.testkit.fixtures.BoardMemberFixtures.sampleMember.copy(
+        boardId = matchingDashboard.id
+      ),
+      io.github.oleksiybondar.api.testkit.fixtures.BoardMemberFixtures.sampleMember.copy(
+        boardId = filteredOutByName.id
+      ),
+      io.github.oleksiybondar.api.testkit.fixtures.BoardMemberFixtures.sampleMember.copy(
+        boardId = filteredOutByOwner.id
+      )
+    )
+
+    val response = withGraphQLRoutes(
+      users = List(UserFixtures.sampleUser),
+      dashboards = List(matchingDashboard, filteredOutByName, filteredOutByOwner),
+      members = memberships
+    ) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        filteredBoardsQuery,
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body       = response.as[Json].unsafeRunSync()
+    val dashboards =
+      body.hcursor.downField(
+        "data"
+      ).downField("myBoards").focus.flatMap(_.asArray).getOrElse(Vector.empty)
+
+    assertEquals(response.status, Status.Ok)
+    assertEquals(dashboards.size, 1)
+    assertEquals(dashboards.head.hcursor.get[String]("name").toOption, Some("Platform Board"))
   }
 
   test("POST /graphql creates a board and returns it") {
@@ -427,6 +489,18 @@ class BoardGraphQLRoutesSpec extends FunSuite {
   private val myDashboardsLegacyQuery =
     """query {
       |  myDashboards {
+      |    id
+      |    name
+      |    active
+      |  }
+      |}""".stripMargin
+
+  private val filteredBoardsQuery =
+    """query {
+      |  myBoards(
+      |    keyword: "platform"
+      |    ownerUserId: "11111111-1111-1111-1111-111111111111"
+      |  ) {
       |    id
       |    name
       |    active

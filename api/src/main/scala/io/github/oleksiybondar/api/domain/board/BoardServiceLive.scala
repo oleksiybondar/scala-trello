@@ -33,13 +33,17 @@ final class BoardServiceLive[F[_]: Temporal](
   override def listDashboards: F[List[Board]] =
     dashboardRepo.list
 
-  override def listDashboardsForUser(userId: UserId): F[List[Board]] =
+  override def listDashboardsForUser(
+      userId: UserId,
+      filters: BoardQueryFilters
+  ): F[List[Board]] =
     dashboardMembershipService
       .listMembershipsForUser(userId)
       .flatMap(
         _.traverse(memberWithRole => dashboardRepo.findById(memberWithRole.member.boardId))
       )
       .map(_.flatten)
+      .map(_.filter(matchesFilters(_, filters)))
 
   override def changeOwnership(
       dashboardId: BoardId,
@@ -170,4 +174,15 @@ final class BoardServiceLive[F[_]: Temporal](
     roleService
       .getByName(RoleName("admin"))
       .flatMap(_.liftTo[F](new IllegalStateException("Admin role was not found")))
+
+  private def matchesFilters(board: Board, filters: BoardQueryFilters): Boolean = {
+    val normalizedKeyword = filters.keyword.map(_.trim.toLowerCase).filter(_.nonEmpty)
+    val matchesKeyword    = normalizedKeyword.forall { keyword =>
+      board.name.value.toLowerCase.contains(keyword) ||
+      board.description.exists(_.value.toLowerCase.contains(keyword))
+    }
+    val matchesOwner      = filters.ownerUserId.forall(_ == board.ownerUserId)
+
+    matchesKeyword && matchesOwner
+  }
 }

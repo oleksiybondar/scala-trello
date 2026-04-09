@@ -91,6 +91,49 @@ class BoardServiceLiveSpec extends FunSuite {
     assertEquals(result, List(firstDashboard))
   }
 
+  test("listDashboardsForUser filters dashboards by keyword and owner") {
+    val matchingDashboard   =
+      BoardFixtures.sampleDashboard.copy(name = BoardName("Platform Sprint"))
+    val otherOwnedDashboard =
+      BoardFixtures.dashboard(
+        id = BoardId(UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff")),
+        name = BoardName("Infra Board"),
+        ownerUserId = matchingDashboard.ownerUserId,
+        createdByUserId = matchingDashboard.ownerUserId,
+        lastModifiedByUserId = matchingDashboard.ownerUserId
+      )
+    val otherOwnerDashboard =
+      BoardFixtures.dashboard(
+        id = BoardId(UUID.fromString("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee")),
+        name = BoardName("Platform Ops"),
+        ownerUserId = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222")),
+        createdByUserId = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222")),
+        lastModifiedByUserId = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222"))
+      )
+    val memberships         = List(
+      BoardMemberFixtures.sampleMember.copy(boardId = matchingDashboard.id),
+      BoardMemberFixtures.sampleMember.copy(boardId = otherOwnedDashboard.id),
+      BoardMemberFixtures.sampleMember.copy(boardId = otherOwnerDashboard.id)
+    )
+
+    val result = BoardServiceFixtures.withBoardService(
+      dashboards = List(matchingDashboard, otherOwnedDashboard, otherOwnerDashboard),
+      members = memberships,
+      roles = List(RoleFixtures.adminRole),
+      permissions = List(PermissionFixtures.adminDashboardPermission)
+    ) { ctx =>
+      ctx.dashboardService.listDashboardsForUser(
+        BoardMemberFixtures.sampleMember.userId,
+        BoardQueryFilters(
+          keyword = Some("platform"),
+          ownerUserId = Some(matchingDashboard.ownerUserId)
+        )
+      )
+    }
+
+    assertEquals(result, List(matchingDashboard))
+  }
+
   test("deactivate marks the dashboard inactive when the actor has access") {
     val dashboard = BoardFixtures.sampleDashboard
 

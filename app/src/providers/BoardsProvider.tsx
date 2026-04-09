@@ -1,11 +1,12 @@
 import type { PropsWithChildren, ReactElement } from "react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { BoardsContext } from "@contexts/boards-context";
 import type {
   NormalizedQueryBoardsParams,
   QueryBoardsParams
 } from "@contexts/boards-context";
+import { filterBoards, getBoardOwnerOptions } from "@features/board/boardsApi";
 import { useCreateBoardMutation } from "@features/board/useCreateBoardMutation";
 import { useBoardsQuery } from "@features/board/useBoardsQuery";
 import type { CreateBoardInput } from "@models/board";
@@ -35,37 +36,38 @@ export const BoardsProvider = ({
   const [currentParams, setCurrentParams] = useState(
     normalizeQueryBoardsParams(DEFAULT_QUERY_BOARDS_PARAMS)
   );
-  const boardsQuery = useBoardsQuery(currentParams);
+  const boardsQuery = useBoardsQuery({
+    keyword: currentParams.keyword,
+    owner: currentParams.owner
+  });
+  const ownerOptionsQuery = useBoardsQuery({});
   const createBoardMutation = useCreateBoardMutation();
+  const visibleBoards = boardsQuery.data ?? [];
+  const allBoards = ownerOptionsQuery.data ?? [];
 
-  const value = useMemo(
-    () => ({
-      boards: boardsQuery.data ?? [],
-      boardsError:
-        boardsQuery.error instanceof Error ? boardsQuery.error : null,
-      createBoard: async (input: CreateBoardInput) => {
-        await createBoardMutation.mutateAsync(input);
-      },
-      currentParams,
-      isCreatingBoard: createBoardMutation.isPending,
-      isLoadingBoards: boardsQuery.isLoading,
-      queryBoards: (params: QueryBoardsParams) => {
-        setCurrentParams(currentState => {
-          return normalizeQueryBoardsParams({
-            ...currentState,
-            ...params
-          });
-        });
-      }
+  const value = {
+    boards: filterBoards(visibleBoards, {
+      active: currentParams.active,
+      page: currentParams.page
     }),
-    [
-      boardsQuery.data,
-      boardsQuery.error,
-      boardsQuery.isLoading,
-      createBoardMutation,
-      currentParams
-    ]
-  );
+    boardsError:
+      boardsQuery.error instanceof Error ? boardsQuery.error : null,
+    createBoard: async (input: CreateBoardInput) => {
+      await createBoardMutation.mutateAsync(input);
+    },
+    currentParams,
+    isCreatingBoard: createBoardMutation.isPending,
+    isLoadingBoards: boardsQuery.isLoading || ownerOptionsQuery.isLoading,
+    ownerOptions: getBoardOwnerOptions(allBoards),
+    queryBoards: (params: QueryBoardsParams) => {
+      setCurrentParams(currentState => {
+        return normalizeQueryBoardsParams({
+          ...currentState,
+          ...params
+        });
+      });
+    }
+  };
 
   return <BoardsContext.Provider value={value}>{children}</BoardsContext.Provider>;
 };

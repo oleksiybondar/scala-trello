@@ -3,6 +3,11 @@ package io.github.oleksiybondar.api.domain.board
 import io.github.oleksiybondar.api.domain.permission.RoleId
 import io.github.oleksiybondar.api.domain.user.UserId
 
+final case class BoardQueryFilters(
+    keyword: Option[String] = None,
+    ownerUserId: Option[UserId] = None
+)
+
 /** Service responsible for dashboard lifecycle operations and membership-facing orchestration.
   *
   * This service owns dashboard CRUD-oriented business actions and delegates authorization checks to
@@ -21,7 +26,10 @@ trait BoardService[F[_]] {
   def listDashboards: F[List[Board]]
 
   /** Lists dashboards where the user is a member. */
-  def listDashboardsForUser(userId: UserId): F[List[Board]]
+  def listDashboardsForUser(
+      userId: UserId,
+      filters: BoardQueryFilters = BoardQueryFilters()
+  ): F[List[Board]]
 
   /** Changes dashboard ownership when the acting user has sufficient dashboard rights. */
   def changeOwnership(

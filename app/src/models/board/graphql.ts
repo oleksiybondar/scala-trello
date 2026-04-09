@@ -37,10 +37,31 @@ const serializeNullableGraphQLString = (value: string | undefined): string => {
   return value === undefined ? "null" : serializeGraphQLString(value);
 };
 
-export const buildMyDashboardsQuery = (): string => {
+interface BuildMyDashboardsQueryParams {
+  keyword?: string | undefined;
+  ownerUserId?: string | undefined;
+}
+
+const buildMyDashboardsArguments = ({
+  keyword,
+  ownerUserId
+}: BuildMyDashboardsQueryParams): string => {
+  const args = [
+    `keyword: ${serializeNullableGraphQLString(keyword)}`,
+    `ownerUserId: ${serializeNullableGraphQLString(ownerUserId)}`
+  ];
+
+  return args.join("\n        ");
+};
+
+export const buildMyDashboardsQuery = (
+  params: BuildMyDashboardsQueryParams = {}
+): string => {
   return /* GraphQL */ `
     query {
-      myDashboards {
+      myDashboards(
+        ${buildMyDashboardsArguments(params)}
+      ) {
         ${DASHBOARD_FIELDS}
       }
     }
