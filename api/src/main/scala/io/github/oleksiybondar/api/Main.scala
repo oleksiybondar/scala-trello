@@ -5,19 +5,11 @@ import com.comcast.ip4s.{Host, Port}
 import io.github.oleksiybondar.api.config.{AppConfig, ConfigLoader, DebugMode}
 import io.github.oleksiybondar.api.domain.board.{
   BoardAccessService,
-  BoardAccessServiceLive,
   BoardMembershipService,
-  BoardMembershipServiceLive,
-  BoardService,
-  BoardServiceLive
+  BoardService
 }
-import io.github.oleksiybondar.api.domain.permission.{
-  PermissionService,
-  PermissionServiceLive,
-  RoleService,
-  RoleServiceLive
-}
-import io.github.oleksiybondar.api.domain.user.{UserService, UserServiceLive}
+import io.github.oleksiybondar.api.domain.permission.{PermissionService, RoleService}
+import io.github.oleksiybondar.api.domain.user.UserService
 import io.github.oleksiybondar.api.http.HttpApi
 import io.github.oleksiybondar.api.http.docs.graphql.GraphiQLRoutes
 import io.github.oleksiybondar.api.http.docs.rest.OpenAPI
@@ -25,31 +17,8 @@ import io.github.oleksiybondar.api.http.middleware.{AuthMiddleware, LoggingMiddl
 import io.github.oleksiybondar.api.http.routes.graphql.{GraphQLContext, GraphQLRoutes}
 import io.github.oleksiybondar.api.http.routes.rest.auth.AuthRoutes
 import io.github.oleksiybondar.api.http.routes.rest.health.HealthRoutes
-import io.github.oleksiybondar.api.infrastructure.auth.password.{
-  PasswordHistoryLive,
-  PasswordStrengthValidatorLive
-}
-import io.github.oleksiybondar.api.infrastructure.crypto.Password4jPasswordHasher
 import io.github.oleksiybondar.api.infrastructure.db.DatabaseResource
-import io.github.oleksiybondar.api.infrastructure.db.auth.password.{
-  PasswordHistoryRepo,
-  PasswordHistoryRepoSlick
-}
-import io.github.oleksiybondar.api.infrastructure.db.auth.{AuthSessionRepo, AuthSessionRepoSlick}
-import io.github.oleksiybondar.api.infrastructure.db.board.{
-  BoardMemberRepo,
-  BoardRepo,
-  SlickBoardMemberRepo,
-  SlickBoardRepo
-}
-import io.github.oleksiybondar.api.infrastructure.db.permission.{
-  PermissionRepo,
-  RoleRepo,
-  SlickPermissionRepo,
-  SlickRoleRepo
-}
-import io.github.oleksiybondar.api.infrastructure.db.user.{SlickUserRepo, UserRepo}
-import io.github.oleksiybondar.api.modules.AuthModule
+import io.github.oleksiybondar.api.modules.{ApplicationModules, AuthModule}
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.Server
 import org.http4s.{HttpApp, HttpRoutes}
@@ -101,39 +70,19 @@ object Main extends IOApp.Simple {
       debugEnabled: Boolean
   ): Resource[IO, HttpApp[IO]] =
     for {
-      db                        <- databaseResource(config)
-      userRepo                   = buildUserRepo(db)
-      dashboardRepo              = buildDashboardRepo(db)
-      dashboardMemberRepo        = buildDashboardMemberRepo(db)
-      authSessionRepo            = buildAuthSessionRepo(db)
-      roleRepo                   = buildRoleRepo(db)
-      permissionRepo             = buildPermissionRepo(db)
-      passwordHistoryRepo        = buildPasswordHistoryRepo(db)
-      userService                = buildUserService(config, userRepo, passwordHistoryRepo)
-      roleService                = buildRoleService(roleRepo, permissionRepo)
-      permissionService          = buildPermissionService(permissionRepo)
-      dashboardMembershipService = buildDashboardMembershipService(dashboardMemberRepo, roleService)
-      dashboardAccessService     =
-        buildDashboardAccessService(dashboardRepo, dashboardMembershipService)
-      dashboardService           =
-        buildDashboardService(
-          dashboardRepo,
-          dashboardAccessService,
-          dashboardMembershipService,
-          roleService
-        )
-      authModule                 = buildAuthModule(config, userRepo, authSessionRepo, passwordHistoryRepo)
-      graphqlRoutes             <- graphqlRoutesResource(
-                                     userService,
-                                     dashboardService,
-                                     dashboardMembershipService,
-                                     dashboardAccessService,
-                                     roleService,
-                                     permissionService,
-                                     authModule.authService
-                                   )
+      db            <- databaseResource(config)
+      modules        = ApplicationModules.make[IO](config, db)
+      graphqlRoutes <- graphqlRoutesResource(
+                         modules.user.userService,
+                         modules.board.boardService,
+                         modules.board.boardMembershipService,
+                         modules.board.boardAccessService,
+                         modules.permission.roleService,
+                         modules.permission.permissionService,
+                         modules.auth.authService
+                       )
     } yield {
-      buildHttpApp(authModule, userService, graphqlRoutes, debugEnabled)
+      buildHttpApp(modules.auth, modules.user.userService, graphqlRoutes, debugEnabled)
     }
 
   def databaseResource(config: AppConfig): Resource[IO, Database] =
@@ -161,89 +110,6 @@ object Main extends IOApp.Simple {
           currentUserId = None
         )
       )
-    )
-
-  def buildUserRepo(db: Database): UserRepo[IO] =
-    new SlickUserRepo[IO](db)
-
-  def buildDashboardRepo(db: Database): BoardRepo[IO] =
-    new SlickBoardRepo[IO](db)
-
-  def buildDashboardMemberRepo(db: Database): BoardMemberRepo[IO] =
-    new SlickBoardMemberRepo[IO](db)
-
-  def buildRoleRepo(db: Database): RoleRepo[IO] =
-    new SlickRoleRepo[IO](db)
-
-  def buildPermissionRepo(db: Database): PermissionRepo[IO] =
-    new SlickPermissionRepo[IO](db)
-
-  def buildRoleService(
-      roleRepo: RoleRepo[IO],
-      permissionRepo: PermissionRepo[IO]
-  ): RoleService[IO] =
-    new RoleServiceLive[IO](roleRepo, permissionRepo)
-
-  def buildPermissionService(permissionRepo: PermissionRepo[IO]): PermissionService[IO] =
-    new PermissionServiceLive[IO](permissionRepo)
-
-  def buildDashboardMembershipService(
-      dashboardMemberRepo: BoardMemberRepo[IO],
-      roleService: RoleService[IO]
-  ): BoardMembershipService[IO] =
-    new BoardMembershipServiceLive[IO](dashboardMemberRepo, roleService)
-
-  def buildDashboardAccessService(
-      dashboardRepo: BoardRepo[IO],
-      dashboardMembershipService: BoardMembershipService[IO]
-  ): BoardAccessService[IO] =
-    new BoardAccessServiceLive[IO](dashboardRepo, dashboardMembershipService)
-
-  def buildDashboardService(
-      dashboardRepo: BoardRepo[IO],
-      dashboardAccessService: BoardAccessService[IO],
-      dashboardMembershipService: BoardMembershipService[IO],
-      roleService: RoleService[IO]
-  ): BoardService[IO] =
-    new BoardServiceLive[IO](
-      dashboardRepo,
-      dashboardAccessService,
-      dashboardMembershipService,
-      roleService
-    )
-
-  def buildUserService(
-      config: AppConfig,
-      userRepo: UserRepo[IO],
-      passwordHistoryRepo: PasswordHistoryRepo[IO]
-  ): UserService[IO] = {
-    val passwordHasher = new Password4jPasswordHasher[IO](config.password)
-    new UserServiceLive[IO](
-      userRepo,
-      passwordHasher,
-      new PasswordStrengthValidatorLive(config.password.strength),
-      new PasswordHistoryLive[IO](passwordHistoryRepo, passwordHasher, config.password)
-    )
-  }
-
-  def buildAuthSessionRepo(db: Database): AuthSessionRepo[IO] =
-    new AuthSessionRepoSlick[IO](db)
-
-  def buildPasswordHistoryRepo(db: Database): PasswordHistoryRepo[IO] =
-    new PasswordHistoryRepoSlick[IO](db)
-
-  def buildAuthModule(
-      config: AppConfig,
-      userRepo: UserRepo[IO],
-      authSessionRepo: AuthSessionRepo[IO],
-      passwordHistoryRepo: PasswordHistoryRepo[IO]
-  ): AuthModule[IO] =
-    AuthModule.make[IO](
-      config.auth,
-      config.password,
-      userRepo,
-      authSessionRepo,
-      passwordHistoryRepo
     )
 
   def buildHttpApp(
