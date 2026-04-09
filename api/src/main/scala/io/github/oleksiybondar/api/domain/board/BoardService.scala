@@ -3,6 +3,12 @@ package io.github.oleksiybondar.api.domain.board
 import io.github.oleksiybondar.api.domain.permission.RoleId
 import io.github.oleksiybondar.api.domain.user.UserId
 
+final case class BoardQueryFilters(
+    active: Option[Boolean] = Some(true),
+    keyword: Option[String] = None,
+    ownerUserId: Option[UserId] = None
+)
+
 /** Service responsible for dashboard lifecycle operations and membership-facing orchestration.
   *
   * This service owns dashboard CRUD-oriented business actions and delegates authorization checks to
@@ -21,7 +27,10 @@ trait BoardService[F[_]] {
   def listDashboards: F[List[Board]]
 
   /** Lists dashboards where the user is a member. */
-  def listDashboardsForUser(userId: UserId): F[List[Board]]
+  def listDashboardsForUser(
+      userId: UserId,
+      filters: BoardQueryFilters = BoardQueryFilters()
+  ): F[List[Board]]
 
   /** Changes dashboard ownership when the acting user has sufficient dashboard rights. */
   def changeOwnership(
@@ -30,8 +39,21 @@ trait BoardService[F[_]] {
       newOwnerUserId: UserId
   ): F[Boolean]
 
+  /** Changes the dashboard title when the acting user has sufficient dashboard rights. */
+  def changeTitle(dashboardId: BoardId, actorUserId: UserId, title: BoardName): F[Boolean]
+
+  /** Changes the dashboard description when the acting user has sufficient dashboard rights. */
+  def changeDescription(
+      dashboardId: BoardId,
+      actorUserId: UserId,
+      description: Option[BoardDescription]
+  ): F[Boolean]
+
   /** Deactivates a dashboard when the acting user has sufficient dashboard rights. */
   def deactivate(dashboardId: BoardId, actorUserId: UserId): F[Boolean]
+
+  /** Activates a dashboard when the acting user has sufficient dashboard rights. */
+  def activate(dashboardId: BoardId, actorUserId: UserId): F[Boolean]
 
   /** Adds a new dashboard member when the acting user has sufficient dashboard rights. */
   def addMember(

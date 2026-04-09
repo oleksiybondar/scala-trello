@@ -66,7 +66,7 @@ export const AppUserInfo = ({
             {fullName}
           </Typography>
           {secondaryLabel !== undefined ? (
-            <Typography color="text.secondary" noWrap variant="caption">
+            <Typography noWrap variant="caption">
               {secondaryLabel}
             </Typography>
           ) : null}

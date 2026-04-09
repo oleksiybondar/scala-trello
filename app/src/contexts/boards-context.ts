@@ -3,18 +3,24 @@ import { createContext } from "react";
 import type { CreateBoardInput } from "@models/board";
 import type { Board } from "@models/board";
 
+export interface BoardOwnerOption {
+  label: string;
+  ownerUserId: string;
+}
+
 export interface QueryBoardsParams {
   active?: boolean | undefined;
   keyword?: string | undefined;
   owner?: string | undefined;
   page?: number | undefined;
+  showInactive?: boolean | undefined;
 }
 
 export interface NormalizedQueryBoardsParams {
-  active: boolean;
   keyword?: string | undefined;
   owner?: string | undefined;
   page: number;
+  showInactive: boolean;
 }
 
 export interface BoardsContextValue {
@@ -24,6 +30,7 @@ export interface BoardsContextValue {
   currentParams: NormalizedQueryBoardsParams;
   isCreatingBoard: boolean;
   isLoadingBoards: boolean;
+  ownerOptions: BoardOwnerOption[];
   queryBoards: (params: QueryBoardsParams) => void;
 }
 
@@ -36,10 +43,11 @@ export const BoardsContext = createContext<BoardsContextValue>({
   boardsError: null,
   createBoard: missingBoardsProvider,
   currentParams: {
-    active: true,
-    page: 1
+    page: 1,
+    showInactive: false
   },
   isCreatingBoard: false,
   isLoadingBoards: false,
+  ownerOptions: [],
   queryBoards: missingBoardsProvider
 });

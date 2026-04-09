@@ -2,15 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import type { UseQueryResult } from "@tanstack/react-query";
 
 import type { QueryBoardsParams } from "@contexts/boards-context";
-import { filterBoards } from "@features/board/boardsApi";
 import { useAuth } from "@hooks/useAuth";
 import { requestGraphQL } from "@helpers/requestGraphQL";
 import {
-  buildMyDashboardsQuery,
-  mapDashboardResponseToBoard
+  buildMyBoardsQuery,
+  mapBoardResponseToBoard
 } from "@models/board";
 import type { Board } from "@models/board";
-import type { MyDashboardsQueryResponse } from "@models/board";
+import type { MyBoardsQueryResponse } from "@models/board";
 
 export const useBoardsQuery = (
   params: QueryBoardsParams
@@ -20,19 +19,26 @@ export const useBoardsQuery = (
   return useQuery({
     enabled: accessToken !== null && session !== null,
     queryFn: async () => {
-      const response = await requestGraphQL<MyDashboardsQueryResponse>({
+      const response = await requestGraphQL<MyBoardsQueryResponse>({
         accessToken,
-        document: buildMyDashboardsQuery(),
+        document: buildMyBoardsQuery({
+          active: params.active,
+          keyword: params.keyword,
+          ownerUserId: params.owner
+        }),
         ...(session?.tokenType === undefined
           ? {}
           : {
               tokenType: session.tokenType
             })
       });
-      const boards = response.myDashboards.map(mapDashboardResponseToBoard);
-
-      return filterBoards(boards, params);
+      return response.myBoards.map(mapBoardResponseToBoard);
     },
-    queryKey: ["boards", params]
+    queryKey: [
+      "boards",
+      params.active === undefined ? "all" : String(params.active),
+      params.keyword ?? "",
+      params.owner ?? ""
+    ]
   });
 };

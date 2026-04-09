@@ -1,5 +1,10 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 
+import { BoardGeneralSettingsPage } from "@pages/BoardGeneralSettingsPage";
+import { BoardMembersSettingsPage } from "@pages/BoardMembersSettingsPage";
+import { BoardOwnershipSettingsPage } from "@pages/BoardOwnershipSettingsPage";
+import { BoardPage } from "@pages/BoardPage";
+import { BoardSettingsPage } from "@pages/BoardSettingsPage";
 import { LoginPage } from "@pages/LoginPage";
 import { MyBoardsPage } from "@pages/MyBoardsPage";
 import { RegisterPage } from "@pages/RegisterPage";
@@ -34,6 +39,40 @@ export const router = createBrowserRouter([
         <MyBoardsPage />
       </RequireAuthentication>
     )
+  },
+  {
+    path: "/boards/:boardId",
+    element: (
+      <RequireAuthentication>
+        <BoardPage />
+      </RequireAuthentication>
+    )
+  },
+  {
+    path: "/boards/:boardId/settings",
+    element: (
+      <RequireAuthentication>
+        <BoardSettingsPage />
+      </RequireAuthentication>
+    ),
+    children: [
+      {
+        index: true,
+        element: <Navigate replace to="general" />
+      },
+      {
+        path: "general",
+        element: <BoardGeneralSettingsPage />
+      },
+      {
+        path: "members",
+        element: <BoardMembersSettingsPage />
+      },
+      {
+        path: "ownership",
+        element: <BoardOwnershipSettingsPage />
+      }
+    ]
   },
   {
     path: "/settings",

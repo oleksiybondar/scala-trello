@@ -2,6 +2,7 @@ package io.github.oleksiybondar.api.http.routes.graphql.user
 
 import cats.effect.unsafe.implicits.global
 import io.circe.Json
+import io.github.oleksiybondar.api.domain.user.{Email, UserId, Username}
 import io.github.oleksiybondar.api.testkit.fixtures.{GraphQLFixtures, UserFixtures}
 import io.github.oleksiybondar.api.testkit.support.GraphQLRequestSupport.graphqlRequest
 import munit.FunSuite
@@ -83,6 +84,32 @@ class UserGraphQLRoutesSpec extends FunSuite {
       Some("bob")
     )
     assert(!body.noSpaces.contains("passwordHash"))
+  }
+
+  test("POST /graphql clamps negative pagination arguments to zero") {
+    val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        usersQuery(offset = -1, limit = -1),
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body  = response.as[Json].unsafeRunSync()
+    val users =
+      body.hcursor
+        .downField("data")
+        .downField("users")
+        .focus
+        .flatMap(_.asArray)
+        .getOrElse(Vector.empty)
+
+    assertEquals(response.status, Status.Ok)
+    assertEquals(users.size, 0)
   }
 
   test("POST /graphql returns null when the requested user does not exist") {
@@ -208,6 +235,25 @@ class UserGraphQLRoutesSpec extends FunSuite {
     )
   }
 
+  test("POST /graphql returns an error when changing to a blank username") {
+    val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        changeUsernameMutation("   "),
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body = response.as[Json].unsafeRunSync()
+
+    assertEquals(response.status, Status.Ok)
+    assert(body.noSpaces.contains("Username is required"))
+  }
+
   test("POST /graphql returns an error when changing to an already used username") {
     val otherUser = UserFixtures.user(
       id = io.github.oleksiybondar.api.domain.user.UserId(
@@ -261,6 +307,69 @@ class UserGraphQLRoutesSpec extends FunSuite {
     )
   }
 
+  test("POST /graphql returns an error when changing to an already used email") {
+    val otherUser = UserFixtures.user(
+      id = UserId(java.util.UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")),
+      username = Some(Username("other")),
+      email = Some(Email("taken@example.com"))
+    )
+
+    val response = withGraphQLRoutes(List(UserFixtures.sampleUser, otherUser)) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        changeEmailMutation("taken@example.com"),
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body = response.as[Json].unsafeRunSync()
+
+    assertEquals(response.status, Status.Ok)
+    assert(body.noSpaces.contains("Email is already in use"))
+  }
+
+  test("POST /graphql returns an error when changing to a blank email") {
+    val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        changeEmailMutation("   "),
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body = response.as[Json].unsafeRunSync()
+
+    assertEquals(response.status, Status.Ok)
+    assert(body.noSpaces.contains("Email is required"))
+  }
+
+  test("POST /graphql returns an error when changing to an invalid email") {
+    val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        changeEmailMutation("not-an-email"),
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body = response.as[Json].unsafeRunSync()
+
+    assertEquals(response.status, Status.Ok)
+    assert(body.noSpaces.contains("Email is invalid"))
+  }
+
   test("POST /graphql changes the current user's password when the current password is valid") {
     val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
       for {
@@ -302,6 +411,72 @@ class UserGraphQLRoutesSpec extends FunSuite {
     assert(
       body.noSpaces.contains("Current password is invalid")
     )
+  }
+
+  test("POST /graphql returns an error when the new password is weak") {
+    val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        changePasswordMutation("secret", "short"),
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body = response.as[Json].unsafeRunSync()
+
+    assertEquals(response.status, Status.Ok)
+    assert(body.noSpaces.contains("Password does not satisfy the strength requirements"))
+  }
+
+  test("POST /graphql returns an error when the new password was already used") {
+    val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
+      for {
+        token          <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        firstResponse  <- ctx.httpApp.run(
+                            graphqlRequest(
+                              changePasswordMutation("secret", "secret123"),
+                              accessToken = Some(token)
+                            )
+                          )
+        _              <- firstResponse.as[Json]
+        secondResponse <- ctx.httpApp.run(
+                            graphqlRequest(
+                              changePasswordMutation("secret123", "secret123"),
+                              accessToken = Some(token)
+                            )
+                          )
+      } yield secondResponse
+    }
+
+    val body = response.as[Json].unsafeRunSync()
+
+    assertEquals(response.status, Status.Ok)
+    assert(body.noSpaces.contains("New password must not reuse a previous password"))
+  }
+
+  test("POST /graphql returns an error when the authenticated user no longer exists") {
+    val missingUserId = UserId(java.util.UUID.fromString("99999999-9999-9999-9999-999999999999"))
+
+    val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(missingUserId)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        updateProfileMutation("Ghost", "User"),
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body = response.as[Json].unsafeRunSync()
+
+    assertEquals(response.status, Status.Ok)
+    assert(body.noSpaces.contains("Current user was not found"))
   }
 
   private def userQuery(id: String): String =

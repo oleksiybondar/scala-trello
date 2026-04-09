@@ -48,25 +48,25 @@ object GraphQLFixtures {
   }
 
   def withGraphQLRoutes[A](
-      users: List[User] = List(UserFixtures.sampleUser)
+      users: List[User] = List(UserFixtures.sampleUser),
+      dashboards: List[io.github.oleksiybondar.api.domain.board.Board] = List(
+        BoardFixtures.sampleDashboard
+      ),
+      members: List[io.github.oleksiybondar.api.domain.board.BoardMember] = List(
+        BoardMemberFixtures.sampleMember,
+        BoardMemberFixtures.member(
+          userId = io.github.oleksiybondar.api.domain.user.UserId(
+            java.util.UUID.fromString("22222222-2222-2222-2222-222222222222")
+          ),
+          roleId = io.github.oleksiybondar.api.domain.permission.RoleId(2),
+          createdAt = java.time.Instant.parse("2026-04-06T08:05:00Z")
+        )
+      )
   )(run: GraphQLTestContext => IO[A]): A =
     (for {
       userRepo                  <- InMemoryUserRepo.create[IO](users)
-      dashboardRepo             <- InMemoryBoardRepo.create[IO](List(BoardFixtures.sampleDashboard))
-      dashboardMemberRepo       <- InMemoryBoardMemberRepo.create[IO](
-                                     List(
-                                       BoardMemberFixtures.sampleMember,
-                                       BoardMemberFixtures.member(
-                                         userId = io.github.oleksiybondar.api.domain.user.UserId(
-                                           java.util.UUID.fromString(
-                                             "22222222-2222-2222-2222-222222222222"
-                                           )
-                                         ),
-                                         roleId = io.github.oleksiybondar.api.domain.permission.RoleId(2),
-                                         createdAt = java.time.Instant.parse("2026-04-06T08:05:00Z")
-                                       )
-                                     )
-                                   )
+      dashboardRepo             <- InMemoryBoardRepo.create[IO](dashboards)
+      dashboardMemberRepo       <- InMemoryBoardMemberRepo.create[IO](members)
       authRepo                  <- InMemoryAuthRepo.create[IO]()
       roleRepo                  <- InMemoryRoleRepo.create[IO](
                                      List(

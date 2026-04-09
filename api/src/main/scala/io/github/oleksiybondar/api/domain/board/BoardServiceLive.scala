@@ -33,13 +33,17 @@ final class BoardServiceLive[F[_]: Temporal](
   override def listDashboards: F[List[Board]] =
     dashboardRepo.list
 
-  override def listDashboardsForUser(userId: UserId): F[List[Board]] =
+  override def listDashboardsForUser(
+      userId: UserId,
+      filters: BoardQueryFilters
+  ): F[List[Board]] =
     dashboardMembershipService
       .listMembershipsForUser(userId)
       .flatMap(
         _.traverse(memberWithRole => dashboardRepo.findById(memberWithRole.member.boardId))
       )
       .map(_.flatten)
+      .map(_.filter(matchesFilters(_, filters)))
 
   override def changeOwnership(
       dashboardId: BoardId,
@@ -90,6 +94,24 @@ final class BoardServiceLive[F[_]: Temporal](
         }
     }
 
+  override def changeTitle(
+      dashboardId: BoardId,
+      actorUserId: UserId,
+      title: BoardName
+  ): F[Boolean] =
+    updateDashboardMetadata(dashboardId, actorUserId) { dashboard =>
+      dashboard.copy(name = title)
+    }
+
+  override def changeDescription(
+      dashboardId: BoardId,
+      actorUserId: UserId,
+      description: Option[BoardDescription]
+  ): F[Boolean] =
+    updateDashboardMetadata(dashboardId, actorUserId) { dashboard =>
+      dashboard.copy(description = description)
+    }
+
   override def deactivate(dashboardId: BoardId, actorUserId: UserId): F[Boolean] =
     dashboardAccessService.canDeleteDashboard(dashboardId, actorUserId).flatMap {
       case false => false.pure[F]
@@ -101,6 +123,25 @@ final class BoardServiceLive[F[_]: Temporal](
               dashboardRepo.update(
                 dashboard.copy(
                   active = false,
+                  modifiedAt = now,
+                  lastModifiedByUserId = actorUserId
+                )
+              )
+            }
+        }
+    }
+
+  override def activate(dashboardId: BoardId, actorUserId: UserId): F[Boolean] =
+    dashboardAccessService.canModifyDashboard(dashboardId, actorUserId).flatMap {
+      case false => false.pure[F]
+      case true  =>
+        dashboardRepo.findById(dashboardId).flatMap {
+          case None            => false.pure[F]
+          case Some(dashboard) =>
+            Temporal[F].realTimeInstant.flatMap { now =>
+              dashboardRepo.update(
+                dashboard.copy(
+                  active = true,
                   modifiedAt = now,
                   lastModifiedByUserId = actorUserId
                 )
@@ -170,4 +211,37 @@ final class BoardServiceLive[F[_]: Temporal](
     roleService
       .getByName(RoleName("admin"))
       .flatMap(_.liftTo[F](new IllegalStateException("Admin role was not found")))
+
+  private def updateDashboardMetadata(
+      dashboardId: BoardId,
+      actorUserId: UserId
+  )(update: Board => Board): F[Boolean] =
+    dashboardAccessService.canModifyDashboard(dashboardId, actorUserId).flatMap {
+      case false => false.pure[F]
+      case true  =>
+        dashboardRepo.findById(dashboardId).flatMap {
+          case None            => false.pure[F]
+          case Some(dashboard) =>
+            Temporal[F].realTimeInstant.flatMap { now =>
+              dashboardRepo.update(
+                update(dashboard).copy(
+                  modifiedAt = now,
+                  lastModifiedByUserId = actorUserId
+                )
+              )
+            }
+        }
+    }
+
+  private def matchesFilters(board: Board, filters: BoardQueryFilters): Boolean = {
+    val matchesActive     = filters.active.forall(_ == board.active)
+    val normalizedKeyword = filters.keyword.map(_.trim.toLowerCase).filter(_.nonEmpty)
+    val matchesKeyword    = normalizedKeyword.forall { keyword =>
+      board.name.value.toLowerCase.contains(keyword) ||
+      board.description.exists(_.value.toLowerCase.contains(keyword))
+    }
+    val matchesOwner      = filters.ownerUserId.forall(_ == board.ownerUserId)
+
+    matchesActive && matchesKeyword && matchesOwner
+  }
 }

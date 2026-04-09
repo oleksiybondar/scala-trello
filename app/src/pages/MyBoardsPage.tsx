@@ -1,49 +1,55 @@
 import type { ReactElement } from "react";
 import { useState } from "react";
 
-import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
+import { BoardCard } from "@components/boards/BoardCard";
+import { BoardsToolbar } from "@components/boards/boards-toolbar/BoardsToolbar";
 import { CreateBoardDialog } from "@components/boards/CreateBoardDialog";
 import { NoBoards } from "@components/boards/NoBoards";
+import { NoBoardsFound } from "@components/boards/NoBoardsFound";
 import { AppPageLayout } from "@components/layout/AppPageLayout";
 import { useBoards } from "@hooks/useBoards";
+import { useCurrentUser } from "@hooks/useCurrentUser";
 import { BoardsProvider } from "@providers/BoardsProvider";
 
-const MyBoardsPageContent = (): ReactElement => {
+const MyBoardsPageBody = (): ReactElement => {
   const [isCreateBoardDialogOpen, setIsCreateBoardDialogOpen] = useState(false);
-  const { boards } = useBoards();
+  const { boards, currentParams } = useBoards();
+  const { userId } = useCurrentUser();
+
+  const hasKeywordFilter = (currentParams.keyword ?? "").trim().length > 0;
+  const isMeOwnerFilter = userId !== null && currentParams.owner === userId;
+  const shouldShowInitialEmptyState =
+    !hasKeywordFilter &&
+    (currentParams.owner === undefined || isMeOwnerFilter);
 
   return (
     <AppPageLayout>
-      <Stack spacing={1}>
+      <Stack spacing={1.5}>
         <Typography variant="h2">My boards</Typography>
-        <Typography color="text.secondary" variant="body1">
-          Your boards will appear here once you are invited to one or create a
-          new board yourself.
-        </Typography>
-      </Stack>
-
-      {boards.length === 0 ? (
-        <NoBoards
+        <BoardsToolbar
           onCreateBoard={() => {
             setIsCreateBoardDialogOpen(true);
           }}
         />
+      </Stack>
+
+      {boards.length === 0 ? (
+        shouldShowInitialEmptyState ? (
+          <NoBoards
+            onCreateBoard={() => {
+              setIsCreateBoardDialogOpen(true);
+            }}
+          />
+        ) : (
+          <NoBoardsFound />
+        )
       ) : (
         <Stack spacing={2}>
           {boards.map(board => (
-            <Paper key={board.boardId} sx={{ p: 3 }} variant="outlined">
-              <Stack spacing={1}>
-                <Typography variant="h5">{board.name}</Typography>
-                {board.description !== null && board.description.length > 0 ? (
-                  <Typography color="text.secondary" variant="body2">
-                    {board.description}
-                  </Typography>
-                ) : null}
-              </Stack>
-            </Paper>
+            <BoardCard board={board} key={board.boardId} />
           ))}
         </Stack>
       )}
@@ -58,13 +64,10 @@ const MyBoardsPageContent = (): ReactElement => {
   );
 };
 
-/**
- * Boards entry page backed by the boards facade provider.
- */
 export const MyBoardsPage = (): ReactElement => {
   return (
     <BoardsProvider>
-      <MyBoardsPageContent />
+      <MyBoardsPageBody />
     </BoardsProvider>
   );
 };

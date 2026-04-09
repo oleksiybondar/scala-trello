@@ -22,5 +22,6 @@ final case class BoardMemberView(
     boardId: String,
     userId: String,
     createdAt: String,
-    role: BoardRoleView
+    role: BoardRoleView,
+    user: Option[io.github.oleksiybondar.api.http.routes.graphql.user.UserView]
 )

@@ -67,6 +67,28 @@ class RoleGraphQLRoutesSpec extends FunSuite {
     )
   }
 
+  test("POST /graphql returns null when the requested role does not exist") {
+    val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        missingRoleQuery,
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body = response.as[Json].unsafeRunSync()
+
+    assertEquals(response.status, Status.Ok)
+    assertEquals(
+      body.hcursor.downField("data").downField("role").focus,
+      Some(Json.Null)
+    )
+  }
+
   private val rolesQuery =
     """query {
       |  roles {
@@ -93,6 +115,14 @@ class RoleGraphQLRoutesSpec extends FunSuite {
       |    permissions {
       |      id
       |    }
+      |  }
+      |}""".stripMargin
+
+  private val missingRoleQuery =
+    """query {
+      |  role(id: 999) {
+      |    id
+      |    name
       |  }
       |}""".stripMargin
 }

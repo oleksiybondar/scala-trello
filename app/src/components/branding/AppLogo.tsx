@@ -61,7 +61,7 @@ export const AppLogo = (): ReactElement => {
         }}
       >
         <Typography
-          color="primary"
+          color="warning.main"
           sx={{
             alignItems: "flex-end",
             display: "flex",
