@@ -38,6 +38,16 @@ trait BoardService[F[_]] {
       newOwnerUserId: UserId
   ): F[Boolean]
 
+  /** Changes the dashboard title when the acting user has sufficient dashboard rights. */
+  def changeTitle(dashboardId: BoardId, actorUserId: UserId, title: BoardName): F[Boolean]
+
+  /** Changes the dashboard description when the acting user has sufficient dashboard rights. */
+  def changeDescription(
+      dashboardId: BoardId,
+      actorUserId: UserId,
+      description: Option[BoardDescription]
+  ): F[Boolean]
+
   /** Deactivates a dashboard when the acting user has sufficient dashboard rights. */
   def deactivate(dashboardId: BoardId, actorUserId: UserId): F[Boolean]
 

@@ -94,6 +94,24 @@ final class BoardServiceLive[F[_]: Temporal](
         }
     }
 
+  override def changeTitle(
+      dashboardId: BoardId,
+      actorUserId: UserId,
+      title: BoardName
+  ): F[Boolean] =
+    updateDashboardMetadata(dashboardId, actorUserId) { dashboard =>
+      dashboard.copy(name = title)
+    }
+
+  override def changeDescription(
+      dashboardId: BoardId,
+      actorUserId: UserId,
+      description: Option[BoardDescription]
+  ): F[Boolean] =
+    updateDashboardMetadata(dashboardId, actorUserId) { dashboard =>
+      dashboard.copy(description = description)
+    }
+
   override def deactivate(dashboardId: BoardId, actorUserId: UserId): F[Boolean] =
     dashboardAccessService.canDeleteDashboard(dashboardId, actorUserId).flatMap {
       case false => false.pure[F]
@@ -174,6 +192,27 @@ final class BoardServiceLive[F[_]: Temporal](
     roleService
       .getByName(RoleName("admin"))
       .flatMap(_.liftTo[F](new IllegalStateException("Admin role was not found")))
+
+  private def updateDashboardMetadata(
+      dashboardId: BoardId,
+      actorUserId: UserId
+  )(update: Board => Board): F[Boolean] =
+    dashboardAccessService.canModifyDashboard(dashboardId, actorUserId).flatMap {
+      case false => false.pure[F]
+      case true  =>
+        dashboardRepo.findById(dashboardId).flatMap {
+          case None            => false.pure[F]
+          case Some(dashboard) =>
+            Temporal[F].realTimeInstant.flatMap { now =>
+              dashboardRepo.update(
+                update(dashboard).copy(
+                  modifiedAt = now,
+                  lastModifiedByUserId = actorUserId
+                )
+              )
+            }
+        }
+    }
 
   private def matchesFilters(board: Board, filters: BoardQueryFilters): Boolean = {
     val normalizedKeyword = filters.keyword.map(_.trim.toLowerCase).filter(_.nonEmpty)

@@ -152,6 +152,53 @@ class BoardServiceLiveSpec extends FunSuite {
     assertEquals(result, (true, Some(false)))
   }
 
+  test("changeTitle updates the dashboard name when the actor has access") {
+    val dashboard = BoardFixtures.sampleDashboard
+
+    val result = BoardServiceFixtures.withBoardService(
+      dashboards = List(dashboard),
+      members = List(BoardMemberFixtures.sampleMember),
+      roles = List(RoleFixtures.adminRole),
+      permissions = List(PermissionFixtures.adminDashboardPermission)
+    ) { ctx =>
+      for {
+        changed <- ctx.dashboardService.changeTitle(
+                     dashboard.id,
+                     dashboard.ownerUserId,
+                     BoardName("Platform Board")
+                   )
+        updated <- ctx.dashboardRepo.findById(dashboard.id)
+      } yield (changed, updated.map(_.name), updated.map(_.lastModifiedByUserId))
+    }
+
+    assertEquals(
+      result,
+      (true, Some(BoardName("Platform Board")), Some(dashboard.ownerUserId))
+    )
+  }
+
+  test("changeDescription updates the dashboard description when the actor has access") {
+    val dashboard = BoardFixtures.sampleDashboard
+
+    val result = BoardServiceFixtures.withBoardService(
+      dashboards = List(dashboard),
+      members = List(BoardMemberFixtures.sampleMember),
+      roles = List(RoleFixtures.adminRole),
+      permissions = List(PermissionFixtures.adminDashboardPermission)
+    ) { ctx =>
+      for {
+        changed <- ctx.dashboardService.changeDescription(
+                     dashboard.id,
+                     dashboard.ownerUserId,
+                     Some(BoardDescription("Updated board description"))
+                   )
+        updated <- ctx.dashboardRepo.findById(dashboard.id)
+      } yield (changed, updated.flatMap(_.description).map(_.value))
+    }
+
+    assertEquals(result, (true, Some("Updated board description")))
+  }
+
   test("addMember adds a membership when the actor has access and the role exists") {
     val dashboard    = BoardFixtures.sampleDashboard
     val memberUserId = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222"))

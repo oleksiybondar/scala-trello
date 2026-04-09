@@ -158,6 +158,52 @@ object BoardApi {
       // TODO: remove this legacy alias after the UI migrates to `createBoard`.
       createBoardField("createDashboard"),
       Field(
+        name = "changeDashboardTitle",
+        fieldType = BoardType,
+        arguments = BoardIdArg :: NameArg :: Nil,
+        resolve = ctx =>
+          withCurrentUser(ctx) { currentUserId =>
+            for {
+              dashboardId <- IO.fromEither(parseBoardId(ctx.arg(BoardIdArg)))
+              changed     <-
+                ctx.ctx.dashboardService.changeTitle(
+                  dashboardId,
+                  currentUserId,
+                  BoardName(ctx.arg(NameArg).trim)
+                )
+              _           <-
+                if (changed) IO.unit
+                else IO.raiseError(BoardAccessDenied("Board title could not be changed"))
+              dashboard   <- ctx.ctx.dashboardService.getDashboard(dashboardId).flatMap(
+                               _.liftTo[IO](InvalidUserInput("Board was not found"))
+                             )
+            } yield toDashboardView(dashboard)
+          }.unsafeToFuture()
+      ),
+      Field(
+        name = "changeDashboardDescription",
+        fieldType = BoardType,
+        arguments = BoardIdArg :: DescriptionArg :: Nil,
+        resolve = ctx =>
+          withCurrentUser(ctx) { currentUserId =>
+            for {
+              dashboardId <- IO.fromEither(parseBoardId(ctx.arg(BoardIdArg)))
+              changed     <-
+                ctx.ctx.dashboardService.changeDescription(
+                  dashboardId,
+                  currentUserId,
+                  normalizeDescription(optionalDescriptionArg(ctx))
+                )
+              _           <-
+                if (changed) IO.unit
+                else IO.raiseError(BoardAccessDenied("Board description could not be changed"))
+              dashboard   <- ctx.ctx.dashboardService.getDashboard(dashboardId).flatMap(
+                               _.liftTo[IO](InvalidUserInput("Board was not found"))
+                             )
+            } yield toDashboardView(dashboard)
+          }.unsafeToFuture()
+      ),
+      Field(
         name = "deactivateDashboard",
         fieldType = BoardType,
         arguments = BoardIdArg :: Nil,

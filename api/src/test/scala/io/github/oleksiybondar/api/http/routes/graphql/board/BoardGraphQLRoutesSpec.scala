@@ -280,6 +280,49 @@ class BoardGraphQLRoutesSpec extends FunSuite {
     assertEquals(cursor.get[Boolean]("active").toOption, Some(false))
   }
 
+  test("POST /graphql changes a dashboard title") {
+    val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        changeDashboardTitleMutation,
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body   = response.as[Json].unsafeRunSync()
+    val cursor = body.hcursor.downField("data").downField("changeDashboardTitle")
+
+    assertEquals(response.status, Status.Ok)
+    assertEquals(cursor.get[String]("name").toOption, Some("Platform Board"))
+  }
+
+  test("POST /graphql changes a dashboard description") {
+    val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        changeDashboardDescriptionMutation,
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body   = response.as[Json].unsafeRunSync()
+    val cursor = body.hcursor.downField("data").downField("changeDashboardDescription")
+
+    assertEquals(response.status, Status.Ok)
+    assertEquals(
+      cursor.get[Option[String]]("description").toOption.flatten,
+      Some("Updated board description")
+    )
+  }
+
   test("POST /graphql invites a dashboard member") {
     val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
       for {
@@ -545,6 +588,28 @@ class BoardGraphQLRoutesSpec extends FunSuite {
       |  deactivateDashboard(dashboardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa") {
       |    id
       |    active
+      |  }
+      |}""".stripMargin
+
+  private val changeDashboardTitleMutation =
+    """mutation {
+      |  changeDashboardTitle(
+      |    dashboardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+      |    name: "Platform Board"
+      |  ) {
+      |    id
+      |    name
+      |  }
+      |}""".stripMargin
+
+  private val changeDashboardDescriptionMutation =
+    """mutation {
+      |  changeDashboardDescription(
+      |    dashboardId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+      |    description: "Updated board description"
+      |  ) {
+      |    id
+      |    description
       |  }
       |}""".stripMargin
 
