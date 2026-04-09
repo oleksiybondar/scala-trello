@@ -1,10 +1,10 @@
 import type { ReactElement } from "react";
 import { useState } from "react";
 
-import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
+import { BoardCard } from "@components/boards/BoardCard";
 import { CreateBoardDialog } from "@components/boards/CreateBoardDialog";
 import { NoBoards } from "@components/boards/NoBoards";
 import { AppPageLayout } from "@components/layout/AppPageLayout";
@@ -34,16 +34,7 @@ const MyBoardsPageContent = (): ReactElement => {
       ) : (
         <Stack spacing={2}>
           {boards.map(board => (
-            <Paper key={board.boardId} sx={{ p: 3 }} variant="outlined">
-              <Stack spacing={1}>
-                <Typography variant="h5">{board.name}</Typography>
-                {board.description !== null && board.description.length > 0 ? (
-                  <Typography color="text.secondary" variant="body2">
-                    {board.description}
-                  </Typography>
-                ) : null}
-              </Stack>
-            </Paper>
+            <BoardCard board={board} key={board.boardId} />
           ))}
         </Stack>
       )}

@@ -5,8 +5,21 @@ const DASHBOARD_FIELDS = `
   name
   description
   active
+  membersCount
   ownerUserId
+  owner {
+    id
+    firstName
+    lastName
+    avatarUrl
+  }
   createdByUserId
+  createdBy {
+    id
+    firstName
+    lastName
+    avatarUrl
+  }
   createdAt
   modifiedAt
   lastModifiedByUserId

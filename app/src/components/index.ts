@@ -1,7 +1,17 @@
+export { BoardCard } from "@components/boards/BoardCard";
+export { BoardCardHeader } from "@components/boards/BoardCardHeader";
+export { Person } from "@components/avatar/Person";
+export { BoardInfo } from "@components/boards/BoardInfo";
+export { TicketPieChart } from "@components/boards/tickets-info/TicketPieChart";
+export { TicketPieChartLegendItem } from "@components/boards/tickets-info/TicketPieChartLegendItem";
+export { TimeTrackingLegendItem } from "@components/boards/time-tracking-info/TimeTrackingLegendItem";
+export { TimeTrackingLineChart } from "@components/boards/time-tracking-info/TimeTrackingLineChart";
 export { AppAvatar } from "@components/avatar/AppAvatar";
 export { CreateBoardDialog } from "@components/boards/CreateBoardDialog";
 export { CreateBoardForm } from "@components/boards/CreateBoardForm";
 export { NoBoards } from "@components/boards/NoBoards";
+export { TicketsInfo } from "@components/boards/TicketsInfo";
+export { TimeTrackingInfo } from "@components/boards/TimeTrackingInfo";
 export { AppFooter } from "@components/footer/AppFooter";
 export { LoginForm } from "@components/forms/auth/LoginForm";
 export { AppPageLayout } from "@components/layout/AppPageLayout";
