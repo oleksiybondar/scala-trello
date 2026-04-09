@@ -20,6 +20,7 @@ import io.github.oleksiybondar.api.domain.user.UserMutationError.{
   WeakPassword
 }
 import io.github.oleksiybondar.api.infrastructure.db.user.UserRepo
+import io.github.oleksiybondar.api.validation.InputValidation
 
 /** Default `UserService` implementation backed by `UserRepo` and password policy components. */
 final class UserServiceLive[F[_]: Sync](
@@ -157,21 +158,20 @@ final class UserServiceLive[F[_]: Sync](
     )
 
   private def normalizeUsername(rawUsername: String): Either[UserMutationError, Username] = {
-    val normalized = rawUsername.trim
-
-    if (normalized.isEmpty) Left(UsernameRequired)
-    else Right(Username(normalized))
+    InputValidation.normalizeRequired(rawUsername) match {
+      case None             => Left(UsernameRequired)
+      case Some(normalized) => Right(Username(normalized))
+    }
   }
 
-  private def normalizeEmail(rawEmail: String): Either[UserMutationError, Email] = {
-    val normalized = rawEmail.trim.toLowerCase
-
-    if (normalized.isEmpty) Left(EmailRequired)
-    else if (!normalized.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"))
-      Left(InvalidEmail)
-    else Right(Email(normalized))
-  }
+  private def normalizeEmail(rawEmail: String): Either[UserMutationError, Email] =
+    InputValidation.normalizeEmail(rawEmail) match {
+      case None                                                          => Left(EmailRequired)
+      case Some(normalized) if !InputValidation.isValidEmail(normalized) =>
+        Left(InvalidEmail)
+      case Some(normalized)                                              => Right(Email(normalized))
+    }
 
   private def normalizeOptionalString(rawValue: Option[String]): Option[String] =
-    rawValue.map(_.trim).filter(_.nonEmpty)
+    rawValue.flatMap(InputValidation.normalizeRequired)
 }

@@ -212,6 +212,25 @@ class UserServiceLiveSpec extends FunSuite {
     assertEquals(result, Left(UserMutationError.InvalidEmail))
   }
 
+  test("changeEmail rejects malformed email patterns") {
+    val invalidEmails = List(
+      "plainaddress",
+      "@example.com",
+      "alice@",
+      "alice@example",
+      "alice..dots@example.com",
+      "alice@example..com"
+    )
+
+    invalidEmails.foreach { invalidEmail =>
+      val result = withUserService(List(UserFixtures.sampleUser)) { ctx =>
+        ctx.userService.changeEmail(UserFixtures.sampleUser.id, invalidEmail).value
+      }
+
+      assertEquals(result, Left(UserMutationError.InvalidEmail))
+    }
+  }
+
   test("changeEmail returns EmailAlreadyUsed when the email is taken by another user") {
     val otherUser =
       UserFixtures.user(
