@@ -19,6 +19,7 @@ import io.github.oleksiybondar.api.infrastructure.auth.JwtServiceLive
 import io.github.oleksiybondar.api.testkit.support.{
   InMemoryAuthRepo,
   InMemoryBoardMemberRepo,
+  InMemoryBoardQueryRepo,
   InMemoryBoardRepo,
   InMemoryCommentQueryRepo,
   InMemoryCommentRepo,
@@ -81,6 +82,29 @@ object GraphQLFixtures {
     (for {
       userRepo                  <- InMemoryUserRepo.create[IO](users)
       dashboardRepo             <- InMemoryBoardRepo.create[IO](dashboards)
+      boardQueryRepo             = new InMemoryBoardQueryRepo[IO](
+                                     dashboards,
+                                     members,
+                                     tickets,
+                                     timeEntries,
+                                     users,
+                                     List(
+                                       PermissionFixtures.adminDashboardPermission,
+                                       PermissionFixtures.adminTicketPermission,
+                                       PermissionFixtures.adminCommentPermission,
+                                       PermissionFixtures.contributorDashboardPermission,
+                                       PermissionFixtures.contributorTicketPermission,
+                                       PermissionFixtures.contributorCommentPermission,
+                                       PermissionFixtures.viewerDashboardPermission,
+                                       PermissionFixtures.viewerTicketPermission,
+                                       PermissionFixtures.viewerCommentPermission
+                                     ),
+                                     List(
+                                       RoleFixtures.adminRole,
+                                       RoleFixtures.contributorRole,
+                                       RoleFixtures.viewerRole
+                                     )
+                                   )
       dashboardMemberRepo       <- InMemoryBoardMemberRepo.create[IO](members)
       ticketRepo                <- InMemoryTicketRepo.create[IO](tickets)
       ticketQueryRepo            = new InMemoryTicketQueryRepo[IO](
@@ -229,6 +253,7 @@ object GraphQLFixtures {
                                        dashboardService = dashboardService,
                                        dashboardMembershipService = dashboardMembershipService,
                                        dashboardAccessService = dashboardAccessService,
+                                       boardQueryRepo = boardQueryRepo,
                                        roleService = roleService,
                                        roleQueryRepo = roleQueryRepo,
                                        permissionService = permissionService,

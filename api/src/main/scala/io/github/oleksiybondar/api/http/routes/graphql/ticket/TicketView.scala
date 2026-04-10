@@ -24,6 +24,7 @@ final case class TicketView(
     modifiedAt: String,
     stateId: Long,
     commentsCount: Int = 0,
+    trackedMinutes: Int = 0,
     board: Option[TicketBoardSummaryView] = None,
     createdBy: Option[UserView] = None,
     assignedTo: Option[UserView] = None,

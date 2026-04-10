@@ -86,6 +86,7 @@ object TicketApi {
         ),
         Field("estimatedMinutes", OptionType(IntType), resolve = _.value.estimatedMinutes),
         Field("commentsCount", IntType, resolve = _.value.commentsCount),
+        Field("trackedMinutes", IntType, resolve = _.value.trackedMinutes),
         Field(
           "status",
           OptionType(StringType),
@@ -505,7 +506,8 @@ object TicketApi {
       lastModifiedByUserId = ticket.lastModifiedByUserId.value.toString,
       createdAt = ticket.createdAt.toString,
       modifiedAt = ticket.modifiedAt.toString,
-      stateId = ticket.stateId.value
+      stateId = ticket.stateId.value,
+      trackedMinutes = 0
     )
 
   private def toView(
@@ -525,6 +527,7 @@ object TicketApi {
       modifiedAt = ticket.modifiedAt,
       stateId = ticket.stateId.value,
       commentsCount = ticket.commentsCount,
+      trackedMinutes = 0,
       board = Some(
         TicketBoardSummaryView(
           id = ticket.board.id,

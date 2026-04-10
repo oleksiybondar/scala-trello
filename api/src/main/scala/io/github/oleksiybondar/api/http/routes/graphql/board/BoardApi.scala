@@ -70,10 +70,12 @@ object BoardApi {
           ListType(PermissionType),
           resolve =
             ctx =>
-              ctx.ctx.roleQueryRepo
-                .findById(RoleId(ctx.value.id.toLong))
-                .map(_.fold(List.empty)(_.permissions))
-                .unsafeToFuture()
+              if (ctx.value.permissions.nonEmpty) IO.pure(ctx.value.permissions).unsafeToFuture()
+              else
+                ctx.ctx.roleQueryRepo
+                  .findById(RoleId(ctx.value.id.toLong))
+                  .map(_.fold(List.empty)(_.permissions))
+                  .unsafeToFuture()
         )
       )
     )
@@ -98,55 +100,79 @@ object BoardApi {
         Field(
           "owner",
           sangria.schema.OptionType(UserApi.UserType),
-          resolve = ctx => loadUserView(ctx.ctx, ctx.value.ownerUserId).unsafeToFuture()
+          resolve =
+            ctx =>
+              ctx.value.owner match {
+                case Some(userView) => IO.pure(Some(userView)).unsafeToFuture()
+                case None           => loadUserView(ctx.ctx, ctx.value.ownerUserId).unsafeToFuture()
+              }
         ),
         Field(
           "createdBy",
           sangria.schema.OptionType(UserApi.UserType),
-          resolve = ctx => loadUserView(ctx.ctx, ctx.value.createdByUserId).unsafeToFuture()
+          resolve =
+            ctx =>
+              ctx.value.createdBy match {
+                case Some(userView) => IO.pure(Some(userView)).unsafeToFuture()
+                case None           => loadUserView(ctx.ctx, ctx.value.createdByUserId).unsafeToFuture()
+              }
         ),
         Field(
           "lastModifiedBy",
           sangria.schema.OptionType(UserApi.UserType),
-          resolve = ctx => loadUserView(ctx.ctx, ctx.value.lastModifiedByUserId).unsafeToFuture()
+          resolve =
+            ctx =>
+              ctx.value.lastModifiedBy match {
+                case Some(userView) => IO.pure(Some(userView)).unsafeToFuture()
+                case None           =>
+                  loadUserView(ctx.ctx, ctx.value.lastModifiedByUserId).unsafeToFuture()
+              }
         ),
         Field(
           "membersCount",
           IntType,
           resolve =
             ctx =>
-              ctx.ctx.dashboardMembershipService
-                .listMembers(BoardId(UUID.fromString(ctx.value.id)))
-                .map(_.size)
-                .unsafeToFuture()
+              if (ctx.value.membersCount > 0) IO.pure(ctx.value.membersCount).unsafeToFuture()
+              else
+                ctx.ctx.dashboardMembershipService
+                  .listMembers(BoardId(UUID.fromString(ctx.value.id)))
+                  .map(_.size)
+                  .unsafeToFuture()
         ),
         Field(
           "currentUserRole",
           sangria.schema.OptionType(BoardRoleType),
           resolve =
             ctx =>
-              withCurrentUser(ctx) { currentUserId =>
-                ctx.ctx.dashboardMembershipService
-                  .findMember(BoardId(UUID.fromString(ctx.value.id)), currentUserId)
-                  .map(
-                    _.map(member =>
-                      BoardRoleView(
-                        id = member.role.role.id.value.toString,
-                        name = member.role.role.name.value,
-                        description = member.role.role.description
+              ctx.value.currentUserRole match {
+                case Some(roleView) => IO.pure(Some(roleView)).unsafeToFuture()
+                case None           =>
+                  withCurrentUser(ctx) { currentUserId =>
+                    ctx.ctx.dashboardMembershipService
+                      .findMember(BoardId(UUID.fromString(ctx.value.id)), currentUserId)
+                      .map(
+                        _.map(member =>
+                          BoardRoleView(
+                            id = member.role.role.id.value.toString,
+                            name = member.role.role.name.value,
+                            description = member.role.role.description
+                          )
+                        )
                       )
-                    )
-                  )
-              }.unsafeToFuture()
+                  }.unsafeToFuture()
+              }
         ),
         Field(
           "tickets",
           ListType(TicketApi.TicketType),
           resolve =
             ctx =>
-              TicketApi
-                .ticketsForBoard(ctx.ctx, BoardId(UUID.fromString(ctx.value.id)))
-                .unsafeToFuture()
+              if (ctx.value.tickets.nonEmpty) IO.pure(ctx.value.tickets).unsafeToFuture()
+              else
+                TicketApi
+                  .ticketsForBoard(ctx.ctx, BoardId(UUID.fromString(ctx.value.id)))
+                  .unsafeToFuture()
         )
       )
     )
@@ -484,7 +510,7 @@ object BoardApi {
             boardId <- IO.fromEither(parseRequiredBoardId(ctx))
             canRead <- ctx.ctx.dashboardAccessService.canReadDashboard(boardId, currentUserId)
             board   <-
-              if (canRead) ctx.ctx.dashboardService.getDashboard(boardId)
+              if (canRead) ctx.ctx.boardQueryRepo.findById(boardId, currentUserId)
               else IO.raiseError(BoardAccessDenied("You do not have access to this board"))
           } yield board.map(toDashboardView)
         }.unsafeToFuture()
@@ -829,6 +855,27 @@ object BoardApi {
       lastModifiedByUserId = dashboard.lastModifiedByUserId.value.toString
     )
 
+  private def toDashboardView(
+      board: io.github.oleksiybondar.api.infrastructure.db.board.BoardQueryRow
+  ): BoardView =
+    BoardView(
+      id = board.id.value.toString,
+      name = board.name,
+      description = board.description,
+      active = board.active,
+      ownerUserId = board.ownerUserId,
+      createdByUserId = board.createdByUserId,
+      createdAt = board.createdAt,
+      modifiedAt = board.modifiedAt,
+      lastModifiedByUserId = board.lastModifiedByUserId,
+      owner = Some(toUserView(board.owner)),
+      createdBy = Some(toUserView(board.createdBy)),
+      lastModifiedBy = Some(toUserView(board.lastModifiedBy)),
+      membersCount = board.membersCount,
+      currentUserRole = board.currentUserRole.map(toBoardRoleView),
+      tickets = board.tickets.map(toTicketView)
+    )
+
   private def toUserView(user: io.github.oleksiybondar.api.domain.user.User): UserView =
     UserView(
       id = user.id.value.toString,
@@ -838,5 +885,47 @@ object BoardApi {
       lastName = user.lastName.value,
       avatarUrl = user.avatarUrl.map(_.value),
       createdAt = user.createdAt.toString
+    )
+
+  private def toUserView(
+      user: io.github.oleksiybondar.api.infrastructure.db.board.BoardQueryUserRow
+  ): UserView =
+    UserView(
+      id = user.id,
+      username = None,
+      email = None,
+      firstName = user.firstName,
+      lastName = user.lastName,
+      avatarUrl = user.avatarUrl,
+      createdAt = ""
+    )
+
+  private def toBoardRoleView(
+      role: io.github.oleksiybondar.api.infrastructure.db.board.BoardQueryRoleRow
+  ): BoardRoleView =
+    BoardRoleView(
+      id = role.id,
+      name = role.name,
+      description = role.description,
+      permissions = role.permissions
+    )
+
+  private def toTicketView(
+      ticket: io.github.oleksiybondar.api.infrastructure.db.board.BoardQueryTicketRow
+  ): io.github.oleksiybondar.api.http.routes.graphql.ticket.TicketView =
+    io.github.oleksiybondar.api.http.routes.graphql.ticket.TicketView(
+      id = ticket.id,
+      boardId = ticket.boardId,
+      name = ticket.name,
+      description = ticket.description,
+      acceptanceCriteria = ticket.acceptanceCriteria,
+      estimatedMinutes = ticket.estimatedMinutes,
+      createdByUserId = ticket.createdByUserId,
+      assignedToUserId = ticket.assignedToUserId,
+      lastModifiedByUserId = ticket.lastModifiedByUserId,
+      createdAt = ticket.createdAt,
+      modifiedAt = ticket.modifiedAt,
+      stateId = ticket.stateId.value,
+      trackedMinutes = ticket.trackedMinutes
     )
 }

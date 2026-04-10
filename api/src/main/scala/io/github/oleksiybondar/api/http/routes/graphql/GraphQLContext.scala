@@ -12,6 +12,7 @@ import io.github.oleksiybondar.api.domain.permission.{PermissionService, RoleSer
 import io.github.oleksiybondar.api.domain.ticket.TicketService
 import io.github.oleksiybondar.api.domain.timeTracking.TimeTrackingService
 import io.github.oleksiybondar.api.domain.user.{UserId, UserService}
+import io.github.oleksiybondar.api.infrastructure.db.board.BoardQueryRepo
 import io.github.oleksiybondar.api.infrastructure.db.comment.CommentQueryRepo
 import io.github.oleksiybondar.api.infrastructure.db.permission.RoleQueryRepo
 import io.github.oleksiybondar.api.infrastructure.db.ticket.{TicketQueryRepo, TicketStateRepo}
@@ -27,6 +28,8 @@ final case class GraphQLContext(
     dashboardMembershipService: BoardMembershipService[IO],
     /** Board access service available to GraphQL dashboard queries and mutations. */
     dashboardAccessService: BoardAccessService[IO],
+    /** Joined board read repo used for detailed board projections. */
+    boardQueryRepo: BoardQueryRepo[IO],
     /** Role and permission service exposed to GraphQL dictionary queries. */
     roleService: RoleService[IO],
     /** Joined role read repo used for optimized role/permission reads. */
