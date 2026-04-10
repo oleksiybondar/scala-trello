@@ -19,4 +19,4 @@ if [ "$#" -eq 0 ]; then
   exit 0
 fi
 
-exec "$root_dir/app/node_modules/.bin/jscpd" --config "$root_dir/.jscpd.json" "$@"
+exec npx --yes jscpd --config "$root_dir/.jscpd.json" "$@"
