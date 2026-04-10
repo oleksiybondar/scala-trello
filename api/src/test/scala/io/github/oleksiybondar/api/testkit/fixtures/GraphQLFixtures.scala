@@ -8,7 +8,10 @@ import io.github.oleksiybondar.api.domain.board.{
   BoardMembershipServiceLive,
   BoardServiceLive
 }
+import io.github.oleksiybondar.api.domain.comment.CommentServiceLive
 import io.github.oleksiybondar.api.domain.permission.{PermissionServiceLive, RoleServiceLive}
+import io.github.oleksiybondar.api.domain.ticket.TicketServiceLive
+import io.github.oleksiybondar.api.domain.timeTracking.TimeTrackingServiceLive
 import io.github.oleksiybondar.api.domain.user.{User, UserId, UserServiceLive}
 import io.github.oleksiybondar.api.http.middleware.AuthMiddleware
 import io.github.oleksiybondar.api.http.routes.graphql.{GraphQLContext, GraphQLRoutes}
@@ -16,9 +19,19 @@ import io.github.oleksiybondar.api.infrastructure.auth.JwtServiceLive
 import io.github.oleksiybondar.api.testkit.support.{
   InMemoryAuthRepo,
   InMemoryBoardMemberRepo,
+  InMemoryBoardQueryRepo,
   InMemoryBoardRepo,
+  InMemoryCommentQueryRepo,
+  InMemoryCommentRepo,
   InMemoryPermissionRepo,
+  InMemoryRoleQueryRepo,
   InMemoryRoleRepo,
+  InMemoryTicketQueryRepo,
+  InMemoryTicketRepo,
+  InMemoryTicketStateRepo,
+  InMemoryTimeTrackingActivityRepo,
+  InMemoryTimeTrackingQueryRepo,
+  InMemoryTimeTrackingRepo,
   InMemoryUserRepo
 }
 import org.http4s.HttpApp
@@ -61,12 +74,81 @@ object GraphQLFixtures {
           roleId = io.github.oleksiybondar.api.domain.permission.RoleId(2),
           createdAt = java.time.Instant.parse("2026-04-06T08:05:00Z")
         )
-      )
+      ),
+      tickets: List[io.github.oleksiybondar.api.domain.ticket.Ticket] = Nil,
+      timeEntries: List[io.github.oleksiybondar.api.domain.timeTracking.TimeTrackingEntry] = Nil,
+      comments: List[io.github.oleksiybondar.api.domain.comment.Comment] = Nil
   )(run: GraphQLTestContext => IO[A]): A =
     (for {
       userRepo                  <- InMemoryUserRepo.create[IO](users)
       dashboardRepo             <- InMemoryBoardRepo.create[IO](dashboards)
+      boardQueryRepo             = new InMemoryBoardQueryRepo[IO](
+                                     dashboards,
+                                     members,
+                                     tickets,
+                                     timeEntries,
+                                     users,
+                                     List(
+                                       PermissionFixtures.adminDashboardPermission,
+                                       PermissionFixtures.adminTicketPermission,
+                                       PermissionFixtures.adminCommentPermission,
+                                       PermissionFixtures.contributorDashboardPermission,
+                                       PermissionFixtures.contributorTicketPermission,
+                                       PermissionFixtures.contributorCommentPermission,
+                                       PermissionFixtures.viewerDashboardPermission,
+                                       PermissionFixtures.viewerTicketPermission,
+                                       PermissionFixtures.viewerCommentPermission
+                                     ),
+                                     List(
+                                       RoleFixtures.adminRole,
+                                       RoleFixtures.contributorRole,
+                                       RoleFixtures.viewerRole
+                                     )
+                                   )
       dashboardMemberRepo       <- InMemoryBoardMemberRepo.create[IO](members)
+      ticketRepo                <- InMemoryTicketRepo.create[IO](tickets)
+      ticketQueryRepo            = new InMemoryTicketQueryRepo[IO](
+                                     tickets,
+                                     dashboards,
+                                     comments,
+                                     timeEntries,
+                                     users,
+                                     List(
+                                       TimeTrackingActivityFixtures.codeReviewActivity,
+                                       TimeTrackingActivityFixtures.developmentActivity,
+                                       TimeTrackingActivityFixtures.testingActivity,
+                                       TimeTrackingActivityFixtures.planningActivity,
+                                       TimeTrackingActivityFixtures.designActivity,
+                                       TimeTrackingActivityFixtures.documentationActivity,
+                                       TimeTrackingActivityFixtures.refinementActivity,
+                                       TimeTrackingActivityFixtures.debuggingActivity
+                                     )
+                                   )
+      commentRepo               <- InMemoryCommentRepo.create[IO](comments)
+      timeTrackingRepo          <- InMemoryTimeTrackingRepo.create[IO](timeEntries)
+      commentQueryRepo           = new InMemoryCommentQueryRepo[IO](comments, tickets, users)
+      timeTrackingQueryRepo      = new InMemoryTimeTrackingQueryRepo[IO](timeEntries, tickets, users)
+      timeTrackingActivityRepo   = new InMemoryTimeTrackingActivityRepo[IO](
+                                     List(
+                                       TimeTrackingActivityFixtures.codeReviewActivity,
+                                       TimeTrackingActivityFixtures.developmentActivity,
+                                       TimeTrackingActivityFixtures.testingActivity,
+                                       TimeTrackingActivityFixtures.planningActivity,
+                                       TimeTrackingActivityFixtures.designActivity,
+                                       TimeTrackingActivityFixtures.documentationActivity,
+                                       TimeTrackingActivityFixtures.refinementActivity,
+                                       TimeTrackingActivityFixtures.debuggingActivity
+                                     )
+                                   )
+      ticketStateRepo           <- InMemoryTicketStateRepo.create[IO](
+                                     List(
+                                       TicketStateFixtures.newState,
+                                       TicketStateFixtures.inProgressState,
+                                       TicketStateFixtures.codeReviewState,
+                                       TicketStateFixtures.inTestingState,
+                                       TicketStateFixtures.doneState
+                                     )
+                                   )
       authRepo                  <- InMemoryAuthRepo.create[IO]()
       roleRepo                  <- InMemoryRoleRepo.create[IO](
                                      List(
@@ -76,6 +158,24 @@ object GraphQLFixtures {
                                      )
                                    )
       permissionRepo            <- InMemoryPermissionRepo.create[IO](
+                                     List(
+                                       PermissionFixtures.adminDashboardPermission,
+                                       PermissionFixtures.adminTicketPermission,
+                                       PermissionFixtures.adminCommentPermission,
+                                       PermissionFixtures.contributorDashboardPermission,
+                                       PermissionFixtures.contributorTicketPermission,
+                                       PermissionFixtures.contributorCommentPermission,
+                                       PermissionFixtures.viewerDashboardPermission,
+                                       PermissionFixtures.viewerTicketPermission,
+                                       PermissionFixtures.viewerCommentPermission
+                                     )
+                                   )
+      roleQueryRepo              = new InMemoryRoleQueryRepo[IO](
+                                     List(
+                                       RoleFixtures.adminRole,
+                                       RoleFixtures.contributorRole,
+                                       RoleFixtures.viewerRole
+                                     ),
                                      List(
                                        PermissionFixtures.adminDashboardPermission,
                                        PermissionFixtures.adminTicketPermission,
@@ -128,14 +228,43 @@ object GraphQLFixtures {
                                      dashboardMembershipService,
                                      roleService
                                    )
+      ticketService              = new TicketServiceLive[IO](
+                                     ticketRepo,
+                                     dashboardRepo,
+                                     dashboardAccessService,
+                                     dashboardMembershipService
+                                   )
+      timeTrackingService        = new TimeTrackingServiceLive[IO](
+                                     timeTrackingRepo,
+                                     ticketRepo,
+                                     dashboardRepo,
+                                     dashboardAccessService,
+                                     dashboardMembershipService,
+                                     timeTrackingActivityRepo
+                                   )
+      commentService             = new CommentServiceLive[IO](
+                                     commentRepo,
+                                     ticketRepo,
+                                     dashboardRepo,
+                                     dashboardAccessService
+                                   )
       graphqlRoutes             <- GraphQLRoutes.routes(
                                      GraphQLContext(
                                        userService = userService,
                                        dashboardService = dashboardService,
                                        dashboardMembershipService = dashboardMembershipService,
                                        dashboardAccessService = dashboardAccessService,
+                                       boardQueryRepo = boardQueryRepo,
                                        roleService = roleService,
+                                       roleQueryRepo = roleQueryRepo,
                                        permissionService = permissionService,
+                                       ticketService = ticketService,
+                                       ticketQueryRepo = ticketQueryRepo,
+                                       ticketStateRepo = ticketStateRepo,
+                                       timeTrackingService = timeTrackingService,
+                                       commentQueryRepo = commentQueryRepo,
+                                       timeTrackingQueryRepo = timeTrackingQueryRepo,
+                                       commentService = commentService,
                                        authService = authService,
                                        currentUserId = None
                                      )

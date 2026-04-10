@@ -63,6 +63,16 @@ final class AuthSessionRepoSlick[F[_]: Async](
         .headOption
     ).map(_.map(toDomain))
 
+  override def deleteExpiredOrRevoked(now: Instant): F[Int] =
+    run(
+      authSessions
+        .filter(session =>
+          session.revokedAt.isDefined ||
+            session.expiresAt <= now
+        )
+        .delete
+    )
+
   override def rotateRefreshToken(
       sessionId: SessionId,
       currentRefreshToken: RefreshToken,

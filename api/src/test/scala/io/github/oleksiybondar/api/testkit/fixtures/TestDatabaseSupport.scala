@@ -15,6 +15,15 @@ object TestDatabaseSupport {
       }
     }
 
+  def clearDatabase(db: Database): IO[Unit] =
+    IO.fromFuture(
+      IO(
+        db.run(
+          sqlu"TRUNCATE TABLE time_tracking, comments, tickets, board_members, boards, permissions, roles, activities, severities, states, auth_sessions, password_history, users CASCADE"
+        )
+      )
+    ).void
+
   def resetDatabase(config: AppConfig): IO[Unit] =
     IO.blocking {
       val flyway =

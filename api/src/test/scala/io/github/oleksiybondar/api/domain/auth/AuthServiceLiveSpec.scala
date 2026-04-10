@@ -51,6 +51,35 @@ class AuthServiceLiveSpec extends FunSuite {
     assertEquals(result, Left(AuthError.EmailRequired))
   }
 
+  test("register rejects malformed email patterns") {
+    val invalidEmails = List(
+      "plainaddress",
+      "@example.com",
+      "alice@",
+      "alice@example",
+      "alice..dots@example.com",
+      "alice@example..com"
+    )
+
+    invalidEmails.foreach { invalidEmail =>
+      val result = withAuthService(Nil) { ctx =>
+        ctx.authService
+          .register(
+            RegisterUserCommand(
+              email = invalidEmail,
+              password = "secret123",
+              firstName = "Alice",
+              lastName = "Example",
+              username = Some(Username("alice"))
+            )
+          )
+          .value
+      }
+
+      assertEquals(result, Left(AuthError.InvalidEmail))
+    }
+  }
+
   test("register returns WeakPassword with strength errors for a weak password") {
     val result = withAuthService(Nil) { ctx =>
       ctx.authService

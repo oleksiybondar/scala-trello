@@ -9,6 +9,8 @@ trait AuthSessionRepo[F[_]] {
 
   def findActiveByRefreshToken(refreshToken: RefreshToken, now: Instant): F[Option[AuthSession]]
 
+  def deleteExpiredOrRevoked(now: Instant): F[Int]
+
   def rotateRefreshToken(
       sessionId: SessionId,
       currentRefreshToken: RefreshToken,

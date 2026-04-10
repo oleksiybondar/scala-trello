@@ -20,6 +20,7 @@ import io.github.oleksiybondar.api.domain.auth.password.{
 import io.github.oleksiybondar.api.domain.user.{Email, FirstName, LastName, User, UserId, Username}
 import io.github.oleksiybondar.api.infrastructure.db.auth.AuthSessionRepo
 import io.github.oleksiybondar.api.infrastructure.db.user.UserRepo
+import io.github.oleksiybondar.api.validation.InputValidation
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -112,19 +113,13 @@ final class AuthServiceLive[F[_]: Sync: Clock](
     }
 
   private def normalizeEmail(rawEmail: String): Either[AuthError, Email] = {
-    val normalized = rawEmail.trim.toLowerCase
-
-    if (normalized.isEmpty) {
-      Left(EmailRequired)
-    } else if (!isValidEmail(normalized)) {
-      Left(InvalidEmail)
-    } else {
-      Right(Email(normalized))
+    InputValidation.normalizeEmail(rawEmail) match {
+      case None                                                          => Left(EmailRequired)
+      case Some(normalized) if !InputValidation.isValidEmail(normalized) =>
+        Left(InvalidEmail)
+      case Some(normalized)                                              => Right(Email(normalized))
     }
   }
-
-  private def isValidEmail(email: String): Boolean =
-    email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
 
   private def issueTokens(user: User): F[AuthTokens] =
     for {

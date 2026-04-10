@@ -2,13 +2,13 @@ import type { ChangeEvent, ReactElement } from "react";
 import { useState } from "react";
 
 import Alert from "@mui/material/Alert";
-import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
+import { FormActionButtons } from "@components/forms/user/FormActionButtons";
 import { PasswordInputWithConfirmation } from "@components/form-elements/password/PasswordInputWithConfirmation";
 import type { PasswordInputWithConfirmationValidation } from "@components/form-elements/password/PasswordInputWithConfirmation";
 import { useUserSettingsMutation } from "@features/user/useUserSettingsMutation";
@@ -170,27 +170,16 @@ export const ChangePasswordForm = ({
           />
 
           {hasChanged ? (
-            <Stack
-              direction={{ xs: "column-reverse", sm: "row" }}
-              justifyContent="flex-end"
-              spacing={1.5}
-            >
-              <Button disabled={isDisabled} onClick={handleCancel} variant="outlined">
-                Cancel
-              </Button>
-              <Button
-                disabled={
-                  isDisabled ||
-                  trimmedCurrentPassword.length === 0 ||
-                  !isPasswordValid ||
-                  isSameAsCurrentPassword
-                }
-                onClick={handleApply}
-                variant="contained"
-              >
-                Apply
-              </Button>
-            </Stack>
+            <FormActionButtons
+              applyDisabled={
+                trimmedCurrentPassword.length === 0 ||
+                !isPasswordValid ||
+                isSameAsCurrentPassword
+              }
+              isDisabled={isDisabled}
+              onApply={handleApply}
+              onCancel={handleCancel}
+            />
           ) : null}
         </Stack>
       </CardContent>

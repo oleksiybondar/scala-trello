@@ -1,7 +1,7 @@
 package io.github.oleksiybondar.api.http.routes.graphql.permission
 
 import cats.effect.unsafe.implicits.global
-import io.github.oleksiybondar.api.domain.permission.{Permission, Role, RoleId}
+import io.github.oleksiybondar.api.domain.permission.{Permission, RoleId, RoleWithPermissions}
 import io.github.oleksiybondar.api.http.routes.graphql.GraphQLContext
 import sangria.schema.{
   Argument,
@@ -33,18 +33,17 @@ object RoleApi {
       )
     )
 
-  val RoleType: ObjectType[GraphQLContext, Role] =
+  val RoleType: ObjectType[GraphQLContext, RoleWithPermissions] =
     ObjectType(
       name = "Role",
-      fields[GraphQLContext, Role](
-        Field("id", StringType, resolve = _.value.id.value.toString),
-        Field("name", StringType, resolve = _.value.name.value),
-        Field("description", OptionType(StringType), resolve = _.value.description),
+      fields[GraphQLContext, RoleWithPermissions](
+        Field("id", StringType, resolve = _.value.role.id.value.toString),
+        Field("name", StringType, resolve = _.value.role.name.value),
+        Field("description", OptionType(StringType), resolve = _.value.role.description),
         Field(
           "permissions",
           ListType(PermissionType),
-          resolve =
-            ctx => ctx.ctx.permissionService.listPermissionsByRoleId(ctx.value.id).unsafeToFuture()
+          resolve = _.value.permissions
         )
       )
     )
@@ -55,12 +54,12 @@ object RoleApi {
         name = "role",
         fieldType = OptionType(RoleType),
         arguments = IdArg :: Nil,
-        resolve = ctx => ctx.ctx.roleService.getRole(RoleId(ctx.arg(IdArg))).unsafeToFuture()
+        resolve = ctx => ctx.ctx.roleQueryRepo.findById(RoleId(ctx.arg(IdArg))).unsafeToFuture()
       ),
       Field(
         name = "roles",
         fieldType = ListType(RoleType),
-        resolve = ctx => ctx.ctx.roleService.listRoles.unsafeToFuture()
+        resolve = ctx => ctx.ctx.roleQueryRepo.list.unsafeToFuture()
       )
     )
 }

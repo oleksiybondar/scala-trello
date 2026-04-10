@@ -1,9 +1,9 @@
 package io.github.oleksiybondar.api.http.docs.graphql
 
 import cats.effect.Async
+import io.github.oleksiybondar.api.http.TapirSupport
 import org.http4s.HttpRoutes
 import sttp.tapir._
-import sttp.tapir.server.http4s.Http4sServerInterpreter
 
 object GraphiQLRoutes {
 
@@ -19,7 +19,7 @@ object GraphiQLRoutes {
     List(graphiqlEndpoint)
 
   def routes[F[_]: Async]: HttpRoutes[F] =
-    Http4sServerInterpreter[F]().toRoutes(
+    TapirSupport.interpreter[F].toRoutes(
       graphiqlServerEndpoint[F]
     )
 

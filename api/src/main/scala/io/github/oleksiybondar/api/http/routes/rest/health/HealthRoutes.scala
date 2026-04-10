@@ -3,11 +3,11 @@ package io.github.oleksiybondar.api.http.routes.rest.health
 import cats.effect.Async
 import cats.syntax.all._
 import io.circe.Codec
+import io.github.oleksiybondar.api.http.TapirSupport
 import org.http4s.HttpRoutes
 import sttp.tapir._
 import sttp.tapir.generic.auto._
 import sttp.tapir.json.circe._
-import sttp.tapir.server.http4s.Http4sServerInterpreter
 
 object HealthRoutes {
 
@@ -35,7 +35,7 @@ object HealthRoutes {
     List(healthEndpoint)
 
   def routes[F[_]: Async]: HttpRoutes[F] =
-    Http4sServerInterpreter[F]().toRoutes(
+    TapirSupport.interpreter[F].toRoutes(
       healthServerEndpoint[F]
     )
 

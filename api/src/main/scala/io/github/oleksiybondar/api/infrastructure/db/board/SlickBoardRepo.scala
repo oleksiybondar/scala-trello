@@ -4,51 +4,13 @@ import cats.effect.Async
 import cats.syntax.all._
 import io.github.oleksiybondar.api.domain.board.{Board, BoardDescription, BoardId, BoardName}
 import io.github.oleksiybondar.api.domain.user.UserId
+import io.github.oleksiybondar.api.infrastructure.db.SharedSlickTables.{BoardRow, BoardsTable}
 import slick.jdbc.PostgresProfile.api._
 import slick.lifted.ProvenShape
 
-import java.time.Instant
 import java.util.UUID
 
 final class SlickBoardRepo[F[_]: Async](db: Database) extends BoardRepo[F] {
-
-  private final case class BoardRow(
-      id: UUID,
-      name: String,
-      description: Option[String],
-      active: Boolean,
-      ownerUserId: UUID,
-      createdByUserId: UUID,
-      createdAt: Instant,
-      modifiedAt: Instant,
-      lastModifiedByUserId: UUID
-  )
-
-  private final class BoardsTable(tag: Tag)
-      extends Table[BoardRow](tag, "boards") {
-    def id: Rep[UUID]                    = column[UUID]("id", O.PrimaryKey)
-    def name: Rep[String]                = column[String]("name")
-    def description: Rep[Option[String]] = column[Option[String]]("description")
-    def active: Rep[Boolean]             = column[Boolean]("active")
-    def ownerUserId: Rep[UUID]           = column[UUID]("owner_user_id")
-    def createdByUserId: Rep[UUID]       = column[UUID]("created_by_user_id")
-    def createdAt: Rep[Instant]          = column[Instant]("created_at")
-    def modifiedAt: Rep[Instant]         = column[Instant]("modified_at")
-    def lastModifiedByUserId: Rep[UUID]  = column[UUID]("last_modified_by_user_id")
-
-    def * : ProvenShape[BoardRow] =
-      (
-        id,
-        name,
-        description,
-        active,
-        ownerUserId,
-        createdByUserId,
-        createdAt,
-        modifiedAt,
-        lastModifiedByUserId
-      ).mapTo[BoardRow]
-  }
 
   private final case class BoardMemberLookupRow(
       boardId: UUID,

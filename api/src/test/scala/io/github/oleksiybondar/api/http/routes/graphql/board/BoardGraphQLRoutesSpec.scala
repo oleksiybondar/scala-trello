@@ -11,7 +11,12 @@ import io.github.oleksiybondar.api.domain.user.{
   UserId,
   Username
 }
-import io.github.oleksiybondar.api.testkit.fixtures.{GraphQLFixtures, UserFixtures}
+import io.github.oleksiybondar.api.testkit.fixtures.{
+  GraphQLFixtures,
+  TicketFixtures,
+  TimeTrackingFixtures,
+  UserFixtures
+}
 import io.github.oleksiybondar.api.testkit.support.GraphQLRequestSupport.graphqlRequest
 import munit.FunSuite
 import org.http4s.Status
@@ -182,7 +187,11 @@ class BoardGraphQLRoutesSpec extends FunSuite {
   }
 
   test("POST /graphql returns a single board for the current user") {
-    val response = withGraphQLRoutes(List(UserFixtures.sampleUser)) { ctx =>
+    val response = withGraphQLRoutes(
+      users = List(UserFixtures.sampleUser),
+      tickets = List(TicketFixtures.sampleTicket),
+      timeEntries = List(TimeTrackingFixtures.sampleEntry)
+    ) { ctx =>
       for {
         token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
         response <- ctx.httpApp.run(
@@ -203,6 +212,29 @@ class BoardGraphQLRoutesSpec extends FunSuite {
       Some("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
     )
     assertEquals(cursor.get[String]("name").toOption, Some("Core Board"))
+    assertEquals(cursor.downField("owner").get[String]("firstName").toOption, Some("Alice"))
+    assertEquals(
+      cursor.downField("createdBy").get[String]("lastName").toOption,
+      Some("Example")
+    )
+    assertEquals(
+      cursor.downField("currentUserRole").get[String]("name").toOption,
+      Some("admin")
+    )
+    assertEquals(
+      cursor.downField(
+        "currentUserRole"
+      ).downField("permissions").downArray.get[String]("area").toOption,
+      Some("dashboard")
+    )
+    assertEquals(
+      cursor.downField("tickets").downArray.get[String]("status").toOption,
+      Some("new")
+    )
+    assertEquals(
+      cursor.downField("tickets").downArray.get[Int]("trackedMinutes").toOption,
+      Some(90)
+    )
   }
 
   test("POST /graphql still supports the legacy dashboard field alias") {
@@ -991,6 +1023,18 @@ class BoardGraphQLRoutesSpec extends FunSuite {
       |    id
       |    name
       |    active
+      |    owner { firstName avatarUrl }
+      |    createdBy { lastName }
+      |    currentUserRole {
+      |      name
+      |      permissions { area }
+      |    }
+      |    tickets {
+      |      name
+      |      status
+      |      estimatedMinutes
+      |      trackedMinutes
+      |    }
       |  }
       |}""".stripMargin
 

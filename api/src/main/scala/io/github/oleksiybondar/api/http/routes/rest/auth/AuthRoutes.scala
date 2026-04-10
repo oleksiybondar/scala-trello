@@ -10,6 +10,7 @@ import io.github.oleksiybondar.api.domain.auth.{
   RegisterUserCommand
 }
 import io.github.oleksiybondar.api.domain.user.{User, UserService, Username}
+import io.github.oleksiybondar.api.http.TapirSupport
 import io.github.oleksiybondar.api.http.middleware.AuthMiddleware
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.dsl.Http4sDsl
@@ -17,7 +18,6 @@ import org.http4s.{HttpRoutes, Response, Status}
 import sttp.model.StatusCode
 import sttp.tapir.generic.auto._
 import sttp.tapir.json.circe._
-import sttp.tapir.server.http4s.Http4sServerInterpreter
 import sttp.tapir.{
   AnyEndpoint,
   Endpoint,
@@ -101,7 +101,7 @@ object AuthRoutes {
     List(registerEndpoint, loginEndpoint, refreshEndpoint, logoutEndpoint, currentUserEndpoint)
 
   def publicRoutes[F[_]: Async](authService: AuthService[F]): HttpRoutes[F] =
-    Http4sServerInterpreter[F]().toRoutes(
+    TapirSupport.interpreter[F].toRoutes(
       List(
         registerServerEndpoint(authService),
         loginServerEndpoint(authService),

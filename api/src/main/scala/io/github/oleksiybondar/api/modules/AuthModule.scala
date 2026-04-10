@@ -10,10 +10,11 @@ import io.github.oleksiybondar.api.infrastructure.auth.password.{
   PasswordStrengthValidatorLive
 }
 import io.github.oleksiybondar.api.infrastructure.crypto.Password4jPasswordHasher
-import io.github.oleksiybondar.api.infrastructure.db.auth.AuthSessionRepo
 import io.github.oleksiybondar.api.infrastructure.db.auth.password.PasswordHistoryRepo
+import io.github.oleksiybondar.api.infrastructure.db.auth.{AuthSessionRepo, AuthSessionRepoSlick}
 import io.github.oleksiybondar.api.infrastructure.db.user.UserRepo
 import org.http4s.HttpRoutes
+import slick.jdbc.PostgresProfile.api.Database
 
 final case class AuthModule[F[_]](
     authService: AuthService[F],
@@ -21,6 +22,21 @@ final case class AuthModule[F[_]](
 )
 
 object AuthModule {
+
+  def make[F[_]: Async](
+      authConfig: AuthConfig,
+      passwordConfig: PasswordConfig,
+      userRepo: UserRepo[F],
+      db: Database,
+      passwordHistoryRepo: PasswordHistoryRepo[F]
+  ): AuthModule[F] =
+    make(
+      authConfig,
+      passwordConfig,
+      userRepo,
+      new AuthSessionRepoSlick[F](db),
+      passwordHistoryRepo
+    )
 
   def make[F[_]: Async](
       authConfig: AuthConfig,

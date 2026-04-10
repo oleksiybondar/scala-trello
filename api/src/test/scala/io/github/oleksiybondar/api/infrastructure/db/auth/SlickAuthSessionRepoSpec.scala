@@ -110,6 +110,52 @@ class SlickAuthSessionRepoSpec extends FunSuite {
     }
   }
 
+  test("deleteExpiredOrRevoked removes expired and revoked sessions but keeps active ones") {
+    withRepos { (userRepo, authSessionRepo, user) =>
+      val now            = Instant.parse("2026-03-30T10:15:30Z")
+      val activeSession  = AuthSession(
+        id = SessionId(UUID.fromString("10000000-0000-0000-0000-000000000001")),
+        refreshToken = RefreshToken(UUID.fromString("20000000-0000-0000-0000-000000000001")),
+        userId = user.id,
+        createdAt = now.minusSeconds(60),
+        revokedAt = None,
+        expiresAt = now.plusSeconds(3600)
+      )
+      val expiredSession = AuthSession(
+        id = SessionId(UUID.fromString("10000000-0000-0000-0000-000000000002")),
+        refreshToken = RefreshToken(UUID.fromString("20000000-0000-0000-0000-000000000002")),
+        userId = user.id,
+        createdAt = now.minusSeconds(3600),
+        revokedAt = None,
+        expiresAt = now.minusSeconds(1)
+      )
+      val revokedSession = AuthSession(
+        id = SessionId(UUID.fromString("10000000-0000-0000-0000-000000000003")),
+        refreshToken = RefreshToken(UUID.fromString("20000000-0000-0000-0000-000000000003")),
+        userId = user.id,
+        createdAt = now.minusSeconds(120),
+        revokedAt = Some(now.minusSeconds(30)),
+        expiresAt = now.plusSeconds(3600)
+      )
+
+      for {
+        _             <- userRepo.create(user)
+        _             <- authSessionRepo.create(activeSession)
+        _             <- authSessionRepo.create(expiredSession)
+        _             <- authSessionRepo.create(revokedSession)
+        deleted       <- authSessionRepo.deleteExpiredOrRevoked(now)
+        activeResult  <- authSessionRepo.findActiveByRefreshToken(activeSession.refreshToken, now)
+        expiredResult <- authSessionRepo.findActiveByRefreshToken(expiredSession.refreshToken, now)
+        revokedResult <- authSessionRepo.findActiveByRefreshToken(revokedSession.refreshToken, now)
+      } yield {
+        assertEquals(deleted, 2)
+        assertEquals(activeResult, Some(activeSession))
+        assertEquals(expiredResult, None)
+        assertEquals(revokedResult, None)
+      }
+    }
+  }
+
   private def withRepos(
       run: (
           SlickUserRepo[IO],

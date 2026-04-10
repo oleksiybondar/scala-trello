@@ -64,7 +64,7 @@ object UserApi {
         resolve = ctx => {
           IO
             .fromEither(parseUserId(ctx.arg(IdArg)))
-            .flatMap(userId => ctx.ctx.userService.getUser(userId).map(_.map(toView)))
+            .flatMap(userId => ctx.ctx.userService.getUser(userId).map(_.map(UserView.fromDomain)))
             .unsafeToFuture()
         }
       ),
@@ -78,7 +78,7 @@ object UserApi {
 
           ctx.ctx.userService
             .listUsersPage(offset, limit)
-            .map(_.map(toView))
+            .map(_.map(UserView.fromDomain))
             .unsafeToFuture()
         }
       )
@@ -96,7 +96,7 @@ object UserApi {
             liftUserMutation(
               ctx.ctx.userService
                 .updateProfile(userId, ctx.arg(FirstNameArg), ctx.arg(LastNameArg))
-                .map(toView)
+                .map(UserView.fromDomain)
             )
           }.unsafeToFuture()
       ),
@@ -109,7 +109,7 @@ object UserApi {
             liftUserMutation(
               ctx.ctx.userService
                 .changeAvatar(userId, ctx.arg(AvatarUrlArg))
-                .map(toView)
+                .map(UserView.fromDomain)
             )
           }.unsafeToFuture()
       ),
@@ -122,7 +122,7 @@ object UserApi {
             liftUserMutation(
               ctx.ctx.userService
                 .changeUsername(userId, ctx.arg(UsernameArg))
-                .map(toView)
+                .map(UserView.fromDomain)
             )
           }.unsafeToFuture()
       ),
@@ -135,7 +135,7 @@ object UserApi {
             liftUserMutation(
               ctx.ctx.userService
                 .changeEmail(userId, ctx.arg(EmailArg))
-                .map(toView)
+                .map(UserView.fromDomain)
             )
           }.unsafeToFuture()
       ),
@@ -192,14 +192,9 @@ object UserApi {
       case Left(error)  => IO.raiseError(toUserFacingError(error))
     }
 
-  private def toView(user: io.github.oleksiybondar.api.domain.user.User): UserView =
-    UserView(
-      id = user.id.value.toString,
-      username = user.username.map(_.value),
-      email = user.email.map(_.value),
-      firstName = user.firstName.value,
-      lastName = user.lastName.value,
-      avatarUrl = user.avatarUrl.map(_.value),
-      createdAt = user.createdAt.toString
-    )
+  def loadUserView(ctx: GraphQLContext, rawUserId: String): IO[Option[UserView]] =
+    parseUserId(rawUserId) match {
+      case Left(_)       => IO.pure(None)
+      case Right(userId) => ctx.userService.getUser(userId).map(_.map(UserView.fromDomain))
+    }
 }
