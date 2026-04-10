@@ -98,7 +98,7 @@ final class SlickTicketQueryRepo[F[_]: Async](db: Database) extends TicketQueryR
       ).mapTo[TicketRow]
   }
 
-  private final class BoardsTable(tag: Tag) extends Table[BoardRow](tag, "dashboards") {
+  private final class BoardsTable(tag: Tag) extends Table[BoardRow](tag, "boards") {
     def id: Rep[UUID]        = column[UUID]("id", O.PrimaryKey)
     def name: Rep[String]    = column[String]("name")
     def active: Rep[Boolean] = column[Boolean]("active")

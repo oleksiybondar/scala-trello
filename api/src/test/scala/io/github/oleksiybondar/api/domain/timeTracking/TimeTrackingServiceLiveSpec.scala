@@ -87,6 +87,62 @@ class TimeTrackingServiceLiveSpec extends FunSuite {
     assertEquals(result, None)
   }
 
+  test("updateOwnEntry returns false when the board is inactive") {
+    val existing = TimeTrackingFixtures.sampleEntry
+    val command  = UpdateTimeTrackingEntryCommand(
+      activityId = TimeTrackingActivityFixtures.testingActivity.id,
+      durationMinutes = TimeTrackingDurationMinutes(120),
+      loggedAt = Instant.parse("2026-04-07T11:00:00Z"),
+      description = None
+    )
+
+    val result = TimeTrackingServiceFixtures.withTimeTrackingService(
+      entries = List(existing),
+      tickets = List(TicketFixtures.sampleTicket),
+      boards = List(BoardFixtures.dashboard(active = false)),
+      members = List(BoardMemberFixtures.sampleMember.copy(roleId = RoleFixtures.viewerRole.id)),
+      roles = List(RoleFixtures.viewerRole),
+      permissions = List(PermissionFixtures.viewerTicketPermission)
+    ) { ctx =>
+      for {
+        updated <- ctx.timeTrackingService.updateOwnEntry(existing.id, command, existing.userId)
+        stored  <- ctx.timeTrackingRepo.findById(existing.id)
+      } yield (updated, stored)
+    }
+
+    assertEquals(result, (false, Some(existing)))
+  }
+
+  test("updateOwnEntry returns false when trying to edit another user's entry") {
+    val existing  = TimeTrackingFixtures.sampleEntry
+    val otherUser = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222"))
+    val command   = UpdateTimeTrackingEntryCommand(
+      activityId = TimeTrackingActivityFixtures.testingActivity.id,
+      durationMinutes = TimeTrackingDurationMinutes(120),
+      loggedAt = Instant.parse("2026-04-07T11:00:00Z"),
+      description = None
+    )
+
+    val result = TimeTrackingServiceFixtures.withTimeTrackingService(
+      entries = List(existing),
+      tickets = List(TicketFixtures.sampleTicket),
+      boards = List(BoardFixtures.sampleDashboard),
+      members = List(
+        BoardMemberFixtures.sampleMember.copy(roleId = RoleFixtures.viewerRole.id),
+        BoardMemberFixtures.member(userId = otherUser, roleId = RoleFixtures.viewerRole.id)
+      ),
+      roles = List(RoleFixtures.viewerRole),
+      permissions = List(PermissionFixtures.viewerTicketPermission)
+    ) { ctx =>
+      for {
+        updated <- ctx.timeTrackingService.updateOwnEntry(existing.id, command, otherUser)
+        stored  <- ctx.timeTrackingRepo.findById(existing.id)
+      } yield (updated, stored)
+    }
+
+    assertEquals(result, (false, Some(existing)))
+  }
+
   test("getOwnEntry returns the entry even when the actor is no longer a board member") {
     val entry = TimeTrackingFixtures.sampleEntry
 

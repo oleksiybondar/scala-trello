@@ -79,6 +79,23 @@ class TicketServiceLiveSpec extends FunSuite {
     assertEquals(result, None)
   }
 
+  test("createTicket returns none when the board is inactive") {
+    val command = CreateTicketCommand(
+      boardId = TicketFixtures.sampleTicket.boardId,
+      name = TicketFixtures.sampleTicket.name,
+      stateId = TicketFixtures.sampleTicket.stateId
+    )
+
+    val result = TicketServiceFixtures.withTicketService(
+      dashboards = List(BoardFixtures.dashboard(active = false)),
+      members = List(BoardMemberFixtures.sampleMember),
+      roles = List(RoleFixtures.adminRole),
+      permissions = List(PermissionFixtures.adminTicketPermission)
+    )(_.ticketService.createTicket(command, BoardMemberFixtures.sampleMember.userId))
+
+    assertEquals(result, None)
+  }
+
   test("changeTitle updates the ticket title when the actor can modify tickets") {
     val existing = TicketFixtures.sampleTicket
 
@@ -197,6 +214,29 @@ class TicketServiceLiveSpec extends FunSuite {
     assertEquals(result, (false, Some(existing.name)))
   }
 
+  test("changeTitle returns false when the board is inactive") {
+    val existing = TicketFixtures.sampleTicket
+
+    val result = TicketServiceFixtures.withTicketService(
+      tickets = List(existing),
+      dashboards = List(BoardFixtures.dashboard(active = false)),
+      members = List(BoardMemberFixtures.sampleMember),
+      roles = List(RoleFixtures.adminRole),
+      permissions = List(PermissionFixtures.adminTicketPermission)
+    ) { ctx =>
+      for {
+        modified <- ctx.ticketService.changeTitle(
+                      existing.id,
+                      BoardMemberFixtures.sampleMember.userId,
+                      TicketName("Blocked update")
+                    )
+        stored   <- ctx.ticketRepo.findById(existing.id)
+      } yield (modified, stored.map(_.name))
+    }
+
+    assertEquals(result, (false, Some(existing.name)))
+  }
+
   test("reassignTicket updates assignee when the actor can reassign tickets") {
     val existing    = TicketFixtures.sampleTicket
     val newAssignee = UserId(UUID.fromString("33333333-3333-3333-3333-333333333333"))
@@ -237,6 +277,60 @@ class TicketServiceLiveSpec extends FunSuite {
       members =
         List(BoardMemberFixtures.sampleMember.copy(roleId = RoleFixtures.contributorRole.id)),
       roles = List(RoleFixtures.contributorRole),
+      permissions = List(PermissionFixtures.contributorTicketPermission)
+    ) { ctx =>
+      for {
+        reassigned <- ctx.ticketService.reassignTicket(
+                        existing.id,
+                        BoardMemberFixtures.sampleMember.userId,
+                        Some(newAssignee)
+                      )
+        stored     <- ctx.ticketRepo.findById(existing.id)
+      } yield (reassigned, stored.flatMap(_.assignedToUserId))
+    }
+
+    assertEquals(result, (false, existing.assignedToUserId))
+  }
+
+  test("reassignTicket returns false when the actor lacks ticket reassign permission") {
+    val existing    = TicketFixtures.sampleTicket
+    val newAssignee = UserId(UUID.fromString("33333333-3333-3333-3333-333333333333"))
+
+    val result = TicketServiceFixtures.withTicketService(
+      tickets = List(existing),
+      dashboards = List(BoardFixtures.sampleDashboard),
+      members = List(
+        BoardMemberFixtures.sampleMember.copy(roleId = RoleFixtures.viewerRole.id),
+        BoardMemberFixtures.member(userId = newAssignee, roleId = RoleFixtures.viewerRole.id)
+      ),
+      roles = List(RoleFixtures.viewerRole),
+      permissions = List(PermissionFixtures.viewerTicketPermission)
+    ) { ctx =>
+      for {
+        reassigned <- ctx.ticketService.reassignTicket(
+                        existing.id,
+                        BoardMemberFixtures.sampleMember.userId,
+                        Some(newAssignee)
+                      )
+        stored     <- ctx.ticketRepo.findById(existing.id)
+      } yield (reassigned, stored.flatMap(_.assignedToUserId))
+    }
+
+    assertEquals(result, (false, existing.assignedToUserId))
+  }
+
+  test("reassignTicket returns false when the board is inactive") {
+    val existing    = TicketFixtures.sampleTicket
+    val newAssignee = UserId(UUID.fromString("33333333-3333-3333-3333-333333333333"))
+
+    val result = TicketServiceFixtures.withTicketService(
+      tickets = List(existing),
+      dashboards = List(BoardFixtures.dashboard(active = false)),
+      members = List(
+        BoardMemberFixtures.sampleMember.copy(roleId = RoleFixtures.contributorRole.id),
+        BoardMemberFixtures.member(userId = newAssignee, roleId = RoleFixtures.viewerRole.id)
+      ),
+      roles = List(RoleFixtures.contributorRole, RoleFixtures.viewerRole),
       permissions = List(PermissionFixtures.contributorTicketPermission)
     ) { ctx =>
       for {

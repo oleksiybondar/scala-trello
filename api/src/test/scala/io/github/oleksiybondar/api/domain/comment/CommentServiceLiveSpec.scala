@@ -64,6 +64,21 @@ class CommentServiceLiveSpec extends FunSuite {
     assertEquals(result, None)
   }
 
+  test("createComment returns none when the actor is not a board member") {
+    val command = CreateCommentCommand(
+      ticketId = TicketFixtures.sampleTicket.id,
+      message = CommentMessage("Blocked"),
+      relatedCommentId = None
+    )
+
+    val result = CommentServiceFixtures.withCommentService(
+      tickets = List(TicketFixtures.sampleTicket),
+      boards = List(BoardFixtures.sampleDashboard)
+    )(_.commentService.createComment(command, BoardMemberFixtures.sampleMember.userId))
+
+    assertEquals(result, None)
+  }
+
   test("createComment returns none when comments are disabled on the ticket") {
     val command = CreateCommentCommand(
       ticketId = TicketFixtures.sampleTicket.id,
@@ -127,6 +142,52 @@ class CommentServiceLiveSpec extends FunSuite {
         updated <- ctx.commentService.changeMessage(
                      existing.id,
                      otherUser,
+                     CommentMessage("Blocked update")
+                   )
+        stored  <- ctx.commentRepo.findById(existing.id)
+      } yield (updated, stored.map(_.message))
+    }
+
+    assertEquals(result, (false, Some(existing.message)))
+  }
+
+  test("changeMessage returns false when the author is no longer a board member") {
+    val existing = CommentFixtures.sampleComment
+
+    val result = CommentServiceFixtures.withCommentService(
+      comments = List(existing),
+      tickets = List(TicketFixtures.sampleTicket),
+      boards = List(BoardFixtures.sampleDashboard)
+    ) { ctx =>
+      for {
+        updated <- ctx.commentService.changeMessage(
+                     existing.id,
+                     existing.authorUserId,
+                     CommentMessage("Blocked update")
+                   )
+        stored  <- ctx.commentRepo.findById(existing.id)
+      } yield (updated, stored.map(_.message))
+    }
+
+    assertEquals(result, (false, Some(existing.message)))
+  }
+
+  test("changeMessage returns false when the board is inactive") {
+    val existing = CommentFixtures.sampleComment
+
+    val result = CommentServiceFixtures.withCommentService(
+      comments = List(existing),
+      tickets = List(TicketFixtures.sampleTicket),
+      boards = List(BoardFixtures.dashboard(active = false)),
+      members =
+        List(BoardMemberFixtures.sampleMember.copy(roleId = RoleFixtures.contributorRole.id)),
+      roles = List(RoleFixtures.contributorRole),
+      permissions = List(PermissionFixtures.contributorCommentPermission)
+    ) { ctx =>
+      for {
+        updated <- ctx.commentService.changeMessage(
+                     existing.id,
+                     existing.authorUserId,
                      CommentMessage("Blocked update")
                    )
         stored  <- ctx.commentRepo.findById(existing.id)

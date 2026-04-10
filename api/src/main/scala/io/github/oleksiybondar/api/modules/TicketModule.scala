@@ -3,6 +3,7 @@ package io.github.oleksiybondar.api.modules
 import cats.effect.Async
 import io.github.oleksiybondar.api.domain.board.{BoardAccessService, BoardMembershipService}
 import io.github.oleksiybondar.api.domain.ticket.{TicketService, TicketServiceLive}
+import io.github.oleksiybondar.api.infrastructure.db.board.BoardRepo
 import io.github.oleksiybondar.api.infrastructure.db.ticket.{
   SlickTicketQueryRepo,
   SlickTicketRepo,
@@ -21,6 +22,7 @@ object TicketModule {
 
   def make[F[_]: Async](
       db: Database,
+      boardRepo: BoardRepo[F],
       boardAccessService: BoardAccessService[F],
       boardMembershipService: BoardMembershipService[F]
   ): TicketModule[F] = {
@@ -32,6 +34,7 @@ object TicketModule {
       ticketQueryRepo = ticketQueryRepo,
       ticketService = new TicketServiceLive[F](
         ticketRepo,
+        boardRepo,
         boardAccessService,
         boardMembershipService
       )

@@ -38,6 +38,7 @@ object TicketServiceFixtures {
                               boardAccessFixtures = accessCtx,
                               ticketService = new TicketServiceLive[IO](
                                 ticketRepo,
+                                accessCtx.dashboardRepo,
                                 accessCtx.dashboardAccessService,
                                 accessCtx.membershipFixtures.dashboardMembershipService
                               )

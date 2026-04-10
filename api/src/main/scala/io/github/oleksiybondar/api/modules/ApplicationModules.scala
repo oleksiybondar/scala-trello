@@ -26,7 +26,12 @@ object ApplicationModules {
     val boardModule        = BoardModule.make[F](db, permissionModule.roleService)
     val dictionaryModule   = DictionaryModule.make[F](db)
     val ticketModule       =
-      TicketModule.make[F](db, boardModule.boardAccessService, boardModule.boardMembershipService)
+      TicketModule.make[F](
+        db,
+        boardModule.boardRepo,
+        boardModule.boardAccessService,
+        boardModule.boardMembershipService
+      )
     val timeTrackingModule =
       TimeTrackingModule.make[F](
         db,
