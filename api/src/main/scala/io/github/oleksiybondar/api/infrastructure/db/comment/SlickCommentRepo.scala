@@ -5,44 +5,10 @@ import cats.syntax.all._
 import io.github.oleksiybondar.api.domain.comment.{Comment, CommentId, CommentMessage}
 import io.github.oleksiybondar.api.domain.ticket.TicketId
 import io.github.oleksiybondar.api.domain.user.UserId
+import io.github.oleksiybondar.api.infrastructure.db.SharedSlickTables.{CommentRow, CommentsTable}
 import slick.jdbc.PostgresProfile.api._
-import slick.lifted.ProvenShape
-
-import java.time.Instant
-import java.util.UUID
 
 final class SlickCommentRepo[F[_]: Async](db: Database) extends CommentRepo[F] {
-
-  private final case class CommentRow(
-      id: Long,
-      ticketId: Long,
-      authorUserId: UUID,
-      createdAt: Instant,
-      modifiedAt: Instant,
-      message: String,
-      relatedCommentId: Option[Long]
-  )
-
-  private final class CommentsTable(tag: Tag) extends Table[CommentRow](tag, "comments") {
-    def id: Rep[Long]                       = column[Long]("id", O.PrimaryKey)
-    def ticketId: Rep[Long]                 = column[Long]("ticket_id")
-    def authorUserId: Rep[UUID]             = column[UUID]("author_user_id")
-    def createdAt: Rep[Instant]             = column[Instant]("created_at")
-    def modifiedAt: Rep[Instant]            = column[Instant]("modified_at")
-    def message: Rep[String]                = column[String]("message")
-    def relatedCommentId: Rep[Option[Long]] = column[Option[Long]]("related_comment_id")
-
-    def * : ProvenShape[CommentRow] =
-      (
-        id,
-        ticketId,
-        authorUserId,
-        createdAt,
-        modifiedAt,
-        message,
-        relatedCommentId
-      ).mapTo[CommentRow]
-  }
 
   private val comments = TableQuery[CommentsTable]
 

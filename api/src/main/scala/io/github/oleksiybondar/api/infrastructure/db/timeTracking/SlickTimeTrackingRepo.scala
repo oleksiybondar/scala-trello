@@ -11,45 +11,13 @@ import io.github.oleksiybondar.api.domain.timeTracking.{
   TimeTrackingEntryId
 }
 import io.github.oleksiybondar.api.domain.user.UserId
+import io.github.oleksiybondar.api.infrastructure.db.SharedSlickTables.{
+  TimeTrackingRow,
+  TimeTrackingTable
+}
 import slick.jdbc.PostgresProfile.api._
-import slick.lifted.ProvenShape
-
-import java.time.Instant
-import java.util.UUID
 
 final class SlickTimeTrackingRepo[F[_]: Async](db: Database) extends TimeTrackingRepo[F] {
-
-  private final case class TimeTrackingRow(
-      id: Long,
-      ticketId: Long,
-      userId: UUID,
-      activityId: Long,
-      durationMinutes: Int,
-      loggedAt: Instant,
-      description: Option[String]
-  )
-
-  private final class TimeTrackingTable(tag: Tag)
-      extends Table[TimeTrackingRow](tag, "time_tracking") {
-    def id: Rep[Long]                    = column[Long]("id", O.PrimaryKey)
-    def ticketId: Rep[Long]              = column[Long]("ticket_id")
-    def userId: Rep[UUID]                = column[UUID]("user_id")
-    def activityId: Rep[Long]            = column[Long]("activity_id")
-    def durationMinutes: Rep[Int]        = column[Int]("duration_minutes")
-    def loggedAt: Rep[Instant]           = column[Instant]("logged_at")
-    def description: Rep[Option[String]] = column[Option[String]]("description")
-
-    def * : ProvenShape[TimeTrackingRow] =
-      (
-        id,
-        ticketId,
-        userId,
-        activityId,
-        durationMinutes,
-        loggedAt,
-        description
-      ).mapTo[TimeTrackingRow]
-  }
 
   private val timeTrackingEntries = TableQuery[TimeTrackingTable]
 

@@ -2,13 +2,13 @@ import type { ChangeEvent, ReactElement } from "react";
 import { useEffect, useState } from "react";
 
 import Alert from "@mui/material/Alert";
-import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
+import { FormActionButtons } from "@components/forms/user/FormActionButtons";
 import { useUserSettingsMutation } from "@features/user/useUserSettingsMutation";
 import { createAsyncSubmitHandler } from "@helpers/createAsyncActionBuilder";
 import { requestGraphQL } from "@helpers/requestGraphQL";
@@ -154,22 +154,12 @@ export const UserProfileForm = ({
         />
 
           {isChanged ? (
-            <Stack
-              direction={{ xs: "column-reverse", sm: "row" }}
-              justifyContent="flex-end"
-              spacing={1.5}
-            >
-              <Button disabled={isDisabled} onClick={handleCancel} variant="outlined">
-                Cancel
-              </Button>
-              <Button
-                disabled={isDisabled || !isValid}
-                onClick={handleApply}
-                variant="contained"
-              >
-                Apply
-              </Button>
-            </Stack>
+            <FormActionButtons
+              applyDisabled={!isValid}
+              isDisabled={isDisabled}
+              onApply={handleApply}
+              onCancel={handleCancel}
+            />
           ) : null}
         </Stack>
       </CardContent>

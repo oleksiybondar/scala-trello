@@ -11,50 +11,15 @@ import io.github.oleksiybondar.api.domain.permission.{
   RoleName,
   RoleWithPermissions
 }
+import io.github.oleksiybondar.api.infrastructure.db.SharedSlickTables.{
+  PermissionRow,
+  PermissionsTable,
+  RoleRow,
+  RolesTable
+}
 import slick.jdbc.PostgresProfile.api._
-import slick.lifted.ProvenShape
 
 final class SlickRoleQueryRepo[F[_]: Async](db: Database) extends RoleQueryRepo[F] {
-
-  private final case class RoleRow(
-      id: Long,
-      name: String,
-      description: Option[String]
-  )
-
-  private final case class PermissionRow(
-      id: Long,
-      roleId: Long,
-      area: String,
-      canRead: Boolean,
-      canCreate: Boolean,
-      canModify: Boolean,
-      canDelete: Boolean,
-      canReassign: Boolean
-  )
-
-  private final class RolesTable(tag: Tag) extends Table[RoleRow](tag, "roles") {
-    def id: Rep[Long]                    = column[Long]("id", O.PrimaryKey)
-    def name: Rep[String]                = column[String]("name")
-    def description: Rep[Option[String]] = column[Option[String]]("description")
-
-    def * : ProvenShape[RoleRow] = (id, name, description).mapTo[RoleRow]
-  }
-
-  private final class PermissionsTable(tag: Tag)
-      extends Table[PermissionRow](tag, "permissions") {
-    def id: Rep[Long]             = column[Long]("id", O.PrimaryKey)
-    def roleId: Rep[Long]         = column[Long]("role_id")
-    def area: Rep[String]         = column[String]("area")
-    def canRead: Rep[Boolean]     = column[Boolean]("can_read")
-    def canCreate: Rep[Boolean]   = column[Boolean]("can_create")
-    def canModify: Rep[Boolean]   = column[Boolean]("can_modify")
-    def canDelete: Rep[Boolean]   = column[Boolean]("can_delete")
-    def canReassign: Rep[Boolean] = column[Boolean]("can_reassign")
-
-    def * : ProvenShape[PermissionRow] =
-      (id, roleId, area, canRead, canCreate, canModify, canDelete, canReassign).mapTo[PermissionRow]
-  }
 
   private val roles       = TableQuery[RolesTable]
   private val permissions = TableQuery[PermissionsTable]

@@ -8,33 +8,18 @@ import io.github.oleksiybondar.api.domain.timeTracking.{
   TimeTrackingActivityId,
   TimeTrackingActivityName
 }
+import io.github.oleksiybondar.api.infrastructure.db.SharedSlickTables.{
+  ActivitiesTable,
+  ActivityRow
+}
 import slick.jdbc.PostgresProfile.api._
-import slick.lifted.ProvenShape
 
 final class SlickTimeTrackingActivityRepo[F[_]: Async](db: Database)
     extends TimeTrackingActivityRepo[F] {
 
-  private final case class TimeTrackingActivityRow(
-      id: Long,
-      code: String,
-      name: String,
-      description: Option[String]
-  )
-
-  private final class ActivitiesTable(tag: Tag)
-      extends Table[TimeTrackingActivityRow](tag, "activities") {
-    def id: Rep[Long]                    = column[Long]("id", O.PrimaryKey)
-    def code: Rep[String]                = column[String]("code")
-    def name: Rep[String]                = column[String]("name")
-    def description: Rep[Option[String]] = column[Option[String]]("description")
-
-    def * : ProvenShape[TimeTrackingActivityRow] =
-      (id, code, name, description).mapTo[TimeTrackingActivityRow]
-  }
-
   private val activities = TableQuery[ActivitiesTable]
 
-  private def toDomain(row: TimeTrackingActivityRow): TimeTrackingActivity =
+  private def toDomain(row: ActivityRow): TimeTrackingActivity =
     TimeTrackingActivity(
       id = TimeTrackingActivityId(row.id),
       code = TimeTrackingActivityCode(row.code),

@@ -123,7 +123,8 @@ object TicketApi {
             ctx =>
               ctx.value.createdBy match {
                 case Some(userView) => IO.pure(Some(userView)).unsafeToFuture()
-                case None           => loadUserView(ctx.ctx, ctx.value.createdByUserId).unsafeToFuture()
+                case None           =>
+                  UserApi.loadUserView(ctx.ctx, ctx.value.createdByUserId).unsafeToFuture()
               }
         ),
         Field(
@@ -135,7 +136,7 @@ object TicketApi {
                 case Some(userView) => IO.pure(Some(userView)).unsafeToFuture()
                 case None           =>
                   ctx.value.assignedToUserId match {
-                    case Some(userId) => loadUserView(ctx.ctx, userId).unsafeToFuture()
+                    case Some(userId) => UserApi.loadUserView(ctx.ctx, userId).unsafeToFuture()
                     case None         => IO.pure(None).unsafeToFuture()
                   }
               }
@@ -148,7 +149,7 @@ object TicketApi {
               ctx.value.lastModifiedBy match {
                 case Some(userView) => IO.pure(Some(userView)).unsafeToFuture()
                 case None           =>
-                  loadUserView(ctx.ctx, ctx.value.lastModifiedByUserId).unsafeToFuture()
+                  UserApi.loadUserView(ctx.ctx, ctx.value.lastModifiedByUserId).unsafeToFuture()
               }
         ),
         Field(
@@ -360,12 +361,6 @@ object TicketApi {
       } yield toView(ticket)
     }
 
-  private def loadUserView(ctx: GraphQLContext, rawUserId: String): IO[Option[UserView]] =
-    parseUserId(rawUserId) match {
-      case Left(_)       => IO.pure(None)
-      case Right(userId) => ctx.userService.getUser(userId).map(_.map(toUserView))
-    }
-
   private def toCommentView(
       row: io.github.oleksiybondar.api.infrastructure.db.comment.CommentQueryRow
   ): CommentView =
@@ -539,17 +534,6 @@ object TicketApi {
       assignedTo = ticket.assignedTo.map(toUserView),
       lastModifiedBy = Some(toUserView(ticket.lastModifiedBy)),
       timeEntries = ticket.timeEntries.map(toTimeTrackingView)
-    )
-
-  private def toUserView(user: io.github.oleksiybondar.api.domain.user.User): UserView =
-    UserView(
-      id = user.id.value.toString,
-      username = user.username.map(_.value),
-      email = user.email.map(_.value),
-      firstName = user.firstName.value,
-      lastName = user.lastName.value,
-      avatarUrl = user.avatarUrl.map(_.value),
-      createdAt = user.createdAt.toString
     )
 
   private def toUserView(

@@ -3,25 +3,10 @@ package io.github.oleksiybondar.api.infrastructure.db.permission
 import cats.effect.Async
 import cats.syntax.all._
 import io.github.oleksiybondar.api.domain.permission.{Role, RoleId, RoleName}
+import io.github.oleksiybondar.api.infrastructure.db.SharedSlickTables.{RoleRow, RolesTable}
 import slick.jdbc.PostgresProfile.api._
-import slick.lifted.ProvenShape
 
 final class SlickRoleRepo[F[_]: Async](db: Database) extends RoleRepo[F] {
-
-  private final case class RoleRow(
-      id: Long,
-      name: String,
-      description: Option[String]
-  )
-
-  private final class RolesTable(tag: Tag) extends Table[RoleRow](tag, "roles") {
-    def id: Rep[Long]                    = column[Long]("id", O.PrimaryKey)
-    def name: Rep[String]                = column[String]("name")
-    def description: Rep[Option[String]] = column[Option[String]]("description")
-
-    def * : ProvenShape[RoleRow] =
-      (id, name, description).mapTo[RoleRow]
-  }
 
   private val roles = TableQuery[RolesTable]
 

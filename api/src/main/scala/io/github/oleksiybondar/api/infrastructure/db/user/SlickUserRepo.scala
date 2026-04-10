@@ -3,49 +3,12 @@ package io.github.oleksiybondar.api.infrastructure.db.user
 import cats.effect.Async
 import cats.syntax.all._
 import io.github.oleksiybondar.api.domain.user._
+import io.github.oleksiybondar.api.infrastructure.db.SharedSlickTables.{UserRow, UsersTable}
 import slick.jdbc.PostgresProfile.api._
-import slick.lifted.ProvenShape
-
-import java.time.Instant
-import java.util.UUID
 
 final class SlickUserRepo[F[_]: Async](
     db: Database
 ) extends UserRepo[F] {
-
-  private final case class UserRow(
-      id: UUID,
-      username: Option[String],
-      email: Option[String],
-      passwordHash: String,
-      firstName: String,
-      lastName: String,
-      avatarUrl: Option[String],
-      createdAt: Instant
-  )
-
-  private final class UsersTable(tag: Tag) extends Table[UserRow](tag, "users") {
-    def id: Rep[UUID]                  = column[UUID]("id", O.PrimaryKey)
-    def username: Rep[Option[String]]  = column[Option[String]]("username")
-    def email: Rep[Option[String]]     = column[Option[String]]("email")
-    def passwordHash: Rep[String]      = column[String]("password_hash")
-    def firstName: Rep[String]         = column[String]("first_name")
-    def lastName: Rep[String]          = column[String]("last_name")
-    def avatarUrl: Rep[Option[String]] = column[Option[String]]("avatar_url")
-    def createdAt: Rep[Instant]        = column[Instant]("created_at")
-
-    def * : ProvenShape[UserRow] =
-      (
-        id,
-        username,
-        email,
-        passwordHash,
-        firstName,
-        lastName,
-        avatarUrl,
-        createdAt
-      ).mapTo[UserRow]
-  }
 
   private val users = TableQuery[UsersTable]
 

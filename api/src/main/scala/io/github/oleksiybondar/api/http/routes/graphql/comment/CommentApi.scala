@@ -73,7 +73,7 @@ object CommentApi {
             ctx =>
               ctx.value.user match {
                 case Some(userView) => IO.pure(Some(userView)).unsafeToFuture()
-                case None           => loadUserView(ctx.ctx, ctx.value.authorUserId).unsafeToFuture()
+                case None           => UserApi.loadUserView(ctx.ctx, ctx.value.authorUserId).unsafeToFuture()
               }
         ),
         Field(
@@ -218,12 +218,6 @@ object CommentApi {
         case None         => IO.pure(false)
       }
 
-  private def loadUserView(ctx: GraphQLContext, rawUserId: String): IO[Option[UserView]] =
-    parseUserId(rawUserId) match {
-      case Left(_)       => IO.pure(None)
-      case Right(userId) => ctx.userService.getUser(userId).map(_.map(toUserView))
-    }
-
   private def withCurrentUser[A](
       ctx: sangria.schema.Context[GraphQLContext, Unit]
   )(action: UserId => IO[A]): IO[A] =
@@ -279,14 +273,4 @@ object CommentApi {
       title = ticket.name.value
     )
 
-  private def toUserView(user: io.github.oleksiybondar.api.domain.user.User): UserView =
-    UserView(
-      id = user.id.value.toString,
-      username = user.username.map(_.value),
-      email = user.email.map(_.value),
-      firstName = user.firstName.value,
-      lastName = user.lastName.value,
-      avatarUrl = user.avatarUrl.map(_.value),
-      createdAt = user.createdAt.toString
-    )
 }
