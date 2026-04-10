@@ -12,7 +12,10 @@ import io.github.oleksiybondar.api.domain.permission.{PermissionService, RoleSer
 import io.github.oleksiybondar.api.domain.ticket.TicketService
 import io.github.oleksiybondar.api.domain.timeTracking.TimeTrackingService
 import io.github.oleksiybondar.api.domain.user.{UserId, UserService}
+import io.github.oleksiybondar.api.infrastructure.db.comment.CommentQueryRepo
+import io.github.oleksiybondar.api.infrastructure.db.permission.RoleQueryRepo
 import io.github.oleksiybondar.api.infrastructure.db.ticket.TicketStateRepo
+import io.github.oleksiybondar.api.infrastructure.db.timeTracking.TimeTrackingQueryRepo
 
 /** Per-request GraphQL context carrying services and the authenticated user identity. */
 final case class GraphQLContext(
@@ -26,6 +29,8 @@ final case class GraphQLContext(
     dashboardAccessService: BoardAccessService[IO],
     /** Role and permission service exposed to GraphQL dictionary queries. */
     roleService: RoleService[IO],
+    /** Joined role read repo used for optimized role/permission reads. */
+    roleQueryRepo: RoleQueryRepo[IO],
     /** Permission service exposed to GraphQL dictionary queries. */
     permissionService: PermissionService[IO],
     /** Ticket service exposed to ticket queries and mutations. */
@@ -34,6 +39,10 @@ final case class GraphQLContext(
     ticketStateRepo: TicketStateRepo[IO],
     /** Time tracking service exposed to time entry queries and mutations. */
     timeTrackingService: TimeTrackingService[IO],
+    /** Joined comment read repo used for optimized nested reads. */
+    commentQueryRepo: CommentQueryRepo[IO],
+    /** Joined time tracking read repo used for optimized nested reads. */
+    timeTrackingQueryRepo: TimeTrackingQueryRepo[IO],
     /** Comment service exposed to comment queries and mutations. */
     commentService: CommentService[IO],
     /** Authentication service available for GraphQL flows that need token-related behavior. */

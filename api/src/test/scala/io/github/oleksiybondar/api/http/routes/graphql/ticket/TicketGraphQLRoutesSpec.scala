@@ -6,8 +6,10 @@ import io.github.oleksiybondar.api.domain.permission.RoleId
 import io.github.oleksiybondar.api.domain.user.{UserId, Username}
 import io.github.oleksiybondar.api.testkit.fixtures.{
   BoardMemberFixtures,
+  CommentFixtures,
   GraphQLFixtures,
   TicketFixtures,
+  TimeTrackingFixtures,
   UserFixtures
 }
 import io.github.oleksiybondar.api.testkit.support.GraphQLRequestSupport.graphqlRequest
@@ -65,6 +67,41 @@ class TicketGraphQLRoutesSpec extends FunSuite {
     assertEquals(ticketCursor.get[String]("name").toOption, Some("Implement login mutation"))
     assertEquals(ticketCursor.get[String]("status").toOption, Some("new"))
     assertEquals(ticketCursor.get[Int]("estimatedMinutes").toOption, Some(120))
+  }
+
+  test("POST /graphql returns nested ticket comments and time entries") {
+    val response = GraphQLFixtures.withGraphQLRoutes(
+      tickets = List(TicketFixtures.sampleTicket),
+      comments = List(CommentFixtures.sampleComment),
+      timeEntries = List(TimeTrackingFixtures.sampleEntry)
+    ) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <-
+          ctx.httpApp.run(graphqlRequest(ticketNestedActivityQuery, accessToken = Some(token)))
+      } yield response
+    }
+
+    val body               = response.as[Json].unsafeRunSync()
+    val ticketCursor       = body.hcursor.downField("data").downField("ticket")
+    val commentCursor      = ticketCursor.downField("comments").downArray
+    val timeTrackingCursor = ticketCursor.downField("timeEntries").downArray
+
+    assertEquals(response.status, Status.Ok)
+    assertEquals(
+      commentCursor.get[String]("message").toOption,
+      Some("This needs a follow-up review.")
+    )
+    assertEquals(commentCursor.downField("user").get[String]("firstName").toOption, Some("Alice"))
+    assertEquals(timeTrackingCursor.get[Int]("durationMinutes").toOption, Some(90))
+    assertEquals(
+      timeTrackingCursor.downField("user").get[String]("firstName").toOption,
+      Some("Alice")
+    )
+    assertEquals(
+      timeTrackingCursor.downField("ticket").get[String]("title").toOption,
+      Some("Implement login mutation")
+    )
   }
 
   test("POST /graphql creates a ticket and returns it") {
@@ -198,6 +235,23 @@ class TicketGraphQLRoutesSpec extends FunSuite {
       |      name
       |      status
       |      estimatedMinutes
+      |    }
+      |  }
+      |}""".stripMargin
+
+  private val ticketNestedActivityQuery =
+    """query {
+      |  ticket(ticketId: "1") {
+      |    id
+      |    comments {
+      |      message
+      |      user { firstName }
+      |      ticket { title }
+      |    }
+      |    timeEntries {
+      |      durationMinutes
+      |      user { firstName }
+      |      ticket { title }
       |    }
       |  }
       |}""".stripMargin

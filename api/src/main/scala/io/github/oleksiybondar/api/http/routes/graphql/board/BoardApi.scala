@@ -70,8 +70,8 @@ object BoardApi {
           ListType(PermissionType),
           resolve =
             ctx =>
-              ctx.ctx.roleService
-                .getRoleWithPermissions(RoleId(ctx.value.id.toLong))
+              ctx.ctx.roleQueryRepo
+                .findById(RoleId(ctx.value.id.toLong))
                 .map(_.fold(List.empty)(_.permissions))
                 .unsafeToFuture()
         )

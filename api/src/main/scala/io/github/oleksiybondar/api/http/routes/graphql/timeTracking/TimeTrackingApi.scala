@@ -77,19 +77,29 @@ object TimeTrackingApi {
         Field(
           "ticket",
           OptionType(TicketSummaryType),
-          resolve = ctx =>
-            parseTicketId(ctx.value.ticketId) match {
-              case Left(_)         => IO.pure(None).unsafeToFuture()
-              case Right(ticketId) =>
-                ctx.ctx.ticketService.getTicket(
-                  ticketId
-                ).map(_.map(toTicketSummaryView)).unsafeToFuture()
-            }
+          resolve =
+            ctx =>
+              ctx.value.ticket match {
+                case Some(ticketView) => IO.pure(Some(ticketView)).unsafeToFuture()
+                case None             =>
+                  parseTicketId(ctx.value.ticketId) match {
+                    case Left(_)         => IO.pure(None).unsafeToFuture()
+                    case Right(ticketId) =>
+                      ctx.ctx.ticketService.getTicket(
+                        ticketId
+                      ).map(_.map(toTicketSummaryView)).unsafeToFuture()
+                  }
+              }
         ),
         Field(
           "user",
           OptionType(UserApi.UserType),
-          resolve = ctx => loadUserView(ctx.ctx, ctx.value.userId).unsafeToFuture()
+          resolve =
+            ctx =>
+              ctx.value.user match {
+                case Some(userView) => IO.pure(Some(userView)).unsafeToFuture()
+                case None           => loadUserView(ctx.ctx, ctx.value.userId).unsafeToFuture()
+              }
         )
       )
     )

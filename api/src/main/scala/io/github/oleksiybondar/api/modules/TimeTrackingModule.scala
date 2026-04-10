@@ -9,14 +9,17 @@ import io.github.oleksiybondar.api.domain.timeTracking.{
 import io.github.oleksiybondar.api.infrastructure.db.board.BoardRepo
 import io.github.oleksiybondar.api.infrastructure.db.ticket.TicketRepo
 import io.github.oleksiybondar.api.infrastructure.db.timeTracking.{
+  SlickTimeTrackingQueryRepo,
   SlickTimeTrackingRepo,
   TimeTrackingActivityRepo,
+  TimeTrackingQueryRepo,
   TimeTrackingRepo
 }
 import slick.jdbc.PostgresProfile.api.Database
 
 final case class TimeTrackingModule[F[_]](
     timeTrackingRepo: TimeTrackingRepo[F],
+    timeTrackingQueryRepo: TimeTrackingQueryRepo[F],
     timeTrackingService: TimeTrackingService[F]
 )
 
@@ -30,10 +33,12 @@ object TimeTrackingModule {
       boardMembershipService: BoardMembershipService[F],
       timeTrackingActivityRepo: TimeTrackingActivityRepo[F]
   ): TimeTrackingModule[F] = {
-    val timeTrackingRepo = new SlickTimeTrackingRepo[F](db)
+    val timeTrackingRepo      = new SlickTimeTrackingRepo[F](db)
+    val timeTrackingQueryRepo = new SlickTimeTrackingQueryRepo[F](db)
 
     TimeTrackingModule(
       timeTrackingRepo = timeTrackingRepo,
+      timeTrackingQueryRepo = timeTrackingQueryRepo,
       timeTrackingService = new TimeTrackingServiceLive[F](
         timeTrackingRepo,
         ticketRepo,

@@ -20,12 +20,15 @@ import io.github.oleksiybondar.api.testkit.support.{
   InMemoryAuthRepo,
   InMemoryBoardMemberRepo,
   InMemoryBoardRepo,
+  InMemoryCommentQueryRepo,
   InMemoryCommentRepo,
   InMemoryPermissionRepo,
+  InMemoryRoleQueryRepo,
   InMemoryRoleRepo,
   InMemoryTicketRepo,
   InMemoryTicketStateRepo,
   InMemoryTimeTrackingActivityRepo,
+  InMemoryTimeTrackingQueryRepo,
   InMemoryTimeTrackingRepo,
   InMemoryUserRepo
 }
@@ -81,6 +84,8 @@ object GraphQLFixtures {
       ticketRepo                <- InMemoryTicketRepo.create[IO](tickets)
       commentRepo               <- InMemoryCommentRepo.create[IO](comments)
       timeTrackingRepo          <- InMemoryTimeTrackingRepo.create[IO](timeEntries)
+      commentQueryRepo           = new InMemoryCommentQueryRepo[IO](comments, tickets, users)
+      timeTrackingQueryRepo      = new InMemoryTimeTrackingQueryRepo[IO](timeEntries, tickets, users)
       timeTrackingActivityRepo   = new InMemoryTimeTrackingActivityRepo[IO](
                                      List(
                                        TimeTrackingActivityFixtures.codeReviewActivity,
@@ -111,6 +116,24 @@ object GraphQLFixtures {
                                      )
                                    )
       permissionRepo            <- InMemoryPermissionRepo.create[IO](
+                                     List(
+                                       PermissionFixtures.adminDashboardPermission,
+                                       PermissionFixtures.adminTicketPermission,
+                                       PermissionFixtures.adminCommentPermission,
+                                       PermissionFixtures.contributorDashboardPermission,
+                                       PermissionFixtures.contributorTicketPermission,
+                                       PermissionFixtures.contributorCommentPermission,
+                                       PermissionFixtures.viewerDashboardPermission,
+                                       PermissionFixtures.viewerTicketPermission,
+                                       PermissionFixtures.viewerCommentPermission
+                                     )
+                                   )
+      roleQueryRepo              = new InMemoryRoleQueryRepo[IO](
+                                     List(
+                                       RoleFixtures.adminRole,
+                                       RoleFixtures.contributorRole,
+                                       RoleFixtures.viewerRole
+                                     ),
                                      List(
                                        PermissionFixtures.adminDashboardPermission,
                                        PermissionFixtures.adminTicketPermission,
@@ -189,10 +212,13 @@ object GraphQLFixtures {
                                        dashboardMembershipService = dashboardMembershipService,
                                        dashboardAccessService = dashboardAccessService,
                                        roleService = roleService,
+                                       roleQueryRepo = roleQueryRepo,
                                        permissionService = permissionService,
                                        ticketService = ticketService,
                                        ticketStateRepo = ticketStateRepo,
                                        timeTrackingService = timeTrackingService,
+                                       commentQueryRepo = commentQueryRepo,
+                                       timeTrackingQueryRepo = timeTrackingQueryRepo,
                                        commentService = commentService,
                                        authService = authService,
                                        currentUserId = None

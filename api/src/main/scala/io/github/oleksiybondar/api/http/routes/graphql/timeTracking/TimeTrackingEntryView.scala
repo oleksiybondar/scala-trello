@@ -1,5 +1,7 @@
 package io.github.oleksiybondar.api.http.routes.graphql.timeTracking
 
+import io.github.oleksiybondar.api.http.routes.graphql.user.UserView
+
 final case class TimeTrackingTicketSummaryView(
     id: String,
     title: String,
@@ -13,5 +15,7 @@ final case class TimeTrackingEntryView(
     activityId: String,
     durationMinutes: Int,
     loggedAt: String,
-    description: Option[String]
+    description: Option[String],
+    user: Option[UserView] = None,
+    ticket: Option[TimeTrackingTicketSummaryView] = None
 )

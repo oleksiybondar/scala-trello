@@ -78,10 +78,13 @@ object Main extends IOApp.Simple {
                          modules.board.boardMembershipService,
                          modules.board.boardAccessService,
                          modules.permission.roleService,
+                         modules.permission.roleQueryRepo,
                          modules.permission.permissionService,
                          modules.ticket.ticketService,
                          modules.dictionary.ticketStateRepo,
                          modules.timeTracking.timeTrackingService,
+                         modules.comment.commentQueryRepo,
+                         modules.timeTracking.timeTrackingQueryRepo,
                          modules.comment.commentService,
                          modules.auth.authService
                        )
@@ -98,10 +101,15 @@ object Main extends IOApp.Simple {
       dashboardMembershipService: BoardMembershipService[IO],
       dashboardAccessService: BoardAccessService[IO],
       roleService: RoleService[IO],
+      roleQueryRepo: io.github.oleksiybondar.api.infrastructure.db.permission.RoleQueryRepo[IO],
       permissionService: PermissionService[IO],
       ticketService: io.github.oleksiybondar.api.domain.ticket.TicketService[IO],
       ticketStateRepo: io.github.oleksiybondar.api.infrastructure.db.ticket.TicketStateRepo[IO],
       timeTrackingService: io.github.oleksiybondar.api.domain.timeTracking.TimeTrackingService[IO],
+      commentQueryRepo: io.github.oleksiybondar.api.infrastructure.db.comment.CommentQueryRepo[IO],
+      timeTrackingQueryRepo: io.github.oleksiybondar.api.infrastructure.db.timeTracking.TimeTrackingQueryRepo[
+        IO
+      ],
       commentService: io.github.oleksiybondar.api.domain.comment.CommentService[IO],
       authService: io.github.oleksiybondar.api.domain.auth.AuthService[IO]
   ): Resource[IO, HttpRoutes[IO]] =
@@ -113,10 +121,13 @@ object Main extends IOApp.Simple {
           dashboardMembershipService = dashboardMembershipService,
           dashboardAccessService = dashboardAccessService,
           roleService = roleService,
+          roleQueryRepo = roleQueryRepo,
           permissionService = permissionService,
           ticketService = ticketService,
           ticketStateRepo = ticketStateRepo,
           timeTrackingService = timeTrackingService,
+          commentQueryRepo = commentQueryRepo,
+          timeTrackingQueryRepo = timeTrackingQueryRepo,
           commentService = commentService,
           authService = authService,
           currentUserId = None

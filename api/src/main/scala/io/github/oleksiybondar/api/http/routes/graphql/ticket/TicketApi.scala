@@ -15,6 +15,16 @@ import io.github.oleksiybondar.api.domain.ticket.{
 }
 import io.github.oleksiybondar.api.domain.user.UserId
 import io.github.oleksiybondar.api.http.routes.graphql.GraphQLContext
+import io.github.oleksiybondar.api.http.routes.graphql.comment.{
+  CommentApi,
+  CommentTicketSummaryView,
+  CommentView
+}
+import io.github.oleksiybondar.api.http.routes.graphql.timeTracking.{
+  TimeTrackingApi,
+  TimeTrackingEntryView,
+  TimeTrackingTicketSummaryView
+}
 import io.github.oleksiybondar.api.http.routes.graphql.user.{UserApi, UserView}
 import sangria.execution.UserFacingError
 import sangria.schema.{
@@ -103,6 +113,26 @@ object TicketApi {
           "lastModifiedBy",
           OptionType(UserApi.UserType),
           resolve = ctx => loadUserView(ctx.ctx, ctx.value.lastModifiedByUserId).unsafeToFuture()
+        ),
+        Field(
+          "comments",
+          ListType(CommentApi.CommentType),
+          resolve =
+            ctx =>
+              ctx.ctx.commentQueryRepo
+                .listByTicket(TicketId(ctx.value.id.toLong))
+                .map(_.map(toCommentView))
+                .unsafeToFuture()
+        ),
+        Field(
+          "timeEntries",
+          ListType(TimeTrackingApi.TimeTrackingEntryType),
+          resolve =
+            ctx =>
+              ctx.ctx.timeTrackingQueryRepo
+                .listByTicket(TicketId(ctx.value.id.toLong))
+                .map(_.map(toTimeTrackingView))
+                .unsafeToFuture()
         )
       )
     )
@@ -291,6 +321,68 @@ object TicketApi {
       case Left(_)       => IO.pure(None)
       case Right(userId) => ctx.userService.getUser(userId).map(_.map(toUserView))
     }
+
+  private def toCommentView(
+      row: io.github.oleksiybondar.api.infrastructure.db.comment.CommentQueryRow
+  ): CommentView =
+    CommentView(
+      id = row.id.value.toString,
+      ticketId = row.ticketId.value.toString,
+      authorUserId = row.authorUserId,
+      createdAt = row.createdAt,
+      modifiedAt = row.modifiedAt,
+      message = row.message,
+      relatedCommentId = row.relatedCommentId,
+      user = Some(
+        UserView(
+          id = row.authorUserId,
+          username = row.authorUsername,
+          email = row.authorEmail,
+          firstName = row.authorFirstName,
+          lastName = row.authorLastName,
+          avatarUrl = row.authorAvatarUrl,
+          createdAt = row.authorCreatedAt
+        )
+      ),
+      ticket = Some(
+        CommentTicketSummaryView(
+          id = row.ticketId.value.toString,
+          boardId = row.ticketBoardId,
+          title = row.ticketTitle
+        )
+      )
+    )
+
+  private def toTimeTrackingView(
+      row: io.github.oleksiybondar.api.infrastructure.db.timeTracking.TimeTrackingQueryRow
+  ): TimeTrackingEntryView =
+    TimeTrackingEntryView(
+      id = row.id.value.toString,
+      ticketId = row.ticketId.value.toString,
+      userId = row.userId,
+      activityId = row.activityId.value.toString,
+      durationMinutes = row.durationMinutes,
+      loggedAt = row.loggedAt,
+      description = row.description,
+      user = Some(
+        UserView(
+          id = row.userId,
+          username = row.username,
+          email = row.email,
+          firstName = row.firstName,
+          lastName = row.lastName,
+          avatarUrl = row.avatarUrl,
+          createdAt = row.userCreatedAt
+        )
+      ),
+      ticket = Some(
+        TimeTrackingTicketSummaryView(
+          id = row.ticketId.value.toString,
+          title = row.ticketTitle,
+          description = row.ticketDescription
+        )
+      )
+    )
 
   private def parseTicketId(rawId: String): Either[InvalidTicketInput, TicketId] =
     Try(rawId.toLong)
