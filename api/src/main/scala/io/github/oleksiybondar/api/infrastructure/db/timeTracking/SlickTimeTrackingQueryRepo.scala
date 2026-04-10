@@ -40,6 +40,13 @@ final class SlickTimeTrackingQueryRepo[F[_]: Async](db: Database)
       description: Option[String]
   )
 
+  private final case class ActivityRow(
+      id: Long,
+      code: String,
+      name: String,
+      description: Option[String]
+  )
+
   private final class TimeTrackingTable(tag: Tag)
       extends Table[TimeTrackingRow](tag, "time_tracking") {
     def id: Rep[Long]                    = column[Long]("id", O.PrimaryKey)
@@ -83,9 +90,19 @@ final class SlickTimeTrackingQueryRepo[F[_]: Async](db: Database)
     def * : ProvenShape[TicketRow] = (id, name, description).mapTo[TicketRow]
   }
 
+  private final class ActivitiesTable(tag: Tag) extends Table[ActivityRow](tag, "activities") {
+    def id: Rep[Long]                    = column[Long]("id", O.PrimaryKey)
+    def code: Rep[String]                = column[String]("code")
+    def name: Rep[String]                = column[String]("name")
+    def description: Rep[Option[String]] = column[Option[String]]("description")
+
+    def * : ProvenShape[ActivityRow] = (id, code, name, description).mapTo[ActivityRow]
+  }
+
   private val timeTrackingEntries = TableQuery[TimeTrackingTable]
   private val users               = TableQuery[UsersTable]
   private val tickets             = TableQuery[TicketsTable]
+  private val activities          = TableQuery[ActivitiesTable]
 
   override def listByTicket(ticketId: TicketId): F[List[TimeTrackingQueryRow]] =
     run(
@@ -93,16 +110,20 @@ final class SlickTimeTrackingQueryRepo[F[_]: Async](db: Database)
         .filter(_.ticketId === ticketId.value)
         .join(users)
         .on(_.userId === _.id)
+        .join(activities)
+        .on(_._1.activityId === _.id)
         .join(tickets)
-        .on(_._1.ticketId === _.id)
-        .sortBy(_._1._1.loggedAt.desc)
+        .on(_._1._1.ticketId === _.id)
+        .sortBy(_._1._1._1.loggedAt.desc)
         .result
-    ).map(_.toList.map { case ((entry, user), ticket) =>
+    ).map(_.toList.map { case (((entry, user), activity), ticket) =>
       TimeTrackingQueryRow(
         id = TimeTrackingEntryId(entry.id),
         ticketId = TicketId(entry.ticketId),
         userId = entry.userId.toString,
         activityId = TimeTrackingActivityId(entry.activityId),
+        activityCode = Some(activity.code),
+        activityName = Some(activity.name),
         durationMinutes = entry.durationMinutes,
         loggedAt = entry.loggedAt.toString,
         description = entry.description,

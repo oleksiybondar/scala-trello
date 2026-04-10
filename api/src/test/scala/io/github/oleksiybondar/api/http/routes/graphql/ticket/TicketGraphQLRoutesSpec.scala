@@ -21,7 +21,9 @@ import java.util.UUID
 
 class TicketGraphQLRoutesSpec extends FunSuite {
 
-  test("POST /graphql returns a single ticket with nested createdBy and assignedTo users") {
+  test(
+    "POST /graphql returns a single ticket with joined board, users, comments count, and time entry activity"
+  ) {
     val response = GraphQLFixtures.withGraphQLRoutes(
       users = List(
         UserFixtures.sampleUser,
@@ -30,7 +32,9 @@ class TicketGraphQLRoutesSpec extends FunSuite {
           username = Some(Username("bob"))
         )
       ),
-      tickets = List(TicketFixtures.sampleTicket)
+      tickets = List(TicketFixtures.sampleTicket),
+      comments = List(CommentFixtures.sampleComment),
+      timeEntries = List(TimeTrackingFixtures.sampleEntry)
     ) { ctx =>
       for {
         token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
@@ -45,8 +49,19 @@ class TicketGraphQLRoutesSpec extends FunSuite {
     assertEquals(cursor.get[String]("name").toOption, Some("Implement login mutation"))
     assertEquals(cursor.get[String]("status").toOption, Some("new"))
     assertEquals(cursor.get[Int]("estimatedMinutes").toOption, Some(120))
+    assertEquals(cursor.get[Int]("commentsCount").toOption, Some(1))
+    assertEquals(cursor.downField("board").get[String]("name").toOption, Some("Core Board"))
+    assertEquals(cursor.downField("board").get[Boolean]("active").toOption, Some(true))
     assertEquals(cursor.downField("createdBy").get[String]("firstName").toOption, Some("Alice"))
     assertEquals(cursor.downField("assignedTo").get[String]("username").toOption, Some("bob"))
+    assertEquals(
+      cursor.downField("timeEntries").downArray.get[String]("activityName").toOption,
+      Some("Development")
+    )
+    assertEquals(
+      cursor.downField("timeEntries").downArray.downField("user").get[String]("lastName").toOption,
+      Some("Example")
+    )
   }
 
   test("POST /graphql resolves nested board tickets with status and estimated minutes") {
@@ -222,8 +237,11 @@ class TicketGraphQLRoutesSpec extends FunSuite {
       |    name
       |    status
       |    estimatedMinutes
+      |    commentsCount
+      |    board { name active }
       |    createdBy { firstName }
       |    assignedTo { username }
+      |    timeEntries { activityName user { lastName } }
       |  }
       |}""".stripMargin
 

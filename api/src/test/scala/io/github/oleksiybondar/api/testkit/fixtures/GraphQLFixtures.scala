@@ -25,6 +25,7 @@ import io.github.oleksiybondar.api.testkit.support.{
   InMemoryPermissionRepo,
   InMemoryRoleQueryRepo,
   InMemoryRoleRepo,
+  InMemoryTicketQueryRepo,
   InMemoryTicketRepo,
   InMemoryTicketStateRepo,
   InMemoryTimeTrackingActivityRepo,
@@ -82,6 +83,23 @@ object GraphQLFixtures {
       dashboardRepo             <- InMemoryBoardRepo.create[IO](dashboards)
       dashboardMemberRepo       <- InMemoryBoardMemberRepo.create[IO](members)
       ticketRepo                <- InMemoryTicketRepo.create[IO](tickets)
+      ticketQueryRepo            = new InMemoryTicketQueryRepo[IO](
+                                     tickets,
+                                     dashboards,
+                                     comments,
+                                     timeEntries,
+                                     users,
+                                     List(
+                                       TimeTrackingActivityFixtures.codeReviewActivity,
+                                       TimeTrackingActivityFixtures.developmentActivity,
+                                       TimeTrackingActivityFixtures.testingActivity,
+                                       TimeTrackingActivityFixtures.planningActivity,
+                                       TimeTrackingActivityFixtures.designActivity,
+                                       TimeTrackingActivityFixtures.documentationActivity,
+                                       TimeTrackingActivityFixtures.refinementActivity,
+                                       TimeTrackingActivityFixtures.debuggingActivity
+                                     )
+                                   )
       commentRepo               <- InMemoryCommentRepo.create[IO](comments)
       timeTrackingRepo          <- InMemoryTimeTrackingRepo.create[IO](timeEntries)
       commentQueryRepo           = new InMemoryCommentQueryRepo[IO](comments, tickets, users)
@@ -215,6 +233,7 @@ object GraphQLFixtures {
                                        roleQueryRepo = roleQueryRepo,
                                        permissionService = permissionService,
                                        ticketService = ticketService,
+                                       ticketQueryRepo = ticketQueryRepo,
                                        ticketStateRepo = ticketStateRepo,
                                        timeTrackingService = timeTrackingService,
                                        commentQueryRepo = commentQueryRepo,

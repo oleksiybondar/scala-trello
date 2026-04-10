@@ -14,7 +14,7 @@ import io.github.oleksiybondar.api.domain.timeTracking.TimeTrackingService
 import io.github.oleksiybondar.api.domain.user.{UserId, UserService}
 import io.github.oleksiybondar.api.infrastructure.db.comment.CommentQueryRepo
 import io.github.oleksiybondar.api.infrastructure.db.permission.RoleQueryRepo
-import io.github.oleksiybondar.api.infrastructure.db.ticket.TicketStateRepo
+import io.github.oleksiybondar.api.infrastructure.db.ticket.{TicketQueryRepo, TicketStateRepo}
 import io.github.oleksiybondar.api.infrastructure.db.timeTracking.TimeTrackingQueryRepo
 
 /** Per-request GraphQL context carrying services and the authenticated user identity. */
@@ -35,6 +35,8 @@ final case class GraphQLContext(
     permissionService: PermissionService[IO],
     /** Ticket service exposed to ticket queries and mutations. */
     ticketService: TicketService[IO],
+    /** Joined ticket read repo used for detailed ticket projections. */
+    ticketQueryRepo: TicketQueryRepo[IO],
     /** Ticket state repo used for status/name expansion in GraphQL views. */
     ticketStateRepo: TicketStateRepo[IO],
     /** Time tracking service exposed to time entry queries and mutations. */

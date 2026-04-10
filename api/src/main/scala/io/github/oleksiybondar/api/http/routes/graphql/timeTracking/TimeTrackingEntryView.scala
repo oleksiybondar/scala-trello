@@ -13,6 +13,8 @@ final case class TimeTrackingEntryView(
     ticketId: String,
     userId: String,
     activityId: String,
+    activityCode: Option[String] = None,
+    activityName: Option[String] = None,
     durationMinutes: Int,
     loggedAt: String,
     description: Option[String],

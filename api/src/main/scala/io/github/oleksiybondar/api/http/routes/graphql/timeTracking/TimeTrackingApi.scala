@@ -71,6 +71,8 @@ object TimeTrackingApi {
         Field("ticketId", StringType, resolve = _.value.ticketId),
         Field("userId", StringType, resolve = _.value.userId),
         Field("activityId", StringType, resolve = _.value.activityId),
+        Field("activityCode", OptionType(StringType), resolve = _.value.activityCode),
+        Field("activityName", OptionType(StringType), resolve = _.value.activityName),
         Field("durationMinutes", IntType, resolve = _.value.durationMinutes),
         Field("loggedAt", StringType, resolve = _.value.loggedAt),
         Field("description", OptionType(StringType), resolve = _.value.description),
@@ -362,6 +364,8 @@ object TimeTrackingApi {
       ticketId = entry.ticketId.value.toString,
       userId = entry.userId.value.toString,
       activityId = entry.activityId.value.toString,
+      activityCode = None,
+      activityName = None,
       durationMinutes = entry.durationMinutes.value,
       loggedAt = entry.loggedAt.toString,
       description = entry.description.map(_.value)

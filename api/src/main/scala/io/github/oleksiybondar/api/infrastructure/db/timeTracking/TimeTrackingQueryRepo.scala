@@ -8,6 +8,8 @@ final case class TimeTrackingQueryRow(
     ticketId: TicketId,
     userId: String,
     activityId: TimeTrackingActivityId,
+    activityCode: Option[String],
+    activityName: Option[String],
     durationMinutes: Int,
     loggedAt: String,
     description: Option[String],

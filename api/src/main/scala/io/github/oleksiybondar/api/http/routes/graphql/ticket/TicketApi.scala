@@ -61,6 +61,16 @@ object TicketApi {
   private val EstimatedArg      = Argument("estimatedMinutes", OptionInputType(IntType))
   private val AssignedUserIdArg = Argument("assignedToUserId", OptionInputType(StringType))
 
+  val TicketBoardSummaryType: ObjectType[GraphQLContext, TicketBoardSummaryView] =
+    ObjectType(
+      name = "TicketBoardSummaryView",
+      fields[GraphQLContext, TicketBoardSummaryView](
+        Field("id", StringType, resolve = _.value.id),
+        Field("name", StringType, resolve = _.value.name),
+        Field("active", sangria.schema.BooleanType, resolve = _.value.active)
+      )
+    )
+
   val TicketType: ObjectType[GraphQLContext, TicketView] =
     ObjectType(
       name = "TicketView",
@@ -75,6 +85,7 @@ object TicketApi {
           resolve = _.value.acceptanceCriteria
         ),
         Field("estimatedMinutes", OptionType(IntType), resolve = _.value.estimatedMinutes),
+        Field("commentsCount", IntType, resolve = _.value.commentsCount),
         Field(
           "status",
           OptionType(StringType),
@@ -95,44 +106,73 @@ object TicketApi {
         Field("createdAt", StringType, resolve = _.value.createdAt),
         Field("modifiedAt", StringType, resolve = _.value.modifiedAt),
         Field(
+          "board",
+          OptionType(TicketBoardSummaryType),
+          resolve =
+            ctx =>
+              ctx.value.board match {
+                case Some(boardView) => IO.pure(Some(boardView)).unsafeToFuture()
+                case None            => IO.pure(None).unsafeToFuture()
+              }
+        ),
+        Field(
           "createdBy",
           OptionType(UserApi.UserType),
-          resolve = ctx => loadUserView(ctx.ctx, ctx.value.createdByUserId).unsafeToFuture()
+          resolve =
+            ctx =>
+              ctx.value.createdBy match {
+                case Some(userView) => IO.pure(Some(userView)).unsafeToFuture()
+                case None           => loadUserView(ctx.ctx, ctx.value.createdByUserId).unsafeToFuture()
+              }
         ),
         Field(
           "assignedTo",
           OptionType(UserApi.UserType),
           resolve =
             ctx =>
-              ctx.value.assignedToUserId match {
-                case Some(userId) => loadUserView(ctx.ctx, userId).unsafeToFuture()
-                case None         => IO.pure(None).unsafeToFuture()
+              ctx.value.assignedTo match {
+                case Some(userView) => IO.pure(Some(userView)).unsafeToFuture()
+                case None           =>
+                  ctx.value.assignedToUserId match {
+                    case Some(userId) => loadUserView(ctx.ctx, userId).unsafeToFuture()
+                    case None         => IO.pure(None).unsafeToFuture()
+                  }
               }
         ),
         Field(
           "lastModifiedBy",
           OptionType(UserApi.UserType),
-          resolve = ctx => loadUserView(ctx.ctx, ctx.value.lastModifiedByUserId).unsafeToFuture()
+          resolve =
+            ctx =>
+              ctx.value.lastModifiedBy match {
+                case Some(userView) => IO.pure(Some(userView)).unsafeToFuture()
+                case None           =>
+                  loadUserView(ctx.ctx, ctx.value.lastModifiedByUserId).unsafeToFuture()
+              }
         ),
         Field(
           "comments",
           ListType(CommentApi.CommentType),
           resolve =
             ctx =>
-              ctx.ctx.commentQueryRepo
-                .listByTicket(TicketId(ctx.value.id.toLong))
-                .map(_.map(toCommentView))
-                .unsafeToFuture()
+              if (ctx.value.comments.nonEmpty) IO.pure(ctx.value.comments).unsafeToFuture()
+              else
+                ctx.ctx.commentQueryRepo
+                  .listByTicket(TicketId(ctx.value.id.toLong))
+                  .map(_.map(toCommentView))
+                  .unsafeToFuture()
         ),
         Field(
           "timeEntries",
           ListType(TimeTrackingApi.TimeTrackingEntryType),
           resolve =
             ctx =>
-              ctx.ctx.timeTrackingQueryRepo
-                .listByTicket(TicketId(ctx.value.id.toLong))
-                .map(_.map(toTimeTrackingView))
-                .unsafeToFuture()
+              if (ctx.value.timeEntries.nonEmpty) IO.pure(ctx.value.timeEntries).unsafeToFuture()
+              else
+                ctx.ctx.timeTrackingQueryRepo
+                  .listByTicket(TicketId(ctx.value.id.toLong))
+                  .map(_.map(toTimeTrackingView))
+                  .unsafeToFuture()
         )
       )
     )
@@ -147,12 +187,15 @@ object TicketApi {
           withCurrentUser(ctx) { currentUserId =>
             for {
               ticketId <- IO.fromEither(parseTicketId(ctx.arg(TicketIdArg)))
-              ticket   <- ctx.ctx.ticketService.getTicket(ticketId)
+              ticket   <- ctx.ctx.ticketQueryRepo.findById(ticketId)
               result   <- ticket match {
                             case None        => IO.pure(None)
                             case Some(value) =>
                               ctx.ctx.dashboardAccessService
-                                .canReadTicket(value.boardId, currentUserId)
+                                .canReadTicket(
+                                  BoardId(UUID.fromString(value.board.id)),
+                                  currentUserId
+                                )
                                 .flatMap {
                                   case true  => IO.pure(Some(toView(value)))
                                   case false => IO.pure(None)
@@ -361,6 +404,8 @@ object TicketApi {
       ticketId = row.ticketId.value.toString,
       userId = row.userId,
       activityId = row.activityId.value.toString,
+      activityCode = row.activityCode,
+      activityName = row.activityName,
       durationMinutes = row.durationMinutes,
       loggedAt = row.loggedAt,
       description = row.description,
@@ -463,6 +508,36 @@ object TicketApi {
       stateId = ticket.stateId.value
     )
 
+  private def toView(
+      ticket: io.github.oleksiybondar.api.infrastructure.db.ticket.TicketQueryRow
+  ): TicketView =
+    TicketView(
+      id = ticket.id.value.toString,
+      boardId = ticket.boardId,
+      name = ticket.name,
+      description = ticket.description,
+      acceptanceCriteria = ticket.acceptanceCriteria,
+      estimatedMinutes = ticket.estimatedMinutes,
+      createdByUserId = ticket.createdByUserId,
+      assignedToUserId = ticket.assignedToUserId,
+      lastModifiedByUserId = ticket.lastModifiedByUserId,
+      createdAt = ticket.createdAt,
+      modifiedAt = ticket.modifiedAt,
+      stateId = ticket.stateId.value,
+      commentsCount = ticket.commentsCount,
+      board = Some(
+        TicketBoardSummaryView(
+          id = ticket.board.id,
+          name = ticket.board.name,
+          active = ticket.board.active
+        )
+      ),
+      createdBy = Some(toUserView(ticket.createdBy)),
+      assignedTo = ticket.assignedTo.map(toUserView),
+      lastModifiedBy = Some(toUserView(ticket.lastModifiedBy)),
+      timeEntries = ticket.timeEntries.map(toTimeTrackingView)
+    )
+
   private def toUserView(user: io.github.oleksiybondar.api.domain.user.User): UserView =
     UserView(
       id = user.id.value.toString,
@@ -472,5 +547,35 @@ object TicketApi {
       lastName = user.lastName.value,
       avatarUrl = user.avatarUrl.map(_.value),
       createdAt = user.createdAt.toString
+    )
+
+  private def toUserView(
+      user: io.github.oleksiybondar.api.infrastructure.db.ticket.TicketQueryUserRow
+  ): UserView =
+    UserView(
+      id = user.id,
+      username = user.username,
+      email = user.email,
+      firstName = user.firstName,
+      lastName = user.lastName,
+      avatarUrl = user.avatarUrl,
+      createdAt = user.createdAt
+    )
+
+  private def toTimeTrackingView(
+      row: io.github.oleksiybondar.api.infrastructure.db.ticket.TicketQueryTimeEntryRow
+  ): TimeTrackingEntryView =
+    TimeTrackingEntryView(
+      id = row.id.value.toString,
+      ticketId = row.ticketId.value.toString,
+      userId = row.userId,
+      activityId = row.activityId.value.toString,
+      activityCode = Some(row.activityCode),
+      activityName = Some(row.activityName),
+      durationMinutes = row.durationMinutes,
+      loggedAt = row.loggedAt,
+      description = row.description,
+      user = Some(toUserView(row.user)),
+      ticket = None
     )
 }

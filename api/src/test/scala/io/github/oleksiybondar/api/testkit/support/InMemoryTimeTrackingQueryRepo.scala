@@ -28,6 +28,8 @@ final class InMemoryTimeTrackingQueryRepo[F[_]: Sync](
           ticketId = entry.ticketId,
           userId = entry.userId.value.toString,
           activityId = TimeTrackingActivityId(entry.activityId.value),
+          activityCode = None,
+          activityName = None,
           durationMinutes = entry.durationMinutes.value,
           loggedAt = entry.loggedAt.toString,
           description = entry.description.map(_.value),
