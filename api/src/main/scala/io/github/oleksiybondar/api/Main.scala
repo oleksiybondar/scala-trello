@@ -81,6 +81,8 @@ object Main extends IOApp.Simple {
                          modules.permission.permissionService,
                          modules.ticket.ticketService,
                          modules.dictionary.ticketStateRepo,
+                         modules.timeTracking.timeTrackingService,
+                         modules.comment.commentService,
                          modules.auth.authService
                        )
     } yield {
@@ -99,6 +101,8 @@ object Main extends IOApp.Simple {
       permissionService: PermissionService[IO],
       ticketService: io.github.oleksiybondar.api.domain.ticket.TicketService[IO],
       ticketStateRepo: io.github.oleksiybondar.api.infrastructure.db.ticket.TicketStateRepo[IO],
+      timeTrackingService: io.github.oleksiybondar.api.domain.timeTracking.TimeTrackingService[IO],
+      commentService: io.github.oleksiybondar.api.domain.comment.CommentService[IO],
       authService: io.github.oleksiybondar.api.domain.auth.AuthService[IO]
   ): Resource[IO, HttpRoutes[IO]] =
     Resource.eval(
@@ -112,6 +116,8 @@ object Main extends IOApp.Simple {
           permissionService = permissionService,
           ticketService = ticketService,
           ticketStateRepo = ticketStateRepo,
+          timeTrackingService = timeTrackingService,
+          commentService = commentService,
           authService = authService,
           currentUserId = None
         )

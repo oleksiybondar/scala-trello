@@ -2,7 +2,8 @@ package io.github.oleksiybondar.api.domain.timeTracking
 
 import cats.effect.kernel.MonadCancelThrow
 import cats.syntax.all._
-import io.github.oleksiybondar.api.domain.board.BoardMembershipService
+import io.github.oleksiybondar.api.domain.board.{BoardAccessService, BoardMembershipService}
+import io.github.oleksiybondar.api.domain.ticket.TicketId
 import io.github.oleksiybondar.api.domain.user.UserId
 import io.github.oleksiybondar.api.infrastructure.db.board.BoardRepo
 import io.github.oleksiybondar.api.infrastructure.db.ticket.TicketRepo
@@ -15,6 +16,7 @@ final class TimeTrackingServiceLive[F[_]: MonadCancelThrow](
     timeTrackingRepo: TimeTrackingRepo[F],
     ticketRepo: TicketRepo[F],
     boardRepo: BoardRepo[F],
+    boardAccessService: BoardAccessService[F],
     boardMembershipService: BoardMembershipService[F],
     timeTrackingActivityRepo: TimeTrackingActivityRepo[F]
 ) extends TimeTrackingService[F] {
@@ -45,11 +47,38 @@ final class TimeTrackingServiceLive[F[_]: MonadCancelThrow](
         }
     }
 
+  override def getEntry(
+      id: TimeTrackingEntryId,
+      actorUserId: UserId
+  ): F[Option[TimeTrackingEntry]] =
+    timeTrackingRepo.findById(id).flatMap {
+      case Some(entry) if entry.userId == actorUserId => entry.some.pure[F]
+      case Some(entry)                                =>
+        canReadForTicket(entry.ticketId, actorUserId).map {
+          case true  => Some(entry)
+          case false => None
+        }
+      case None                                       => none[TimeTrackingEntry].pure[F]
+    }
+
   override def getOwnEntry(
       id: TimeTrackingEntryId,
       actorUserId: UserId
   ): F[Option[TimeTrackingEntry]] =
     timeTrackingRepo.findById(id).map(_.filter(_.userId == actorUserId))
+
+  override def listEntriesByUser(userId: UserId, actorUserId: UserId): F[List[TimeTrackingEntry]] =
+    if (userId == actorUserId) timeTrackingRepo.listByUser(userId)
+    else List.empty[TimeTrackingEntry].pure[F]
+
+  override def listEntriesByTicket(
+      ticketId: TicketId,
+      actorUserId: UserId
+  ): F[List[TimeTrackingEntry]] =
+    canReadForTicket(ticketId, actorUserId).flatMap {
+      case true  => timeTrackingRepo.listByTicket(ticketId)
+      case false => List.empty[TimeTrackingEntry].pure[F]
+    }
 
   override def listOwnEntries(actorUserId: UserId): F[List[TimeTrackingEntry]] =
     timeTrackingRepo.listByUser(actorUserId)
@@ -90,8 +119,14 @@ final class TimeTrackingServiceLive[F[_]: MonadCancelThrow](
       case _                                                => false.pure[F]
     }
 
+  private def canReadForTicket(ticketId: TicketId, actorUserId: UserId): F[Boolean] =
+    ticketRepo.findById(ticketId).flatMap {
+      case None         => false.pure[F]
+      case Some(ticket) => boardAccessService.canReadTicket(ticket.boardId, actorUserId)
+    }
+
   private def canMutateForTicket(
-      ticketId: io.github.oleksiybondar.api.domain.ticket.TicketId,
+      ticketId: TicketId,
       actorUserId: UserId
   ): F[Boolean] =
     ticketRepo.findById(ticketId).flatMap {

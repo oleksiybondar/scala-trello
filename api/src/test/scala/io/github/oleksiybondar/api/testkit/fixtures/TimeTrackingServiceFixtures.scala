@@ -2,13 +2,14 @@ package io.github.oleksiybondar.api.testkit.fixtures
 
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
-import io.github.oleksiybondar.api.domain.board.{Board, BoardMember}
+import io.github.oleksiybondar.api.domain.board.{Board, BoardAccessServiceLive, BoardMember}
 import io.github.oleksiybondar.api.domain.permission.{Permission, Role}
 import io.github.oleksiybondar.api.domain.ticket.Ticket
 import io.github.oleksiybondar.api.domain.timeTracking.{TimeTrackingEntry, TimeTrackingServiceLive}
 import io.github.oleksiybondar.api.testkit.support.{
   InMemoryBoardRepo,
   InMemoryTicketRepo,
+  InMemoryTimeTrackingActivityRepo,
   InMemoryTimeTrackingRepo
 }
 
@@ -51,63 +52,23 @@ object TimeTrackingServiceFixtures {
                                       timeTrackingRepo,
                                       ticketRepo,
                                       boardRepo,
+                                      new BoardAccessServiceLive[IO](
+                                        boardRepo,
+                                        membershipCtx.dashboardMembershipService
+                                      ),
                                       membershipCtx.dashboardMembershipService,
-                                      new io.github.oleksiybondar.api.infrastructure.db.timeTracking.TimeTrackingActivityRepo[
-                                        IO
-                                      ] {
-                                        override def findById(
-                                            id: io.github.oleksiybondar.api.domain.timeTracking.TimeTrackingActivityId
-                                        ): IO[Option[
-                                          io.github.oleksiybondar.api.domain.timeTracking.TimeTrackingActivity
-                                        ]] =
-                                          IO.pure(
-                                            List(
-                                              TimeTrackingActivityFixtures.codeReviewActivity,
-                                              TimeTrackingActivityFixtures.developmentActivity,
-                                              TimeTrackingActivityFixtures.testingActivity,
-                                              TimeTrackingActivityFixtures.planningActivity,
-                                              TimeTrackingActivityFixtures.designActivity,
-                                              TimeTrackingActivityFixtures.documentationActivity,
-                                              TimeTrackingActivityFixtures.refinementActivity,
-                                              TimeTrackingActivityFixtures.debuggingActivity
-                                            ).find(_.id == id)
-                                          )
-
-                                        override def findByCode(
-                                            code: io.github.oleksiybondar.api.domain.timeTracking.TimeTrackingActivityCode
-                                        ): IO[Option[
-                                          io.github.oleksiybondar.api.domain.timeTracking.TimeTrackingActivity
-                                        ]] =
-                                          IO.pure(
-                                            List(
-                                              TimeTrackingActivityFixtures.codeReviewActivity,
-                                              TimeTrackingActivityFixtures.developmentActivity,
-                                              TimeTrackingActivityFixtures.testingActivity,
-                                              TimeTrackingActivityFixtures.planningActivity,
-                                              TimeTrackingActivityFixtures.designActivity,
-                                              TimeTrackingActivityFixtures.documentationActivity,
-                                              TimeTrackingActivityFixtures.refinementActivity,
-                                              TimeTrackingActivityFixtures.debuggingActivity
-                                            ).find(_.code == code)
-                                          )
-
-                                        override def list
-                                            : IO[List[
-                                              io.github.oleksiybondar.api.domain.timeTracking.TimeTrackingActivity
-                                            ]] =
-                                          IO.pure(
-                                            List(
-                                              TimeTrackingActivityFixtures.codeReviewActivity,
-                                              TimeTrackingActivityFixtures.developmentActivity,
-                                              TimeTrackingActivityFixtures.testingActivity,
-                                              TimeTrackingActivityFixtures.planningActivity,
-                                              TimeTrackingActivityFixtures.designActivity,
-                                              TimeTrackingActivityFixtures.documentationActivity,
-                                              TimeTrackingActivityFixtures.refinementActivity,
-                                              TimeTrackingActivityFixtures.debuggingActivity
-                                            )
-                                          )
-                                      }
+                                      new InMemoryTimeTrackingActivityRepo[IO](
+                                        List(
+                                          TimeTrackingActivityFixtures.codeReviewActivity,
+                                          TimeTrackingActivityFixtures.developmentActivity,
+                                          TimeTrackingActivityFixtures.testingActivity,
+                                          TimeTrackingActivityFixtures.planningActivity,
+                                          TimeTrackingActivityFixtures.designActivity,
+                                          TimeTrackingActivityFixtures.documentationActivity,
+                                          TimeTrackingActivityFixtures.refinementActivity,
+                                          TimeTrackingActivityFixtures.debuggingActivity
+                                        )
+                                      )
                                     )
                                   )
                                 )

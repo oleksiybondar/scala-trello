@@ -8,8 +8,10 @@ import io.github.oleksiybondar.api.domain.board.{
   BoardMembershipServiceLive,
   BoardServiceLive
 }
+import io.github.oleksiybondar.api.domain.comment.CommentServiceLive
 import io.github.oleksiybondar.api.domain.permission.{PermissionServiceLive, RoleServiceLive}
 import io.github.oleksiybondar.api.domain.ticket.TicketServiceLive
+import io.github.oleksiybondar.api.domain.timeTracking.TimeTrackingServiceLive
 import io.github.oleksiybondar.api.domain.user.{User, UserId, UserServiceLive}
 import io.github.oleksiybondar.api.http.middleware.AuthMiddleware
 import io.github.oleksiybondar.api.http.routes.graphql.{GraphQLContext, GraphQLRoutes}
@@ -18,10 +20,13 @@ import io.github.oleksiybondar.api.testkit.support.{
   InMemoryAuthRepo,
   InMemoryBoardMemberRepo,
   InMemoryBoardRepo,
+  InMemoryCommentRepo,
   InMemoryPermissionRepo,
   InMemoryRoleRepo,
   InMemoryTicketRepo,
   InMemoryTicketStateRepo,
+  InMemoryTimeTrackingActivityRepo,
+  InMemoryTimeTrackingRepo,
   InMemoryUserRepo
 }
 import org.http4s.HttpApp
@@ -65,13 +70,29 @@ object GraphQLFixtures {
           createdAt = java.time.Instant.parse("2026-04-06T08:05:00Z")
         )
       ),
-      tickets: List[io.github.oleksiybondar.api.domain.ticket.Ticket] = Nil
+      tickets: List[io.github.oleksiybondar.api.domain.ticket.Ticket] = Nil,
+      timeEntries: List[io.github.oleksiybondar.api.domain.timeTracking.TimeTrackingEntry] = Nil,
+      comments: List[io.github.oleksiybondar.api.domain.comment.Comment] = Nil
   )(run: GraphQLTestContext => IO[A]): A =
     (for {
       userRepo                  <- InMemoryUserRepo.create[IO](users)
       dashboardRepo             <- InMemoryBoardRepo.create[IO](dashboards)
       dashboardMemberRepo       <- InMemoryBoardMemberRepo.create[IO](members)
       ticketRepo                <- InMemoryTicketRepo.create[IO](tickets)
+      commentRepo               <- InMemoryCommentRepo.create[IO](comments)
+      timeTrackingRepo          <- InMemoryTimeTrackingRepo.create[IO](timeEntries)
+      timeTrackingActivityRepo   = new InMemoryTimeTrackingActivityRepo[IO](
+                                     List(
+                                       TimeTrackingActivityFixtures.codeReviewActivity,
+                                       TimeTrackingActivityFixtures.developmentActivity,
+                                       TimeTrackingActivityFixtures.testingActivity,
+                                       TimeTrackingActivityFixtures.planningActivity,
+                                       TimeTrackingActivityFixtures.designActivity,
+                                       TimeTrackingActivityFixtures.documentationActivity,
+                                       TimeTrackingActivityFixtures.refinementActivity,
+                                       TimeTrackingActivityFixtures.debuggingActivity
+                                     )
+                                   )
       ticketStateRepo           <- InMemoryTicketStateRepo.create[IO](
                                      List(
                                        TicketStateFixtures.newState,
@@ -147,6 +168,20 @@ object GraphQLFixtures {
                                      dashboardAccessService,
                                      dashboardMembershipService
                                    )
+      timeTrackingService        = new TimeTrackingServiceLive[IO](
+                                     timeTrackingRepo,
+                                     ticketRepo,
+                                     dashboardRepo,
+                                     dashboardAccessService,
+                                     dashboardMembershipService,
+                                     timeTrackingActivityRepo
+                                   )
+      commentService             = new CommentServiceLive[IO](
+                                     commentRepo,
+                                     ticketRepo,
+                                     dashboardRepo,
+                                     dashboardAccessService
+                                   )
       graphqlRoutes             <- GraphQLRoutes.routes(
                                      GraphQLContext(
                                        userService = userService,
@@ -157,6 +192,8 @@ object GraphQLFixtures {
                                        permissionService = permissionService,
                                        ticketService = ticketService,
                                        ticketStateRepo = ticketStateRepo,
+                                       timeTrackingService = timeTrackingService,
+                                       commentService = commentService,
                                        authService = authService,
                                        currentUserId = None
                                      )

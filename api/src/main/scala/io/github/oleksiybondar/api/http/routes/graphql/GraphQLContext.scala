@@ -7,8 +7,10 @@ import io.github.oleksiybondar.api.domain.board.{
   BoardMembershipService,
   BoardService
 }
+import io.github.oleksiybondar.api.domain.comment.CommentService
 import io.github.oleksiybondar.api.domain.permission.{PermissionService, RoleService}
 import io.github.oleksiybondar.api.domain.ticket.TicketService
+import io.github.oleksiybondar.api.domain.timeTracking.TimeTrackingService
 import io.github.oleksiybondar.api.domain.user.{UserId, UserService}
 import io.github.oleksiybondar.api.infrastructure.db.ticket.TicketStateRepo
 
@@ -30,6 +32,10 @@ final case class GraphQLContext(
     ticketService: TicketService[IO],
     /** Ticket state repo used for status/name expansion in GraphQL views. */
     ticketStateRepo: TicketStateRepo[IO],
+    /** Time tracking service exposed to time entry queries and mutations. */
+    timeTrackingService: TimeTrackingService[IO],
+    /** Comment service exposed to comment queries and mutations. */
+    commentService: CommentService[IO],
     /** Authentication service available for GraphQL flows that need token-related behavior. */
     authService: AuthService[IO],
     /** User id extracted from the already verified bearer token, when present. */
