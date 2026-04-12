@@ -3,13 +3,17 @@ import type { ReactElement } from "react";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import Divider from "@mui/material/Divider";
 import Typography from "@mui/material/Typography";
 
+import type { Ticket } from "../../../domain/ticket/graphql";
+
 interface BoardColumnProps {
+  tickets: Ticket[];
   title: string;
 }
 
-export const BoardColumn = ({ title }: BoardColumnProps): ReactElement => {
+export const BoardColumn = ({ tickets, title }: BoardColumnProps): ReactElement => {
   return (
     <Paper
       sx={{
@@ -40,7 +44,6 @@ export const BoardColumn = ({ title }: BoardColumnProps): ReactElement => {
       </Box>
 
       <Stack
-        justifyContent="center"
         spacing={1}
         sx={{
           color: "text.secondary",
@@ -50,7 +53,33 @@ export const BoardColumn = ({ title }: BoardColumnProps): ReactElement => {
           py: 3
         }}
       >
-        <Typography variant="body2">No tickets yet.</Typography>
+        {tickets.length === 0 ? (
+          <Typography variant="body2">No tickets yet.</Typography>
+        ) : (
+          tickets.map(ticket => (
+            <Paper key={ticket.ticketId} sx={{ p: 1.5 }} variant="outlined">
+              <Stack spacing={1}>
+                <Typography color="text.primary" fontWeight={700} variant="body2">
+                  {ticket.name}
+                </Typography>
+                {ticket.description !== null && ticket.description.trim().length > 0 ? (
+                  <Typography variant="caption">{ticket.description}</Typography>
+                ) : null}
+                <Divider />
+                <Stack direction="row" justifyContent="space-between" spacing={1}>
+                  <Typography variant="caption">
+                    {ticket.assignedTo === null
+                      ? "Unassigned"
+                      : ticket.assignedTo.firstName + " " + ticket.assignedTo.lastName}
+                  </Typography>
+                  <Typography variant="caption">
+                    {String(ticket.trackedMinutes)}m
+                  </Typography>
+                </Stack>
+              </Stack>
+            </Paper>
+          ))
+        )}
       </Stack>
     </Paper>
   );

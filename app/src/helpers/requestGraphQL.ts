@@ -15,17 +15,56 @@ interface GraphQLResponse<TData> {
   errors?: GraphQLErrorPayload[];
 }
 
+interface RequestGraphQLAuthContext {
+  accessToken: string | null;
+  tokenType?: string;
+}
+
 /**
  * Request parameters accepted by the GraphQL helper.
  */
-interface RequestGraphQLParams<TVariables extends object> {
-  accessToken: string | null;
+interface RequestGraphQLParams<TVariables extends object>
+  extends RequestGraphQLAuthContext {
   document: string;
-  tokenType?: string;
   variables?: TVariables;
 }
 
 const GRAPHQL_ENDPOINT = buildApiUrl("/graphql");
+
+const requireGraphQLAuth = (
+  { accessToken, tokenType }: RequestGraphQLAuthContext,
+  errorMessage = "Authentication context is required."
+): string => {
+  if (accessToken === null || tokenType === undefined) {
+    throw new Error(errorMessage);
+  }
+
+  return `${tokenType} ${accessToken}`;
+};
+
+const assertGraphQLHttpOk = (response: Response): void => {
+  if (!response.ok) {
+    throw new Error(
+      `GraphQL request failed with status ${String(response.status)}.`
+    );
+  }
+};
+
+const assertGraphQLResponseHasNoErrors = <TData>(
+  payload: GraphQLResponse<TData>
+): void => {
+  if (payload.errors !== undefined && payload.errors.length > 0) {
+    throw new Error(payload.errors[0]?.message ?? "GraphQL request failed.");
+  }
+};
+
+function assertGraphQLResponseHasBody<TData>(
+  payload: GraphQLResponse<TData>
+): asserts payload is GraphQLResponse<TData> & { data: TData } {
+  if (payload.data === undefined) {
+    throw new Error("GraphQL response did not include data.");
+  }
+}
 
 /**
  * Executes a GraphQL request and returns the typed `data` payload.
@@ -43,16 +82,18 @@ export const requestGraphQL = async <
 >({
   accessToken,
   document,
-  tokenType,
+  tokenType = "Bearer",
   variables
 }: RequestGraphQLParams<TVariables>): Promise<TData> => {
+  const authorizationHeader = requireGraphQLAuth({
+    accessToken,
+    tokenType
+  });
   const headers: HeadersInit = {
     "Content-Type": "application/json"
   };
 
-  if (accessToken !== null && tokenType !== undefined) {
-    headers.Authorization = `${tokenType} ${accessToken}`;
-  }
+  headers.Authorization = authorizationHeader;
 
   const response = await fetch(GRAPHQL_ENDPOINT, {
     body: JSON.stringify({
@@ -64,21 +105,12 @@ export const requestGraphQL = async <
     method: "POST"
   });
 
-  if (!response.ok) {
-    throw new Error(
-      `GraphQL request failed with status ${String(response.status)}.`
-    );
-  }
+  assertGraphQLHttpOk(response);
 
   const payload = (await response.json()) as GraphQLResponse<TData>;
 
-  if (payload.errors !== undefined && payload.errors.length > 0) {
-    throw new Error(payload.errors[0]?.message ?? "GraphQL request failed.");
-  }
-
-  if (payload.data === undefined) {
-    throw new Error("GraphQL response did not include data.");
-  }
+  assertGraphQLResponseHasNoErrors(payload);
+  assertGraphQLResponseHasBody(payload);
 
   return payload.data;
 };

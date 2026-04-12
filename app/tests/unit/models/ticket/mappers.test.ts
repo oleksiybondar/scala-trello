@@ -1,4 +1,4 @@
-import { mapTicketResponseToTicket } from "@models/ticket";
+import { mapTicketResponseToTicket } from "../../../../src/domain/ticket/graphql";
 
 describe("ticket mappers", () => {
   test("maps a backend ticket payload into the frontend ticket model", () => {

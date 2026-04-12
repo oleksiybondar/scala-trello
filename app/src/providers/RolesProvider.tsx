@@ -1,7 +1,7 @@
 import type { PropsWithChildren, ReactElement } from "react";
 
 import { RolesContext } from "@contexts/roles-context";
-import { useRolesQuery } from "@features/role/useRolesQuery";
+import { useRolesQuery } from "../domain/role/useRolesQuery";
 
 export const RolesProvider = ({
   children

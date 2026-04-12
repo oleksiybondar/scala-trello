@@ -4,7 +4,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { AppAvatar } from "@components/avatar/AppAvatar";
-import type { BoardUserSummary } from "@models/board";
+import type { BoardUserSummary } from "../../domain/board/graphql";
 
 interface BoardPersonProps {
   fallbackLabel: string;

@@ -5,66 +5,66 @@ import { BoardContext } from "@contexts/board-context";
 import {
   canManageBoardSettings,
   getBoardPermissionAccess
-} from "@features/board/boardPermissions";
-import { useBoardMetadataMutation } from "@features/board/useBoardMetadataMutation";
-import { useBoardQuery } from "@features/board/useBoardQuery";
+} from "../domain/board/boardPermissions";
+import { useBoardService } from "../domain/board/useBoardService";
 
 export const BoardProvider = ({
   children
 }: PropsWithChildren): ReactElement => {
   const { boardId = "" } = useParams();
-  const boardQuery = useBoardQuery(boardId);
   const {
-    activateBoardMutation,
-    changeBoardDescriptionMutation,
-    changeBoardOwnershipMutation,
-    changeBoardTitleMutation,
-    deactivateBoardMutation
-  } = useBoardMetadataMutation();
-  const board = boardQuery.data ?? null;
+    activateBoard,
+    board,
+    boardError,
+    changeBoardDescription,
+    changeBoardMemberRole,
+    changeBoardOwnership,
+    changeBoardTitle,
+    deactivateBoard,
+    inviteBoardMember,
+    isInvitingBoardMember,
+    isLoadingBoard,
+    isLoadingMembers,
+    isRemovingBoardMember,
+    isUpdatingBoardDescription,
+    isUpdatingBoardMemberRole,
+    isUpdatingBoardOwnership,
+    isUpdatingBoardStatus,
+    isUpdatingBoardTitle,
+    members,
+    membersError,
+    removeBoardMember
+  } = useBoardService({
+    boardId,
+  });
   const boardPermissionAccess = getBoardPermissionAccess(board);
 
   return (
     <BoardContext.Provider
       value={{
-        activateBoard: async () => {
-          await activateBoardMutation.mutateAsync({
-            boardId
-          });
-        },
+        activateBoard,
         board,
-        boardError: boardQuery.error instanceof Error ? boardQuery.error : null,
+        boardError,
         boardPermissionAccess,
         canManageBoardSettings: canManageBoardSettings(board),
-        changeBoardDescription: async (description: string | null) => {
-          await changeBoardDescriptionMutation.mutateAsync({
-            boardId,
-            description
-          });
-        },
-        changeBoardOwnership: async (owner: string) => {
-          await changeBoardOwnershipMutation.mutateAsync({
-            boardId,
-            owner
-          });
-        },
-        changeBoardTitle: async (title: string) => {
-          await changeBoardTitleMutation.mutateAsync({
-            boardId,
-            title
-          });
-        },
-        deactivateBoard: async () => {
-          await deactivateBoardMutation.mutateAsync({
-            boardId
-          });
-        },
-        isLoadingBoard: boardQuery.isLoading,
-        isUpdatingBoardDescription: changeBoardDescriptionMutation.isPending,
-        isUpdatingBoardOwnership: changeBoardOwnershipMutation.isPending,
-        isUpdatingBoardStatus:
-          activateBoardMutation.isPending || deactivateBoardMutation.isPending,
-        isUpdatingBoardTitle: changeBoardTitleMutation.isPending
+        changeBoardDescription,
+        changeBoardMemberRole,
+        changeBoardOwnership,
+        changeBoardTitle,
+        deactivateBoard,
+        inviteBoardMember,
+        isInvitingBoardMember,
+        isLoadingBoard,
+        isLoadingMembers,
+        isRemovingBoardMember,
+        isUpdatingBoardDescription,
+        isUpdatingBoardMemberRole,
+        isUpdatingBoardOwnership,
+        isUpdatingBoardStatus,
+        isUpdatingBoardTitle,
+        members,
+        membersError,
+        removeBoardMember
       }}
     >
       {children}

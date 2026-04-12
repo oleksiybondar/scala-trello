@@ -1,7 +1,7 @@
 import {
   mapCreateBoardInputToRequest,
   mapBoardResponseToBoard
-} from "@models/board";
+} from "../../../../src/domain/board/graphql";
 
 describe("board mappers", () => {
   test("maps a backend dashboard payload into the frontend board model", () => {

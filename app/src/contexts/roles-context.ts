@@ -1,6 +1,6 @@
 import { createContext } from "react";
 
-import type { Role } from "@models/role";
+import type { Role } from "../domain/role/graphql";
 
 export interface RolesContextValue {
   isLoadingRoles: boolean;

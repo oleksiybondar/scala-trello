@@ -2,9 +2,9 @@ import type { PropsWithChildren, ReactElement } from "react";
 import { useRef, useState } from "react";
 
 import { AuthContext } from "@contexts/auth-context";
-import type { AuthStatus, AuthSession } from "@features/auth/types";
-import { useAuthState } from "@features/auth/useAuthState";
-import { useAuthService } from "@features/auth/useAuthService";
+import type { AuthStatus, AuthSession } from "../domain/auth/types";
+import { useAuthState } from "../domain/auth/useAuthState";
+import { useAuthService } from "../domain/auth/useAuthService";
 
 /**
  * Composes auth state and auth service methods into the root auth context.

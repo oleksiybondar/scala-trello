@@ -1,4 +1,4 @@
-import { mapCommentResponseToComment } from "@models/comment";
+import { mapCommentResponseToComment } from "../../../../src/domain/comment/graphql";
 
 describe("comment mappers", () => {
   test("maps a backend comment payload into the frontend model", () => {

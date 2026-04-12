@@ -14,8 +14,28 @@ describe("BoardPageToolbar", () => {
     const user = userEvent.setup();
 
     vi.mocked(useTickets).mockReturnValue({
+      assignedToUserIds: [],
+      codeReviewTickets: [],
+      createTicket: vi.fn(),
+      doneTickets: [],
+      inProgressTickets: [],
+      inTestingTickets: [],
+      isCreatingTicket: false,
+      isReassigningTicket: false,
+      isReloadingTickets: false,
+      isTransitioningTicketState: false,
+      newTickets: [],
+      reassignTicket: vi.fn(),
+      reloadTickets: vi.fn(),
+      resetFilters: vi.fn(),
+      searchKeywords: "",
+      setAssignedToUserIds: vi.fn(),
+      setSearchKeywords: vi.fn(),
       tickets: [],
-      ticketsCount: 5
+      ticketsCount: 5,
+      ticketsError: null,
+      transitionTicketState: vi.fn(),
+      updateTicket: vi.fn()
     });
 
     renderApp(<BoardPageToolbar />);

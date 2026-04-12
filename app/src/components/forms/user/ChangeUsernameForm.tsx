@@ -9,12 +9,8 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
 import { FormActionButtons } from "@components/forms/user/FormActionButtons";
-import { useUserSettingsMutation } from "@features/user/useUserSettingsMutation";
 import { createAsyncSubmitHandler } from "@helpers/createAsyncActionBuilder";
-import { requestGraphQL } from "@helpers/requestGraphQL";
 import { useCurrentUser } from "@hooks/useCurrentUser";
-import { buildChangeUsernameMutation } from "@models/user";
-import type { GraphQLCurrentUserResponse, UserMutationResponse } from "@models/user";
 
 interface ChangeUsernameFormProps {
   disabled?: boolean;
@@ -23,8 +19,7 @@ interface ChangeUsernameFormProps {
 export const ChangeUsernameForm = ({
   disabled = false
 }: ChangeUsernameFormProps): ReactElement => {
-  const { currentUser } = useCurrentUser();
-  const { applyUpdatedUser, getGraphQLAuthContext } = useUserSettingsMutation();
+  const { changeUsername, currentUser } = useCurrentUser();
   const persistedUsername = currentUser?.username ?? "";
   const [username, setUsername] = useState(persistedUsername);
   const [isTouched, setIsTouched] = useState(false);
@@ -55,10 +50,7 @@ export const ChangeUsernameForm = ({
     setErrorMessage(null);
   };
 
-  const handleApply = createAsyncSubmitHandler<
-    UserMutationResponse,
-    GraphQLCurrentUserResponse
-  >()
+  const handleApply = createAsyncSubmitHandler()
     .when(() => {
       setIsTouched(true);
 
@@ -68,20 +60,10 @@ export const ChangeUsernameForm = ({
       setErrorMessage(null);
       setIsSubmitting(true);
     })
-    .request(() =>
-      requestGraphQL<UserMutationResponse>({
-        ...getGraphQLAuthContext(),
-        document: buildChangeUsernameMutation(trimmedUsername)
-      })
-    )
-    .verify((response: UserMutationResponse) => {
-      if (response.changeUsername === undefined) {
-        throw new Error("GraphQL response did not include the updated user.");
-      }
-
-      return response.changeUsername;
+    .request(() => changeUsername(trimmedUsername))
+    .onSuccess(() => {
+      setIsTouched(false);
     })
-    .onSuccess(applyUpdatedUser)
     .onError((error: unknown) => {
       setErrorMessage(
         error instanceof Error ? error.message : "Failed to update the username."

@@ -6,12 +6,8 @@ import Stack from "@mui/material/Stack";
 
 import { AvatarInput } from "@components/form-elements/avatar/AvatarInput";
 import { createAsyncSubmitHandler } from "@helpers/createAsyncActionBuilder";
-import { requestGraphQL } from "@helpers/requestGraphQL";
 import { useCurrentUser } from "@hooks/useCurrentUser";
-import { buildChangeAvatarMutation } from "@models/user";
-import type { GraphQLCurrentUserResponse, UserMutationResponse } from "@models/user";
 import { FormActionButtons } from "@components/forms/user/FormActionButtons";
-import { useUserSettingsMutation } from "@features/user/useUserSettingsMutation";
 import { Card, CardContent } from "@mui/material";
 import Typography from "@mui/material/Typography";
 
@@ -22,8 +18,7 @@ interface ChangeAvatarFormProps {
 export const ChangeAvatarForm = ({
   disabled = false
 }: ChangeAvatarFormProps): ReactElement => {
-  const { currentUser } = useCurrentUser();
-  const { applyUpdatedUser, getGraphQLAuthContext } = useUserSettingsMutation();
+  const { currentUser, updateAvatar } = useCurrentUser();
   const persistedAvatarUrl = currentUser?.avatarUrl ?? "";
   const [draftAvatarUrl, setDraftAvatarUrl] = useState(persistedAvatarUrl);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -41,31 +36,15 @@ export const ChangeAvatarForm = ({
     setErrorMessage(null);
   };
 
-  const handleApply = createAsyncSubmitHandler<
-    UserMutationResponse,
-    GraphQLCurrentUserResponse
-  >()
+  const handleApply = createAsyncSubmitHandler()
     .when(() => isChanged && !isDisabled)
     .onStart(() => {
       setErrorMessage(null);
       setIsSubmitting(true);
     })
     .request(() =>
-      requestGraphQL<UserMutationResponse>({
-        ...getGraphQLAuthContext(),
-        document: buildChangeAvatarMutation(
-          draftAvatarUrl.trim().length === 0 ? null : draftAvatarUrl
-        )
-      })
+      updateAvatar(draftAvatarUrl.trim().length === 0 ? null : draftAvatarUrl)
     )
-    .verify((response: UserMutationResponse) => {
-      if (response.changeAvatar === undefined) {
-        throw new Error("GraphQL response did not include the updated user.");
-      }
-
-      return response.changeAvatar;
-    })
-    .onSuccess(applyUpdatedUser)
     .onError((error: unknown) => {
       setErrorMessage(
         error instanceof Error ? error.message : "Failed to update the avatar."

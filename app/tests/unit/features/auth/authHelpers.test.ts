@@ -1,7 +1,7 @@
 import {
   getRefreshDelay,
   toAuthSession
-} from "@features/auth/authHelpers";
+} from "../../../../src/domain/auth/authHelpers";
 
 describe("authHelpers", () => {
   afterEach(() => {

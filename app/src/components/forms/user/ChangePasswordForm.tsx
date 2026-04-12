@@ -11,11 +11,8 @@ import Typography from "@mui/material/Typography";
 import { FormActionButtons } from "@components/forms/user/FormActionButtons";
 import { PasswordInputWithConfirmation } from "@components/form-elements/password/PasswordInputWithConfirmation";
 import type { PasswordInputWithConfirmationValidation } from "@components/form-elements/password/PasswordInputWithConfirmation";
-import { useUserSettingsMutation } from "@features/user/useUserSettingsMutation";
 import { createAsyncSubmitHandler } from "@helpers/createAsyncActionBuilder";
-import { requestGraphQL } from "@helpers/requestGraphQL";
-import { buildChangePasswordMutation } from "@models/user";
-import type { ChangePasswordMutationResponse } from "@models/user";
+import { useCurrentUser } from "@hooks/useCurrentUser";
 
 interface ChangePasswordFormProps {
   disabled?: boolean;
@@ -36,7 +33,7 @@ const initialFormState: ChangePasswordFormState = {
 export const ChangePasswordForm = ({
   disabled = false
 }: ChangePasswordFormProps): ReactElement => {
-  const { getGraphQLAuthContext, refreshUserState } = useUserSettingsMutation();
+  const { changePassword } = useCurrentUser();
   const [formState, setFormState] = useState(initialFormState);
   const [isTouched, setIsTouched] = useState(false);
   const [passwordValidation, setPasswordValidation] =
@@ -76,10 +73,7 @@ export const ChangePasswordForm = ({
     setErrorMessage(null);
   };
 
-  const handleApply = createAsyncSubmitHandler<
-    ChangePasswordMutationResponse,
-    ChangePasswordMutationResponse
-  >()
+  const handleApply = createAsyncSubmitHandler()
     .when(() => {
       setIsTouched(true);
 
@@ -94,25 +88,9 @@ export const ChangePasswordForm = ({
       setErrorMessage(null);
       setIsSubmitting(true);
     })
-    .request(() =>
-      requestGraphQL<ChangePasswordMutationResponse>({
-        ...getGraphQLAuthContext(),
-        document: buildChangePasswordMutation(
-          formState.currentPassword,
-          formState.password
-        )
-      })
-    )
-    .verify((response: ChangePasswordMutationResponse) => {
-      if (!response.changePassword) {
-        throw new Error("Password update was rejected.");
-      }
-
-      return response;
-    })
-    .onSuccess(async () => {
+    .request(() => changePassword(formState.currentPassword, formState.password))
+    .onSuccess(() => {
       handleCancel();
-      await refreshUserState();
     })
     .onError((error: unknown) => {
       setErrorMessage(

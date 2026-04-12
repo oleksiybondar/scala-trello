@@ -4,7 +4,7 @@ import type {
   AuthStatus,
   LoginCredentials,
   RegisterCredentials
-} from "@features/auth/types";
+} from "../domain/auth/types";
 
 /**
  * Shared auth contract exposed to React consumers.

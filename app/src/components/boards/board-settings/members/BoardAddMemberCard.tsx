@@ -1,6 +1,5 @@
 import type { ChangeEvent, ReactElement } from "react";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
 
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
@@ -11,16 +10,13 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
-import { useInviteBoardMemberMutation } from "@features/board/useInviteBoardMemberMutation";
 import { useBoard } from "@hooks/useBoard";
 import { useRoles } from "@hooks/useRoles";
 import { formatRoleLabel } from "./formatRoleLabel";
 
 export const BoardAddMemberCard = (): ReactElement => {
-  const { boardId = "" } = useParams();
-  const { boardPermissionAccess } = useBoard();
+  const { boardPermissionAccess, inviteBoardMember, isInvitingBoardMember } = useBoard();
   const { isLoadingRoles, roles } = useRoles();
-  const inviteBoardMemberMutation = useInviteBoardMemberMutation();
   const [userQuery, setUserQuery] = useState("");
   const [selectedRoleId, setSelectedRoleId] = useState("");
   const [isTouched, setIsTouched] = useState(false);
@@ -36,8 +32,7 @@ export const BoardAddMemberCard = (): ReactElement => {
   const isUserError = isTouched && trimmedUserQuery.length === 0;
   const isRoleError = isTouched && selectedRoleId.length === 0;
   const isDisabled =
-    boardId.length === 0 ||
-    inviteBoardMemberMutation.isPending ||
+    isInvitingBoardMember ||
     isLoadingRoles ||
     !boardPermissionAccess.canCreate;
 
@@ -62,11 +57,7 @@ export const BoardAddMemberCard = (): ReactElement => {
     setErrorMessage(null);
 
     try {
-      await inviteBoardMemberMutation.mutateAsync({
-        boardId,
-        roleId: selectedRoleId,
-        user: trimmedUserQuery
-      });
+      await inviteBoardMember(trimmedUserQuery, selectedRoleId);
       handleCancel();
     } catch (error: unknown) {
       setErrorMessage(

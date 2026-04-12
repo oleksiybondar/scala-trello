@@ -5,7 +5,7 @@ import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import type { Board } from "@models/board";
+import type { Board } from "../../domain/board/graphql";
 
 interface BoardCardHeaderProps {
   board: Board;

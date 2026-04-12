@@ -1,4 +1,4 @@
-import { mapTimeTrackingEntryResponseToTimeTrackingEntry } from "@models/timeTracking";
+import { mapTimeTrackingEntryResponseToTimeTrackingEntry } from "../../../../src/domain/time-tracking/graphql";
 
 describe("time tracking mappers", () => {
   test("maps a backend time tracking payload into the frontend model", () => {

@@ -4,6 +4,7 @@ import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 
 import { BoardColumn } from "@components/boards/board-page/BoardColumn";
+import { useTickets } from "@hooks/useTickets";
 
 const BOARD_COLUMN_TITLES = [
   "New",
@@ -14,6 +15,21 @@ const BOARD_COLUMN_TITLES = [
 ] as const;
 
 export const BoardMainArea = (): ReactElement => {
+  const {
+    codeReviewTickets,
+    doneTickets,
+    inProgressTickets,
+    inTestingTickets,
+    newTickets
+  } = useTickets();
+  const columnTickets = {
+    "Code review": codeReviewTickets,
+    Done: doneTickets,
+    "In Testing": inTestingTickets,
+    "In progress": inProgressTickets,
+    New: newTickets
+  } as const;
+
   return (
     <Paper
       sx={{
@@ -34,7 +50,7 @@ export const BoardMainArea = (): ReactElement => {
         }}
       >
         {BOARD_COLUMN_TITLES.map(title => (
-          <BoardColumn key={title} title={title} />
+          <BoardColumn key={title} tickets={columnTickets[title]} title={title} />
         ))}
       </Box>
     </Paper>

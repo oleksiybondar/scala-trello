@@ -1,5 +1,5 @@
-import { useAuthState } from "@features/auth/useAuthState";
-import type { AuthSession } from "@features/auth/types";
+import { useAuthState } from "../../../../src/domain/auth/useAuthState";
+import type { AuthSession } from "../../../../src/domain/auth/types";
 
 describe("useAuthState", () => {
   afterEach(() => {
