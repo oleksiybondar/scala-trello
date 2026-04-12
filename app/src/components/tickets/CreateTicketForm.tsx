@@ -8,10 +8,12 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
+import { TimeInput } from "@components/time-tracking/TimeInput";
+
 export interface CreateTicketInput {
   acceptanceCriteria: string;
   description: string;
-  estimatedMinutes: string;
+  estimatedMinutes: number | null;
   title: string;
 }
 
@@ -24,7 +26,7 @@ interface CreateTicketFormProps {
 const INITIAL_FORM_STATE: CreateTicketInput = {
   acceptanceCriteria: "",
   description: "",
-  estimatedMinutes: "",
+  estimatedMinutes: null,
   title: ""
 };
 
@@ -60,7 +62,7 @@ export const CreateTicketForm = ({
       onSubmit({
         acceptanceCriteria: formState.acceptanceCriteria.trim(),
         description: formState.description.trim(),
-        estimatedMinutes: formState.estimatedMinutes.trim(),
+        estimatedMinutes: formState.estimatedMinutes,
         title: formState.title.trim()
       })
     );
@@ -141,24 +143,14 @@ export const CreateTicketForm = ({
             value={formState.acceptanceCriteria}
           />
 
-          <TextField
+          <TimeInput
             disabled={isSubmitting}
-            fullWidth
-            label="Estimated minutes"
-            onChange={handleChange("estimatedMinutes")}
-            slotProps={{
-              htmlInput: {
-                inputMode: "numeric",
-                pattern: "[0-9]*"
-              },
-              inputLabel: {
-                sx: {
-                  "&.MuiInputLabel-shrink": {
-                    bgcolor: "background.paper",
-                    px: 0.5
-                  }
-                }
-              }
+            label="Estimate (HH:MM)"
+            onChange={value => {
+              setFormState(currentState => ({
+                ...currentState,
+                estimatedMinutes: value
+              }));
             }}
             value={formState.estimatedMinutes}
           />

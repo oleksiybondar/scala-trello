@@ -9,6 +9,7 @@ import { BoardInfo } from "@components/boards/BoardInfo";
 import { TicketsInfo } from "@components/boards/TicketsInfo";
 import { TimeTrackingInfo } from "@components/boards/TimeTrackingInfo";
 import { canManageBoardSettings } from "@features/board/boardPermissions";
+import { formatMinutesToTimeTrackingDuration } from "@helpers/timeTrackingConversions";
 import type { Board } from "@models/board";
 import type { TicketStateCounts } from "@components/boards/tickets-info/types";
 import type { TimeTrackingStats } from "@components/boards/time-tracking-info/types";
@@ -49,14 +50,6 @@ const mapTicketStatusToStateKey = (
   }
 };
 
-const formatDuration = (totalMinutes: number): string => {
-  const safeMinutes = Math.max(0, totalMinutes);
-  const resolvedHours = Math.floor(safeMinutes / 60);
-  const resolvedMinutes = safeMinutes % 60;
-
-  return String(resolvedHours) + "h:" + String(resolvedMinutes).padStart(2, "0") + "m";
-};
-
 const getTicketCounts = (board: Board): TicketStateCounts => {
   return board.tickets.reduce((counts, ticket) => {
     const stateKey = mapTicketStatusToStateKey(ticket.status);
@@ -83,9 +76,9 @@ const getTimeTrackingStats = (board: Board): TimeTrackingStats => {
   }, 0);
 
   return {
-    estimatedTime: formatDuration(estimatedMinutes),
-    loggedTime: formatDuration(loggedMinutes),
-    overdueTime: formatDuration(loggedMinutes - estimatedMinutes)
+    estimatedTime: formatMinutesToTimeTrackingDuration(estimatedMinutes),
+    loggedTime: formatMinutesToTimeTrackingDuration(loggedMinutes),
+    overdueTime: formatMinutesToTimeTrackingDuration(loggedMinutes - estimatedMinutes)
   };
 };
 

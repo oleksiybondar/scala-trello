@@ -3,7 +3,7 @@ import type { ReactElement } from "react";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 
-import { CreateTicketForm } from "@components/boards/CreateTicketForm";
+import { CreateTicketForm } from "@components/tickets/CreateTicketForm";
 
 interface CreateTicketDialogProps {
   onClose: () => void;

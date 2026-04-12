@@ -8,7 +8,7 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import { CreateTicketDialog } from "@components/boards/CreateTicketDialog";
+import { CreateTicketDialog } from "@components/tickets/CreateTicketDialog";
 import { useTickets } from "@hooks/useTickets";
 
 export const BoardPageToolbar = (): ReactElement => {
