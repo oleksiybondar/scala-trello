@@ -21,6 +21,8 @@ export { TimeTrackingLineChart } from "@components/boards/time-tracking-info/Tim
 export { AppAvatar } from "@components/avatar/AppAvatar";
 export { CreateBoardDialog } from "@components/boards/CreateBoardDialog";
 export { CreateBoardForm } from "@components/boards/CreateBoardForm";
+export { CreateTicketDialog } from "@components/boards/CreateTicketDialog";
+export { CreateTicketForm } from "@components/boards/CreateTicketForm";
 export { NoBoards } from "@components/boards/NoBoards";
 export { NoBoardsFound } from "@components/boards/NoBoardsFound";
 export { TicketsInfo } from "@components/boards/TicketsInfo";

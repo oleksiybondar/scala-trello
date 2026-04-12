@@ -11,6 +11,7 @@ import { BoardPageToolbar } from "@components/boards/board-page/BoardPageToolbar
 import { AppPageLayout } from "@components/layout/AppPageLayout";
 import { useBoard } from "@hooks/useBoard";
 import { BoardProvider } from "@providers/BoardProvider";
+import { TicketsProvider } from "@providers/TicketsProvider";
 
 const BoardPageBody = (): ReactElement => {
   const { boardError, isLoadingBoard } = useBoard();
@@ -46,7 +47,9 @@ const BoardPageBody = (): ReactElement => {
 export const BoardPage = (): ReactElement => {
   return (
     <BoardProvider>
-      <BoardPageBody />
+      <TicketsProvider>
+        <BoardPageBody />
+      </TicketsProvider>
     </BoardProvider>
   );
 };
