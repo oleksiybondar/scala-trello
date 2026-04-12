@@ -30,6 +30,47 @@ export interface BoardMemberResponse {
   userId: string;
 }
 
+export interface BoardTimeTrackingTicketSummaryResponse {
+  description: string | null;
+  id: string;
+  title: string;
+}
+
+export interface BoardTimeTrackingEntryResponse {
+  activityCode: string | null;
+  activityId: string;
+  activityName: string | null;
+  description: string | null;
+  durationMinutes: number;
+  id: string;
+  loggedAt: string;
+  ticket: BoardTimeTrackingTicketSummaryResponse | null;
+  ticketId: string;
+  user: BoardUserSummaryResponse | null;
+  userId: string;
+}
+
+export interface BoardTicketResponse {
+  acceptanceCriteria: string | null;
+  assignedTo: BoardUserSummaryResponse | null;
+  assignedToUserId: string | null;
+  boardId: string;
+  commentsCount: number;
+  createdAt: string;
+  createdBy: BoardUserSummaryResponse | null;
+  createdByUserId: string;
+  description: string | null;
+  estimatedMinutes: number | null;
+  id: string;
+  lastModifiedBy: BoardUserSummaryResponse | null;
+  lastModifiedByUserId: string;
+  modifiedAt: string;
+  name: string;
+  status: string | null;
+  timeEntries: BoardTimeTrackingEntryResponse[];
+  trackedMinutes: number;
+}
+
 export interface BoardResponse {
   active: boolean;
   createdAt: string;
@@ -44,6 +85,7 @@ export interface BoardResponse {
   name: string;
   owner: BoardUserSummaryResponse | null;
   ownerUserId: string;
+  tickets: BoardTicketResponse[];
 }
 
 export interface CreateBoardRequest {

@@ -21,7 +21,11 @@ export type {
   ActivateBoardMutationResponse,
   BoardMemberResponse,
   BoardMembersQueryResponse,
+  BoardPermissionResponse,
   BoardRoleResponse,
+  BoardTicketResponse,
+  BoardTimeTrackingEntryResponse,
+  BoardTimeTrackingTicketSummaryResponse,
   BoardUserSummaryResponse,
   BoardQueryResponse,
   BoardResponse,
@@ -33,8 +37,7 @@ export type {
   CreateBoardMutationResponse,
   DeactivateBoardMutationResponse,
   InviteBoardMemberMutationResponse,
-  MyBoardsQueryResponse
-  ,
+  MyBoardsQueryResponse,
   RemoveBoardMemberMutationResponse
 } from "./dto";
 export type {
@@ -42,6 +45,9 @@ export type {
   BoardMember,
   BoardPermission,
   BoardRole,
+  BoardTicket,
+  BoardTimeTrackingEntry,
+  BoardTimeTrackingTicketSummary,
   BoardUserSummary,
   CreateBoardInput
 } from "./types";

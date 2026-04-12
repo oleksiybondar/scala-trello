@@ -1,6 +1,7 @@
 import type {
   BoardMemberResponse,
   BoardResponse,
+  BoardUserSummaryResponse,
   CreateBoardRequest
 } from "@models/board/dto";
 import type {
@@ -8,12 +9,15 @@ import type {
   BoardMember,
   BoardPermission,
   BoardRole,
+  BoardTicket,
+  BoardTimeTrackingEntry,
+  BoardTimeTrackingTicketSummary,
   BoardUserSummary,
   CreateBoardInput
 } from "@models/board/types";
 
 const mapBoardUserSummary = (
-  response: BoardResponse["owner"]
+  response: BoardUserSummaryResponse | null
 ): BoardUserSummary | null => {
   if (response === null) {
     return null;
@@ -53,6 +57,63 @@ const mapBoardRole = (response: BoardResponse["currentUserRole"]): BoardRole | n
   };
 };
 
+const mapBoardTimeTrackingTicketSummary = (
+  response: BoardResponse["tickets"][number]["timeEntries"][number]["ticket"]
+): BoardTimeTrackingTicketSummary | null => {
+  if (response === null) {
+    return null;
+  }
+
+  return {
+    description: response.description,
+    ticketId: response.id,
+    title: response.title
+  };
+};
+
+const mapBoardTimeTrackingEntry = (
+  response: BoardResponse["tickets"][number]["timeEntries"][number]
+): BoardTimeTrackingEntry => {
+  return {
+    activityCode: response.activityCode,
+    activityId: response.activityId,
+    activityName: response.activityName,
+    description: response.description,
+    durationMinutes: response.durationMinutes,
+    entryId: response.id,
+    loggedAt: response.loggedAt,
+    ticket: mapBoardTimeTrackingTicketSummary(response.ticket),
+    ticketId: response.ticketId,
+    user: mapBoardUserSummary(response.user),
+    userId: response.userId
+  };
+};
+
+const mapBoardTicket = (
+  response: BoardResponse["tickets"][number]
+): BoardTicket => {
+  return {
+    acceptanceCriteria: response.acceptanceCriteria,
+    assignedTo: mapBoardUserSummary(response.assignedTo),
+    assignedToUserId: response.assignedToUserId,
+    boardId: response.boardId,
+    commentsCount: response.commentsCount,
+    createdAt: response.createdAt,
+    createdBy: mapBoardUserSummary(response.createdBy),
+    createdByUserId: response.createdByUserId,
+    description: response.description,
+    estimatedMinutes: response.estimatedMinutes,
+    lastModifiedBy: mapBoardUserSummary(response.lastModifiedBy),
+    lastModifiedByUserId: response.lastModifiedByUserId,
+    modifiedAt: response.modifiedAt,
+    name: response.name,
+    status: response.status,
+    ticketId: response.id,
+    timeEntries: response.timeEntries.map(mapBoardTimeTrackingEntry),
+    trackedMinutes: response.trackedMinutes
+  };
+};
+
 export const mapBoardResponseToBoard = (
   response: BoardResponse
 ): Board => {
@@ -69,7 +130,8 @@ export const mapBoardResponseToBoard = (
     modifiedAt: response.modifiedAt,
     name: response.name,
     owner: mapBoardUserSummary(response.owner),
-    ownerUserId: response.ownerUserId
+    ownerUserId: response.ownerUserId,
+    tickets: response.tickets.map(mapBoardTicket)
   };
 };
 

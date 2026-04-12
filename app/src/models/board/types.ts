@@ -21,6 +21,47 @@ export interface BoardRole {
   roleName: string;
 }
 
+export interface BoardTimeTrackingTicketSummary {
+  description: string | null;
+  ticketId: string;
+  title: string;
+}
+
+export interface BoardTimeTrackingEntry {
+  activityCode: string | null;
+  activityId: string;
+  activityName: string | null;
+  description: string | null;
+  durationMinutes: number;
+  entryId: string;
+  loggedAt: string;
+  ticket: BoardTimeTrackingTicketSummary | null;
+  ticketId: string;
+  user: BoardUserSummary | null;
+  userId: string;
+}
+
+export interface BoardTicket {
+  acceptanceCriteria: string | null;
+  assignedTo: BoardUserSummary | null;
+  assignedToUserId: string | null;
+  boardId: string;
+  commentsCount: number;
+  createdAt: string;
+  createdBy: BoardUserSummary | null;
+  createdByUserId: string;
+  description: string | null;
+  estimatedMinutes: number | null;
+  lastModifiedBy: BoardUserSummary | null;
+  lastModifiedByUserId: string;
+  modifiedAt: string;
+  name: string;
+  status: string | null;
+  ticketId: string;
+  timeEntries: BoardTimeTrackingEntry[];
+  trackedMinutes: number;
+}
+
 export interface Board {
   active: boolean;
   boardId: string;
@@ -35,6 +76,7 @@ export interface Board {
   name: string;
   owner: BoardUserSummary | null;
   ownerUserId: string;
+  tickets: BoardTicket[];
 }
 
 export interface CreateBoardInput {

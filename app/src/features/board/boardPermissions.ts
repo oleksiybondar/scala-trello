@@ -16,7 +16,7 @@ const EMPTY_BOARD_PERMISSION_ACCESS: BoardPermissionAccess = {
   canReassign: false
 };
 
-const getDashboardPermission = (board: Board | null): BoardPermission | null => {
+const getBoardAreaPermission = (board: Board | null): BoardPermission | null => {
   return (
     board?.currentUserRole?.permissions.find(permission => permission.area === "dashboard") ??
     null
@@ -24,7 +24,7 @@ const getDashboardPermission = (board: Board | null): BoardPermission | null => 
 };
 
 export const getBoardPermissionAccess = (board: Board | null): BoardPermissionAccess => {
-  const permission = getDashboardPermission(board);
+  const permission = getBoardAreaPermission(board);
 
   if (permission === null) {
     return EMPTY_BOARD_PERMISSION_ACCESS;

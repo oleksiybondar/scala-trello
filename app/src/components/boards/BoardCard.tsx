@@ -17,43 +17,81 @@ interface BoardCardProps {
   board: Board;
 }
 
-const getStubTicketCounts = (board: Board): TicketStateCounts => {
-  const seed = board.name.length + board.membersCount * 3;
-  const base = Math.max(2, board.membersCount);
-
+const createEmptyTicketCounts = (): TicketStateCounts => {
   return {
-    code_review: 1 + ((seed + 3) % 3),
-    done: base + ((seed + 1) % 6),
-    in_progress: base + ((seed + 2) % 5),
-    in_testing: 1 + ((seed + 4) % 2),
-    new: base + (seed % 4)
+    code_review: 0,
+    done: 0,
+    in_progress: 0,
+    in_testing: 0,
+    new: 0
   };
 };
 
-const getStubTimeTrackingStats = (board: Board): TimeTrackingStats => {
-  const seed = board.name.length + board.membersCount * 5;
-  const estimated = Math.max(12, board.membersCount * 8 + seed);
-  const logged = Math.max(8, estimated - 6 + (seed % 12));
-  const overdue = Math.max(0, logged - estimated);
+const mapTicketStatusToStateKey = (
+  status: string | null
+): keyof TicketStateCounts | null => {
+  switch (status?.trim().toLowerCase()) {
+    case "new":
+      return "new";
+    case "in progress":
+    case "in_progress":
+      return "in_progress";
+    case "code review":
+    case "code_review":
+      return "code_review";
+    case "in testing":
+    case "in_testing":
+      return "in_testing";
+    case "done":
+      return "done";
+    default:
+      return null;
+  }
+};
 
-  const formatDuration = (hours: number): string => {
-    const totalMinutes = hours * 60;
-    const resolvedHours = Math.floor(totalMinutes / 60);
-    const resolvedMinutes = totalMinutes % 60;
+const formatDuration = (totalMinutes: number): string => {
+  const safeMinutes = Math.max(0, totalMinutes);
+  const resolvedHours = Math.floor(safeMinutes / 60);
+  const resolvedMinutes = safeMinutes % 60;
 
-    return String(resolvedHours) + "h:" + String(resolvedMinutes).padStart(2, "0") + "m";
-  };
+  return String(resolvedHours) + "h:" + String(resolvedMinutes).padStart(2, "0") + "m";
+};
+
+const getTicketCounts = (board: Board): TicketStateCounts => {
+  return board.tickets.reduce((counts, ticket) => {
+    const stateKey = mapTicketStatusToStateKey(ticket.status);
+
+    if (stateKey === null) {
+      return counts;
+    }
+
+    return {
+      ...counts,
+      [stateKey]: counts[stateKey] + 1
+    };
+  }, createEmptyTicketCounts());
+};
+
+const getTimeTrackingStats = (board: Board): TimeTrackingStats => {
+  const estimatedMinutes = board.tickets.reduce((sum, ticket) => {
+    return sum + (ticket.estimatedMinutes ?? 0);
+  }, 0);
+  const loggedMinutes = board.tickets.reduce((sum, ticket) => {
+    return sum + ticket.timeEntries.reduce((ticketSum, entry) => {
+      return ticketSum + entry.durationMinutes;
+    }, 0);
+  }, 0);
 
   return {
-    estimatedTime: formatDuration(estimated),
-    loggedTime: formatDuration(logged),
-    overdueTime: formatDuration(overdue)
+    estimatedTime: formatDuration(estimatedMinutes),
+    loggedTime: formatDuration(loggedMinutes),
+    overdueTime: formatDuration(loggedMinutes - estimatedMinutes)
   };
 };
 
 export const BoardCard = ({ board }: BoardCardProps): ReactElement => {
-  const ticketCounts = getStubTicketCounts(board);
-  const timeTrackingStats = getStubTimeTrackingStats(board);
+  const ticketCounts = getTicketCounts(board);
+  const timeTrackingStats = getTimeTrackingStats(board);
   const navigate = useNavigate();
   const boardPath = "/boards/" + board.boardId;
   const boardSettingsPath = boardPath + "/settings";

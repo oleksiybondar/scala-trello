@@ -37,6 +37,62 @@ const BOARD_FIELDS = `
       canReassign
     }
   }
+  tickets {
+    id
+    boardId
+    name
+    description
+    acceptanceCriteria
+    estimatedMinutes
+    commentsCount
+    trackedMinutes
+    status
+    createdByUserId
+    assignedToUserId
+    lastModifiedByUserId
+    createdAt
+    modifiedAt
+    createdBy {
+      id
+      firstName
+      lastName
+      avatarUrl
+    }
+    assignedTo {
+      id
+      firstName
+      lastName
+      avatarUrl
+    }
+    lastModifiedBy {
+      id
+      firstName
+      lastName
+      avatarUrl
+    }
+    timeEntries {
+      id
+      ticketId
+      userId
+      activityId
+      activityCode
+      activityName
+      durationMinutes
+      loggedAt
+      description
+      user {
+        id
+        firstName
+        lastName
+        avatarUrl
+      }
+      ticket {
+        id
+        title
+        description
+      }
+    }
+  }
 `;
 
 const escapeGraphQLString = (value: string): string => {

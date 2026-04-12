@@ -44,7 +44,67 @@ describe("board mappers", () => {
           id: "user-1",
           lastName: "Morgan"
         },
-        ownerUserId: "user-1"
+        ownerUserId: "user-1",
+        tickets: [
+          {
+            acceptanceCriteria: "Merged and deployed",
+            assignedTo: {
+              avatarUrl: "https://cdn.example.com/users/4.png",
+              firstName: "Jamie",
+              id: "user-4",
+              lastName: "Lee"
+            },
+            assignedToUserId: "user-4",
+            boardId: "board-1",
+            commentsCount: 3,
+            createdAt: "2026-04-08T10:30:00Z",
+            createdBy: {
+              avatarUrl: "https://cdn.example.com/users/2.png",
+              firstName: "Taylor",
+              id: "user-2",
+              lastName: "Nguyen"
+            },
+            createdByUserId: "user-2",
+            description: "Implement GraphQL updates",
+            estimatedMinutes: 120,
+            id: "ticket-1",
+            lastModifiedBy: {
+              avatarUrl: "https://cdn.example.com/users/3.png",
+              firstName: "Robin",
+              id: "user-3",
+              lastName: "Kim"
+            },
+            lastModifiedByUserId: "user-3",
+            modifiedAt: "2026-04-08T11:30:00Z",
+            name: "Board metrics",
+            status: "in progress",
+            timeEntries: [
+              {
+                activityCode: "DEV",
+                activityId: "1",
+                activityName: "Development",
+                description: "Initial implementation",
+                durationMinutes: 90,
+                id: "entry-1",
+                loggedAt: "2026-04-08T11:00:00Z",
+                ticket: {
+                  description: "Implement GraphQL updates",
+                  id: "ticket-1",
+                  title: "Board metrics"
+                },
+                ticketId: "ticket-1",
+                user: {
+                  avatarUrl: "https://cdn.example.com/users/4.png",
+                  firstName: "Jamie",
+                  id: "user-4",
+                  lastName: "Lee"
+                },
+                userId: "user-4"
+              }
+            ],
+            trackedMinutes: 90
+          }
+        ]
       })
     ).toEqual({
       active: true,
@@ -83,7 +143,67 @@ describe("board mappers", () => {
         lastName: "Morgan",
         userId: "user-1"
       },
-      ownerUserId: "user-1"
+      ownerUserId: "user-1",
+      tickets: [
+        {
+          acceptanceCriteria: "Merged and deployed",
+          assignedTo: {
+            avatarUrl: "https://cdn.example.com/users/4.png",
+            firstName: "Jamie",
+            lastName: "Lee",
+            userId: "user-4"
+          },
+          assignedToUserId: "user-4",
+          boardId: "board-1",
+          commentsCount: 3,
+          createdAt: "2026-04-08T10:30:00Z",
+          createdBy: {
+            avatarUrl: "https://cdn.example.com/users/2.png",
+            firstName: "Taylor",
+            lastName: "Nguyen",
+            userId: "user-2"
+          },
+          createdByUserId: "user-2",
+          description: "Implement GraphQL updates",
+          estimatedMinutes: 120,
+          lastModifiedBy: {
+            avatarUrl: "https://cdn.example.com/users/3.png",
+            firstName: "Robin",
+            lastName: "Kim",
+            userId: "user-3"
+          },
+          lastModifiedByUserId: "user-3",
+          modifiedAt: "2026-04-08T11:30:00Z",
+          name: "Board metrics",
+          status: "in progress",
+          ticketId: "ticket-1",
+          timeEntries: [
+            {
+              activityCode: "DEV",
+              activityId: "1",
+              activityName: "Development",
+              description: "Initial implementation",
+              durationMinutes: 90,
+              entryId: "entry-1",
+              loggedAt: "2026-04-08T11:00:00Z",
+              ticket: {
+                description: "Implement GraphQL updates",
+                ticketId: "ticket-1",
+                title: "Board metrics"
+              },
+              ticketId: "ticket-1",
+              user: {
+                avatarUrl: "https://cdn.example.com/users/4.png",
+                firstName: "Jamie",
+                lastName: "Lee",
+                userId: "user-4"
+              },
+              userId: "user-4"
+            }
+          ],
+          trackedMinutes: 90
+        }
+      ]
     });
   });
 
