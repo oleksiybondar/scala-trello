@@ -7,6 +7,7 @@ import io.github.oleksiybondar.api.infrastructure.db.board.BoardRepo
 import io.github.oleksiybondar.api.infrastructure.db.ticket.{
   SlickTicketQueryRepo,
   SlickTicketRepo,
+  SlickTicketStateRepo,
   TicketQueryRepo,
   TicketRepo
 }
@@ -28,12 +29,14 @@ object TicketModule {
   ): TicketModule[F] = {
     val ticketRepo      = new SlickTicketRepo[F](db)
     val ticketQueryRepo = new SlickTicketQueryRepo[F](db)
+    val ticketStateRepo = new SlickTicketStateRepo[F](db)
 
     TicketModule(
       ticketRepo = ticketRepo,
       ticketQueryRepo = ticketQueryRepo,
       ticketService = new TicketServiceLive[F](
         ticketRepo,
+        ticketStateRepo,
         boardRepo,
         boardAccessService,
         boardMembershipService

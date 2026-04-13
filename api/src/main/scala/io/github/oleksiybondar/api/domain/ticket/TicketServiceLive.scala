@@ -5,10 +5,11 @@ import cats.syntax.all._
 import io.github.oleksiybondar.api.domain.board.{BoardAccessService, BoardMembershipService}
 import io.github.oleksiybondar.api.domain.user.UserId
 import io.github.oleksiybondar.api.infrastructure.db.board.BoardRepo
-import io.github.oleksiybondar.api.infrastructure.db.ticket.TicketRepo
+import io.github.oleksiybondar.api.infrastructure.db.ticket.{TicketRepo, TicketStateRepo}
 
 final class TicketServiceLive[F[_]: Temporal](
     ticketRepo: TicketRepo[F],
+    ticketStateRepo: TicketStateRepo[F],
     boardRepo: BoardRepo[F],
     boardAccessService: BoardAccessService[F],
     boardMembershipService: BoardMembershipService[F]
@@ -94,6 +95,16 @@ final class TicketServiceLive[F[_]: Temporal](
       estimatedMinutes: Option[Int]
   ): F[Boolean] =
     updateTicket(ticketId, actorUserId)(_.copy(originalEstimatedMinutes = estimatedMinutes))
+
+  override def changeState(
+      ticketId: TicketId,
+      actorUserId: UserId,
+      stateId: TicketStateId
+  ): F[Boolean] =
+    ticketStateRepo.findById(stateId).flatMap {
+      case None        => false.pure[F]
+      case Some(state) => updateTicket(ticketId, actorUserId)(_.copy(stateId = state.id))
+    }
 
   override def reassignTicket(
       ticketId: TicketId,

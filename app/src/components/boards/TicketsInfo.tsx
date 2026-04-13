@@ -6,76 +6,23 @@ import { useTheme } from "@mui/material/styles";
 
 import { TicketPieChart } from "@components/boards/tickets-info/TicketPieChart";
 import { TicketPieChartLegendItem } from "@components/boards/tickets-info/TicketPieChartLegendItem";
-import type {
-  TicketStateCounts,
-  TicketStateKey
-} from "@components/boards/tickets-info/types";
+import type { TicketStateCounts } from "@components/boards/tickets-info/types";
+import {
+  boardTicketStates,
+  resolveBoardTicketStateColor
+} from "@helpers/boardTicketState";
 
 interface TicketsInfoProps {
   ticketCounts: TicketStateCounts;
 }
 
-interface TicketStateDefinition {
-  key: TicketStateKey;
-  paletteColor: string;
-  title: string;
-}
-
-const ticketStates: TicketStateDefinition[] = [
-  {
-    key: "new",
-    paletteColor: "warning.main",
-    title: "New"
-  },
-  {
-    key: "in_progress",
-    paletteColor: "info.main",
-    title: "In progress"
-  },
-  {
-    key: "code_review",
-    paletteColor: "secondary.main",
-    title: "Code review"
-  },
-  {
-    key: "in_testing",
-    paletteColor: "primary.main",
-    title: "In Testing"
-  },
-  {
-    key: "done",
-    paletteColor: "success.main",
-    title: "Done"
-  }
-];
-
-const resolvePaletteColor = (
-  path: string,
-  palette: Record<string, unknown>,
-  fallback: string
-): string => {
-  const resolved = path.split(".").reduce<unknown>((value, key) => {
-    if (value !== null && typeof value === "object" && key in value) {
-      return (value as Record<string, unknown>)[key];
-    }
-
-    return undefined;
-  }, palette);
-
-  return typeof resolved === "string" ? resolved : fallback;
-};
-
 export const TicketsInfo = ({ ticketCounts }: TicketsInfoProps): ReactElement => {
   const theme = useTheme();
-  const segments = ticketStates.map((state, index) => {
+  const segments = boardTicketStates.map((state, index) => {
     const count = ticketCounts[state.key];
 
     return {
-      color: resolvePaletteColor(
-        state.paletteColor,
-        theme.palette as unknown as Record<string, unknown>,
-        theme.palette.grey[400]
-      ),
+      color: resolveBoardTicketStateColor(theme, state.paletteColor),
       count,
       key: state.key + "-" + String(index),
       title: state.title

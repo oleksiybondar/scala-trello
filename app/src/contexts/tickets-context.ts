@@ -27,8 +27,8 @@ export interface TicketsContextValue {
   tickets: Ticket[];
   ticketsCount: number;
   ticketsError: Error | null;
-  transitionTicketState: (ticketId: string, status: TicketsServiceStatus) => void;
-  updateTicket: (ticketId: string, updater: (ticket: Ticket) => Ticket) => void;
+  transitionTicketState: (ticketId: string, status: TicketsServiceStatus) => Promise<void>;
+  updateTicket: (ticketId: string, updater: (ticket: Ticket) => Ticket) => Promise<void>;
 }
 
 const missingTicketsProvider = (): never => {

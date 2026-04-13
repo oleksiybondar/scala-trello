@@ -100,6 +100,10 @@ export interface ChangeTicketEstimatedTimeMutationResponse {
   changeTicketEstimatedTime: TicketResponse;
 }
 
+export interface ChangeTicketStatusMutationResponse {
+  changeTicketStatus: TicketResponse;
+}
+
 export interface ReassignTicketMutationResponse {
   reassignTicket: TicketResponse;
 }

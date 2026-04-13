@@ -59,6 +59,7 @@ object TicketApi {
   private val DescriptionArg    = Argument("description", OptionInputType(StringType))
   private val AcceptanceArg     = Argument("acceptanceCriteria", OptionInputType(StringType))
   private val EstimatedArg      = Argument("estimatedMinutes", OptionInputType(IntType))
+  private val StatusArg         = Argument("status", StringType)
   private val AssignedUserIdArg = Argument("assignedToUserId", OptionInputType(StringType))
 
   val TicketBoardSummaryType: ObjectType[GraphQLContext, TicketBoardSummaryView] =
@@ -317,6 +318,28 @@ object TicketApi {
           }.unsafeToFuture()
       ),
       Field(
+        name = "changeTicketStatus",
+        fieldType = TicketType,
+        arguments = TicketIdArg :: StatusArg :: Nil,
+        resolve = ctx =>
+          updateAndLoadTicket(ctx) { currentUserId =>
+            for {
+              ticketId   <- IO.fromEither(parseTicketId(ctx.arg(TicketIdArg)))
+              statusName <- IO.fromEither(parseTicketStatusName(ctx.arg(StatusArg)))
+              state      <- ctx.ctx.ticketStateRepo
+                              .findByName(statusName)
+                              .flatMap(
+                                _.liftTo[IO](
+                                  InvalidTicketInput(
+                                    s"Unknown ticket status: ${ctx.arg(StatusArg).trim}"
+                                  )
+                                )
+                              )
+              updated    <- ctx.ctx.ticketService.changeState(ticketId, currentUserId, state.id)
+            } yield (ticketId, updated, "Ticket status could not be changed")
+          }.unsafeToFuture()
+      ),
+      Field(
         name = "reassignTicket",
         fieldType = TicketType,
         arguments = TicketIdArg :: AssignedUserIdArg :: Nil,
@@ -476,6 +499,15 @@ object TicketApi {
         Left(InvalidTicketInput("Estimated minutes must be non-negative"))
       case _                        => Right(rawValue)
     }
+
+  private def parseTicketStatusName(
+      rawStatus: String
+  ): Either[InvalidTicketInput, io.github.oleksiybondar.api.domain.ticket.TicketStateName] =
+    Option(rawStatus)
+      .map(_.trim.toLowerCase.replace(' ', '_'))
+      .filter(_.nonEmpty)
+      .toRight(InvalidTicketInput("Status is required"))
+      .map(io.github.oleksiybondar.api.domain.ticket.TicketStateName(_))
 
   private def normalizeOptionalText(rawValue: Option[String]): Option[String] =
     rawValue.map(_.trim).filter(_.nonEmpty)

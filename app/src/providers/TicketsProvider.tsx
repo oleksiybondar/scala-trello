@@ -143,7 +143,7 @@ export const TicketsProvider = ({
 
   useEffect(() => {
     ticketsState.setInProgressTickets(
-      selectTicketsByStatus(ticketsFilteringService.applyFiltering(), "in progress")
+      selectTicketsByStatus(ticketsFilteringService.applyFiltering(), "in_progress")
     );
   }, [
     bootstrapVersion,
@@ -154,7 +154,7 @@ export const TicketsProvider = ({
 
   useEffect(() => {
     ticketsState.setCodeReviewTickets(
-      selectTicketsByStatus(ticketsFilteringService.applyFiltering(), "code review")
+      selectTicketsByStatus(ticketsFilteringService.applyFiltering(), "code_review")
     );
   }, [
     bootstrapVersion,
@@ -165,7 +165,7 @@ export const TicketsProvider = ({
 
   useEffect(() => {
     ticketsState.setInTestingTickets(
-      selectTicketsByStatus(ticketsFilteringService.applyFiltering(), "in testing")
+      selectTicketsByStatus(ticketsFilteringService.applyFiltering(), "in_testing")
     );
   }, [
     bootstrapVersion,
@@ -196,7 +196,7 @@ export const TicketsProvider = ({
     isCreatingTicket: ticketsService.isCreatingTicket,
     isReassigningTicket: ticketsService.isReassigningTicket,
     isReloadingTickets: ticketsService.isReloadingTickets,
-    isTransitioningTicketState: false,
+    isTransitioningTicketState: ticketsService.isTransitioningTicketState,
     newTickets: ticketsState.newTickets,
     reassignTicket: ticketsService.reassignTicket,
     reloadTickets: ticketsService.reloadTickets,

@@ -2,33 +2,39 @@ import type { ReactElement } from "react";
 
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
+import { useTheme } from "@mui/material/styles";
 
 import { BoardColumn } from "@components/boards/board-page/BoardColumn";
 import { useTickets } from "@hooks/useTickets";
-
-const BOARD_COLUMN_TITLES = [
-  "New",
-  "In progress",
-  "Code review",
-  "In Testing",
-  "Done"
-] as const;
+import {
+  boardTicketStates,
+  resolveBoardTicketStateColor
+} from "@helpers/boardTicketState";
+import type { TicketsServiceStatus } from "../../../domain/ticket/useTicketsService";
 
 export const BoardMainArea = (): ReactElement => {
+  const theme = useTheme();
   const {
     codeReviewTickets,
     doneTickets,
     inProgressTickets,
     inTestingTickets,
-    newTickets
+    newTickets,
+    transitionTicketState
   } = useTickets();
   const columnTickets = {
-    "Code review": codeReviewTickets,
-    Done: doneTickets,
-    "In Testing": inTestingTickets,
-    "In progress": inProgressTickets,
-    New: newTickets
+    code_review: codeReviewTickets,
+    done: doneTickets,
+    in_progress: inProgressTickets,
+    in_testing: inTestingTickets,
+    new: newTickets
   } as const;
+  const handleColumnDrop = (
+    ticketId: string,
+    status: TicketsServiceStatus
+  ): void => {
+    void transitionTicketState(ticketId, status);
+  };
 
   return (
     <Paper
@@ -49,8 +55,16 @@ export const BoardMainArea = (): ReactElement => {
           minHeight: "100%"
         }}
       >
-        {BOARD_COLUMN_TITLES.map(title => (
-          <BoardColumn key={title} tickets={columnTickets[title]} title={title} />
+        {boardTicketStates.map(column => (
+          <BoardColumn
+            background={resolveBoardTicketStateColor(theme, column.paletteColor)}
+            key={column.title}
+            onDrop={ticketId => {
+              handleColumnDrop(ticketId, column.status);
+            }}
+            tickets={columnTickets[column.key]}
+            title={column.title}
+          />
         ))}
       </Box>
     </Paper>

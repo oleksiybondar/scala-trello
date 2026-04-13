@@ -185,6 +185,9 @@ class TicketGraphQLRoutesSpec extends FunSuite {
         _        <- ctx.httpApp.run(
                       graphqlRequest(changeEstimatedMutation, accessToken = Some(token))
                     )
+        _        <- ctx.httpApp.run(
+                      graphqlRequest(changeStatusMutation, accessToken = Some(token))
+                    )
         response <- ctx.httpApp.run(graphqlRequest(reassignMutation, accessToken = Some(token)))
       } yield response
     }
@@ -200,6 +203,7 @@ class TicketGraphQLRoutesSpec extends FunSuite {
       Some("Updated acceptance criteria")
     )
     assertEquals(cursor.get[Int]("estimatedMinutes").toOption, Some(240))
+    assertEquals(cursor.get[String]("status").toOption, Some("in_progress"))
     assertEquals(
       cursor.get[String]("assignedToUserId").toOption,
       Some("22222222-2222-2222-2222-222222222222")
@@ -332,7 +336,16 @@ class TicketGraphQLRoutesSpec extends FunSuite {
       |    description
       |    acceptanceCriteria
       |    estimatedMinutes
+      |    status
       |    assignedToUserId
+      |  }
+      |}""".stripMargin
+
+  private val changeStatusMutation =
+    """mutation {
+      |  changeTicketStatus(ticketId: "1", status: "in progress") {
+      |    id
+      |    status
       |  }
       |}""".stripMargin
 

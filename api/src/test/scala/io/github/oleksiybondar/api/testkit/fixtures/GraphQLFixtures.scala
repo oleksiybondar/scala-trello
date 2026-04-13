@@ -230,6 +230,7 @@ object GraphQLFixtures {
                                    )
       ticketService              = new TicketServiceLive[IO](
                                      ticketRepo,
+                                     ticketStateRepo,
                                      dashboardRepo,
                                      dashboardAccessService,
                                      dashboardMembershipService

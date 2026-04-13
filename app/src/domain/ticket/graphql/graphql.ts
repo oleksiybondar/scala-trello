@@ -213,6 +213,22 @@ export const buildChangeTicketEstimatedTimeMutation = (
   `;
 };
 
+export const buildChangeTicketStatusMutation = (
+  ticketId: string,
+  status: string
+): string => {
+  return /* GraphQL */ `
+    mutation {
+      changeTicketStatus(
+        ticketId: ${serializeGraphQLString(ticketId)}
+        status: ${serializeGraphQLString(status)}
+      ) {
+        ${TICKET_FIELDS}
+      }
+    }
+  `;
+};
+
 export const buildReassignTicketMutation = (
   ticketId: string,
   assignedToUserId: string | null

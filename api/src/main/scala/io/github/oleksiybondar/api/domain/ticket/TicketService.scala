@@ -37,6 +37,11 @@ trait TicketService[F[_]] {
       actorUserId: UserId,
       estimatedMinutes: Option[Int]
   ): F[Boolean]
+  def changeState(
+      ticketId: TicketId,
+      actorUserId: UserId,
+      stateId: TicketStateId
+  ): F[Boolean]
   def reassignTicket(
       ticketId: TicketId,
       actorUserId: UserId,
