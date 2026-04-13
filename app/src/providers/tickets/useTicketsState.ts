@@ -2,9 +2,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { useState } from "react";
 
 import type { Ticket } from "../../domain/ticket/graphql";
-import type { TicketsServiceStatus } from "../../domain/ticket/useTicketsService";
-
-type TicketStatusKey = TicketsServiceStatus;
+import type { TicketStatusKey } from "../../domain/ticket/useTicketsService";
 
 export interface UseTicketsStateResult {
   codeReviewTickets: Ticket[];
@@ -44,15 +42,15 @@ export const useTicketsState = (): UseTicketsStateResult => {
       setNewTicketsRevision(version => version + 1);
     }
 
-    if (affectedStates.has("in progress")) {
+    if (affectedStates.has("in_progress")) {
       setInProgressTicketsRevision(version => version + 1);
     }
 
-    if (affectedStates.has("code review")) {
+    if (affectedStates.has("code_review")) {
       setCodeReviewTicketsRevision(version => version + 1);
     }
 
-    if (affectedStates.has("in testing")) {
+    if (affectedStates.has("in_testing")) {
       setInTestingTicketsRevision(version => version + 1);
     }
 

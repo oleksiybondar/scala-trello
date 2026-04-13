@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { DragEvent, ReactElement } from "react";
 
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
-import Divider from "@mui/material/Divider";
 import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
 
+import { BoardTicketCard } from "@components/boards/board-page/BoardTicketCard";
 import type { Ticket } from "../../../domain/ticket/graphql";
 
 interface BoardColumnProps {
@@ -26,6 +26,7 @@ export const BoardColumn = ({
   title
 }: BoardColumnProps): ReactElement => {
   const [isDropTarget, setIsDropTarget] = useState(false);
+  const dragPreviewRef = useRef<HTMLDivElement | null>(null);
 
   const handleDragOver = (event: DragEvent<HTMLDivElement>): void => {
     event.preventDefault();
@@ -64,12 +65,34 @@ export const BoardColumn = ({
     event: DragEvent<HTMLDivElement>,
     ticketId: string
   ): void => {
+    const preview = event.currentTarget.cloneNode(true);
+
+    if (preview instanceof HTMLDivElement) {
+      const rect = event.currentTarget.getBoundingClientRect();
+
+      preview.style.boxSizing = "border-box";
+      preview.style.left = "-9999px";
+      preview.style.margin = "0";
+      preview.style.opacity = "1";
+      preview.style.pointerEvents = "none";
+      preview.style.position = "fixed";
+      preview.style.top = "0";
+      preview.style.width = `${String(rect.width)}px`;
+      preview.style.zIndex = "9999";
+
+      document.body.append(preview);
+      dragPreviewRef.current = preview;
+      event.dataTransfer.setDragImage(preview, 24, 24);
+    }
+
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData(DRAGGED_TICKET_ID_DATA_KEY, ticketId);
     event.dataTransfer.setData("text/plain", ticketId);
   };
 
   const handleTicketDragEnd = (): void => {
+    dragPreviewRef.current?.remove();
+    dragPreviewRef.current = null;
     setIsDropTarget(false);
   };
 
@@ -93,7 +116,7 @@ export const BoardColumn = ({
           bgcolor: theme =>
             background === undefined
               ? theme.palette.background.paper
-              : alpha(background, 0.14),
+              : alpha(background, 0.4),
           borderBottom: theme => "1px solid " + theme.palette.divider,
           position: "sticky",
           px: 2,
@@ -125,39 +148,12 @@ export const BoardColumn = ({
           <Typography variant="body2">No tickets yet.</Typography>
         ) : (
           tickets.map(ticket => (
-            <Paper
-              draggable
+            <BoardTicketCard
               key={ticket.ticketId}
               onDragEnd={handleTicketDragEnd}
-              onDragStart={event => {
-                handleTicketDragStart(event, ticket.ticketId);
-              }}
-              sx={{
-                cursor: "grab",
-                p: 1.5
-              }}
-              variant="outlined"
-            >
-              <Stack spacing={1}>
-                <Typography color="text.primary" fontWeight={700} variant="body2">
-                  {ticket.name}
-                </Typography>
-                {ticket.description !== null && ticket.description.trim().length > 0 ? (
-                  <Typography variant="caption">{ticket.description}</Typography>
-                ) : null}
-                <Divider />
-                <Stack direction="row" justifyContent="space-between" spacing={1}>
-                  <Typography variant="caption">
-                    {ticket.assignedTo === null
-                      ? "Unassigned"
-                      : ticket.assignedTo.firstName + " " + ticket.assignedTo.lastName}
-                  </Typography>
-                  <Typography variant="caption">
-                    {String(ticket.trackedMinutes)}m
-                  </Typography>
-                </Stack>
-              </Stack>
-            </Paper>
+              onDragStart={handleTicketDragStart}
+              ticket={ticket}
+            />
           ))
         )}
       </Stack>

@@ -1,6 +1,7 @@
 export { BoardCard } from "@components/boards/BoardCard";
 export { BoardCardHeader } from "@components/boards/BoardCardHeader";
 export { BoardColumn } from "@components/boards/board-page/BoardColumn";
+export { BoardTicketCard } from "@components/boards/board-page/BoardTicketCard";
 export { BoardSettingsHeader } from "@components/boards/board-settings/BoardSettingsHeader";
 export { BoardSettingsLayout } from "@components/boards/board-settings/BoardSettingsLayout";
 export { BoardSettingsPlaceholderPanel } from "@components/boards/board-settings/BoardSettingsPlaceholderPanel";
@@ -21,6 +22,7 @@ export { TimeTrackingLineChart } from "@components/boards/time-tracking-info/Tim
 export { AppAvatar } from "@components/avatar/AppAvatar";
 export { CreateBoardDialog } from "@components/boards/CreateBoardDialog";
 export { CreateBoardForm } from "@components/boards/CreateBoardForm";
+export { TimeTrackingModal } from "@components/boards/board-page/TimeTrackingModal";
 export { TimeInput } from "@components/time-tracking/TimeInput";
 export { CreateTicketDialog } from "@components/tickets/CreateTicketDialog";
 export { CreateTicketForm } from "@components/tickets/CreateTicketForm";

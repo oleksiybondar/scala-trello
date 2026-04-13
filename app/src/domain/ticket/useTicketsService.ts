@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { requestGraphQL } from "@helpers/requestGraphQL";
+import { mapUiTicketStatusToStateKey } from "@helpers/uiTicketStatus";
 import {
   buildChangeTicketAcceptanceCriteriaMutation,
   buildChangeTicketDescriptionMutation,
@@ -40,6 +41,13 @@ export type TicketsServiceStatus =
   | "in testing"
   | "done";
 
+export type TicketStatusKey =
+    | "new"
+    | "in_progress"
+    | "code_review"
+    | "in_testing"
+    | "done";
+
 export interface TicketsServiceSource {
   byId: Record<string, Ticket>;
   ids: string[];
@@ -48,7 +56,7 @@ export interface TicketsServiceSource {
 export interface CreateTicketsServiceParams {
   boardId: string;
   ticketsRef: { current: TicketsServiceSource };
-  updateVersioning: (states: TicketsServiceStatus[]) => void;
+  updateVersioning: (states: TicketStatusKey[]) => void;
 }
 
 export interface UseTicketsService {
@@ -73,18 +81,26 @@ const resolveTicketsServiceError = (...errors: (Error | null | undefined)[]): Er
 const collectAffectedStates = (
   previousStatus: TicketsServiceStatus | null,
   nextStatus: TicketsServiceStatus | null
-): TicketsServiceStatus[] => {
-  const affectedStates: TicketsServiceStatus[] = [];
+): TicketStatusKey[] => {
+  const affectedStates = new Set<TicketStatusKey>();
 
   if (previousStatus !== null) {
-    affectedStates.push(previousStatus);
+    const previousKey = mapUiTicketStatusToStateKey(previousStatus);
+
+    if (previousKey !== null) {
+      affectedStates.add(previousKey);
+    }
   }
 
   if (nextStatus !== null && nextStatus !== previousStatus) {
-    affectedStates.push(nextStatus);
+    const nextKey = mapUiTicketStatusToStateKey(nextStatus);
+
+    if (nextKey !== null) {
+      affectedStates.add(nextKey);
+    }
   }
 
-  return affectedStates;
+  return [...affectedStates];
 };
 
 const toSource = (tickets: Ticket[]): TicketsServiceSource => {
@@ -232,7 +248,7 @@ export const useTicketsService = ({
       const tickets = response.tickets.map(mapTicketResponseToTicket);
 
       replaceAllTickets(tickets);
-      updateVersioning(["new", "in progress", "code review", "in testing", "done"]);
+      updateVersioning(["new", "in_progress", "code_review", "in_testing", "done"]);
 
       return tickets;
     },
@@ -265,7 +281,11 @@ export const useTicketsService = ({
       ticketsRef.current.ids = [...ticketsRef.current.ids, ticket.ticketId];
 
       if (ticket.status !== null) {
-        updateVersioning([ticket.status as TicketsServiceStatus]);
+        const stateKey = mapUiTicketStatusToStateKey(ticket.status);
+
+        if (stateKey !== null) {
+          updateVersioning([stateKey]);
+        }
       }
     }
   });
