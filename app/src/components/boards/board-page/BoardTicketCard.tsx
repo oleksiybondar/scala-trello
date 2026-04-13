@@ -12,8 +12,14 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import { useTheme } from "@mui/material/styles";
 
 import { TicketAssigneeMenu } from "@components/boards/board-page/TicketAssigneeMenu";
+import {
+  getPriorityMeta,
+  getSeverityMeta,
+  resolveMetadataToneColor
+} from "@components/tickets/ticketMetadata";
 import { boardTicketStates } from "@helpers/boardTicketState";
 import { formatMinutesToTimeInput } from "@helpers/timeTrackingConversions";
 import { normalizeUiTicketStatus } from "@helpers/uiTicketStatus";
@@ -39,6 +45,7 @@ export const BoardTicketCard = ({
   ticket
 }: BoardTicketCardProps): ReactElement => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const theme = useTheme();
   const { boardPermissionAccess, members } = useBoard();
   const { reassignTicket, transitionTicketState } = useTickets();
   const { openLogTimeModal } = useTimeTracking();
@@ -47,6 +54,10 @@ export const BoardTicketCard = ({
   const hasLongTitle = ticket.name.trim().length > 60;
   const hasLongDescription =
     ticket.description !== null && ticket.description.trim().length > 160;
+  const severityMeta = getSeverityMeta(ticket.severityName);
+  const priorityMeta = getPriorityMeta(ticket.priority);
+  const SeverityIcon = severityMeta?.icon;
+  const PriorityIcon = priorityMeta?.icon;
 
   const handleOpenStateMenu = (event: MouseEvent<HTMLButtonElement>): void => {
     setAnchorEl(event.currentTarget);
@@ -89,34 +100,65 @@ export const BoardTicketCard = ({
               minHeight: `${String(TITLE_LINE_HEIGHT * TITLE_LINES)}em`
             }}
           >
-            <Tooltip
-              disableHoverListener={!hasLongTitle}
-              slotProps={{
-                tooltip: {
-                  sx: {
-                    maxWidth: 320
+            <Stack alignItems="flex-start" direction="row" spacing={0.75}>
+              {severityMeta !== null && SeverityIcon !== undefined ? (
+                <Tooltip title={`Severity: ${severityMeta.label}`}>
+                  <Box
+                    sx={{
+                      color: resolveMetadataToneColor(severityMeta.tone, theme.palette),
+                      display: "flex",
+                      flexShrink: 0,
+                      mt: 0.15
+                    }}
+                  >
+                    <SeverityIcon fontSize="small" />
+                  </Box>
+                </Tooltip>
+              ) : null}
+              {priorityMeta !== null && PriorityIcon !== undefined ? (
+                <Tooltip title={`Priority: ${priorityMeta.label}`}>
+                  <Box
+                    sx={{
+                      color: resolveMetadataToneColor(priorityMeta.tone, theme.palette),
+                      display: "flex",
+                      flexShrink: 0,
+                      mt: 0.15
+                    }}
+                  >
+                    <PriorityIcon fontSize="small" />
+                  </Box>
+                </Tooltip>
+              ) : null}
+              <Tooltip
+                disableHoverListener={!hasLongTitle}
+                slotProps={{
+                  tooltip: {
+                    sx: {
+                      maxWidth: 320
+                    }
                   }
-                }
-              }}
-              title={ticket.name}
-            >
-              <Typography
-                className="BoardTicketCard-title"
-                color="text.primary"
-                fontWeight={700}
-                sx={{
-                  display: "-webkit-box",
-                  lineHeight: String(TITLE_LINE_HEIGHT),
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  WebkitBoxOrient: "vertical",
-                  WebkitLineClamp: TITLE_LINES
                 }}
-                variant="body2"
+                title={ticket.name}
               >
-                {ticket.name}
-              </Typography>
-            </Tooltip>
+                <Typography
+                  className="BoardTicketCard-title"
+                  color="text.primary"
+                  fontWeight={700}
+                  sx={{
+                    display: "-webkit-box",
+                    flex: 1,
+                    lineHeight: String(TITLE_LINE_HEIGHT),
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    WebkitBoxOrient: "vertical",
+                    WebkitLineClamp: TITLE_LINES
+                  }}
+                  variant="body2"
+                >
+                  {ticket.name}
+                </Typography>
+              </Tooltip>
+            </Stack>
           </Box>
           <Tooltip title="Move ticket">
             <IconButton onClick={handleOpenStateMenu} size="small">

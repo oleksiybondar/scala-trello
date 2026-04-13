@@ -36,6 +36,8 @@ final class InMemoryTicketQueryRepo[F[_]: Sync](
           description = ticket.description.map(_.value),
           acceptanceCriteria = ticket.acceptanceCriteria.map(_.value),
           estimatedMinutes = ticket.originalEstimatedMinutes,
+          priority = ticket.priority.flatMap(_.value.toIntOption),
+          severityId = ticket.severityId.map(_.value),
           createdByUserId = ticket.createdByUserId.value.toString,
           assignedToUserId = ticket.assignedToUserId.map(_.value.toString),
           lastModifiedByUserId = ticket.lastModifiedByUserId.value.toString,

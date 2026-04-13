@@ -39,6 +39,8 @@ final case class TicketQueryRow(
     description: Option[String],
     acceptanceCriteria: Option[String],
     estimatedMinutes: Option[Int],
+    priority: Option[Int],
+    severityId: Option[Long],
     createdByUserId: String,
     assignedToUserId: Option[String],
     lastModifiedByUserId: String,

@@ -8,34 +8,51 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
+import { TicketPrioritySelect } from "@components/tickets/TicketPrioritySelect";
+import { TicketSeveritySelect } from "@components/tickets/TicketSeveritySelect";
 import { TimeInput } from "@components/time-tracking/TimeInput";
+import type { DictionarySeverity } from "../../domain/dictionaries/graphql";
 
 export interface CreateTicketInput {
   acceptanceCriteria: string;
   description: string;
   estimatedMinutes: number | null;
+  priority: number;
+  severityId: string | null;
   title: string;
 }
 
 interface CreateTicketFormProps {
+  initialPriority?: number | undefined;
+  initialSeverityId?: string | null | undefined;
   isSubmitting?: boolean | undefined;
   onCancel: () => void;
   onSubmit: (values: CreateTicketInput) => Promise<void> | void;
+  severities: DictionarySeverity[];
 }
 
 const INITIAL_FORM_STATE: CreateTicketInput = {
   acceptanceCriteria: "",
   description: "",
   estimatedMinutes: null,
+  priority: 5,
+  severityId: null,
   title: ""
 };
 
 export const CreateTicketForm = ({
+  initialPriority = INITIAL_FORM_STATE.priority,
+  initialSeverityId = INITIAL_FORM_STATE.severityId,
   isSubmitting = false,
   onCancel,
-  onSubmit
+  onSubmit,
+  severities
 }: CreateTicketFormProps): ReactElement => {
-  const [formState, setFormState] = useState(INITIAL_FORM_STATE);
+  const [formState, setFormState] = useState({
+    ...INITIAL_FORM_STATE,
+    priority: initialPriority,
+    severityId: initialSeverityId
+  });
 
   const isTitleValid =
     formState.title.trim().length > 0 && formState.title.trim().length <= 200;
@@ -63,11 +80,17 @@ export const CreateTicketForm = ({
         acceptanceCriteria: formState.acceptanceCriteria.trim(),
         description: formState.description.trim(),
         estimatedMinutes: formState.estimatedMinutes,
+        priority: formState.priority,
+        severityId: formState.severityId,
         title: formState.title.trim()
       })
     );
 
-    setFormState(INITIAL_FORM_STATE);
+    setFormState({
+      ...INITIAL_FORM_STATE,
+      priority: initialPriority,
+      severityId: initialSeverityId
+    });
   };
 
   return (
@@ -154,6 +177,31 @@ export const CreateTicketForm = ({
             }}
             value={formState.estimatedMinutes}
           />
+
+          <Stack direction={{ md: "row", xs: "column" }} spacing={2}>
+            <TicketSeveritySelect
+              disabled={isSubmitting}
+              onChange={severityId => {
+                setFormState(currentState => ({
+                  ...currentState,
+                  severityId
+                }));
+              }}
+              severities={severities}
+              value={formState.severityId}
+            />
+
+            <TicketPrioritySelect
+              disabled={isSubmitting}
+              onChange={priority => {
+                setFormState(currentState => ({
+                  ...currentState,
+                  priority
+                }));
+              }}
+              value={formState.priority}
+            />
+          </Stack>
         </Stack>
       </DialogContent>
 

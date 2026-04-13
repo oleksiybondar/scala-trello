@@ -4,6 +4,14 @@ import userEvent from "@testing-library/user-event";
 import { CreateTicketForm } from "@components/tickets/CreateTicketForm";
 import { renderApp } from "@tests/setup/render";
 
+const severities = [
+  {
+    description: "Standard impact issue or task.",
+    name: "normal",
+    severityId: "2"
+  }
+];
+
 describe("CreateTicketForm", () => {
   test("submits estimated time as minutes when HH:MM is entered", async () => {
     const user = userEvent.setup();
@@ -11,8 +19,11 @@ describe("CreateTicketForm", () => {
 
     renderApp(
       <CreateTicketForm
+        initialPriority={5}
+        initialSeverityId="2"
         onCancel={vi.fn()}
         onSubmit={onSubmit}
+        severities={severities}
       />
     );
 
@@ -24,6 +35,8 @@ describe("CreateTicketForm", () => {
       acceptanceCriteria: "",
       description: "",
       estimatedMinutes: 150,
+      priority: 5,
+      severityId: "2",
       title: "GraphQL task"
     });
   });
@@ -34,8 +47,11 @@ describe("CreateTicketForm", () => {
 
     renderApp(
       <CreateTicketForm
+        initialPriority={5}
+        initialSeverityId="2"
         onCancel={vi.fn()}
         onSubmit={onSubmit}
+        severities={severities}
       />
     );
 
@@ -47,6 +63,8 @@ describe("CreateTicketForm", () => {
       acceptanceCriteria: "",
       description: "",
       estimatedMinutes: 120,
+      priority: 5,
+      severityId: "2",
       title: "Board cleanup"
     });
   });
@@ -57,8 +75,11 @@ describe("CreateTicketForm", () => {
 
     renderApp(
       <CreateTicketForm
+        initialPriority={5}
+        initialSeverityId="2"
         onCancel={vi.fn()}
         onSubmit={onSubmit}
+        severities={severities}
       />
     );
 
@@ -71,6 +92,8 @@ describe("CreateTicketForm", () => {
       acceptanceCriteria: "",
       description: "",
       estimatedMinutes: 30,
+      priority: 5,
+      severityId: "2",
       title: "Ticket draft"
     });
   });

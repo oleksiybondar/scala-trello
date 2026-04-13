@@ -185,6 +185,8 @@ object SharedSlickTables {
       createdAt: Instant,
       modifiedAt: Instant,
       originalEstimatedMinutes: Option[Int],
+      priority: Option[String],
+      severityId: Option[Long],
       stateId: Long
   )
 
@@ -201,6 +203,8 @@ object SharedSlickTables {
     def modifiedAt: Rep[Instant]                   = column[Instant]("modified_at")
     def originalEstimatedMinutes: Rep[Option[Int]] =
       column[Option[Int]]("original_estimated_minutes")
+    def priority: Rep[Option[String]]              = column[Option[String]]("priority")
+    def severityId: Rep[Option[Long]]              = column[Option[Long]]("severity_id")
     def stateId: Rep[Long]                         = column[Long]("state_id")
 
     def * : ProvenShape[TicketRow] =
@@ -216,6 +220,8 @@ object SharedSlickTables {
         createdAt,
         modifiedAt,
         originalEstimatedMinutes,
+        priority,
+        severityId,
         stateId
       ).mapTo[TicketRow]
   }

@@ -50,6 +50,9 @@ const TICKET_FIELDS = `
   description
   acceptanceCriteria
   estimatedMinutes
+  priority
+  severityId
+  severityName
   commentsCount
   trackedMinutes
   status
@@ -122,6 +125,8 @@ interface BuildCreateTicketMutationParams {
   boardId: string;
   description?: string | null;
   estimatedMinutes?: number | null;
+  priority?: number | null;
+  severityId?: string | null;
   title: string;
 }
 
@@ -131,6 +136,8 @@ export const buildCreateTicketMutation = ({
   boardId,
   description = null,
   estimatedMinutes = null,
+  priority = null,
+  severityId = null,
   title
 }: BuildCreateTicketMutationParams): string => {
   return /* GraphQL */ `
@@ -141,6 +148,8 @@ export const buildCreateTicketMutation = ({
         description: ${serializeNullableGraphQLString(description)}
         acceptanceCriteria: ${serializeNullableGraphQLString(acceptanceCriteria)}
         estimatedMinutes: ${serializeNullableGraphQLInt(estimatedMinutes)}
+        priority: ${serializeNullableGraphQLInt(priority)}
+        severityId: ${serializeNullableGraphQLString(severityId)}
         assignedToUserId: ${serializeNullableGraphQLString(assignedToUserId)}
       ) {
         ${TICKET_FIELDS}

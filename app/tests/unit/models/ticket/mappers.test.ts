@@ -61,6 +61,9 @@ describe("ticket mappers", () => {
         lastModifiedByUserId: "user-3",
         modifiedAt: "2026-04-10T09:00:00Z",
         name: "GraphQL work",
+        priority: 2,
+        severityId: "3",
+        severityName: "major",
         status: "in progress",
         timeEntries: [
           {
@@ -145,6 +148,9 @@ describe("ticket mappers", () => {
       lastModifiedByUserId: "user-3",
       modifiedAt: "2026-04-10T09:00:00Z",
       name: "GraphQL work",
+      priority: 2,
+      severityId: "3",
+      severityName: "major",
       status: "in progress",
       ticketId: "ticket-1",
       timeEntries: [

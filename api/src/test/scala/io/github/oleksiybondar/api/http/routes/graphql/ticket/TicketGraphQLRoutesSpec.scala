@@ -286,6 +286,8 @@ class TicketGraphQLRoutesSpec extends FunSuite {
       |    description: "Created from GraphQL"
       |    acceptanceCriteria: "It should work"
       |    estimatedMinutes: 45
+      |    priority: 5
+      |    severityId: "2"
       |    assignedToUserId: "22222222-2222-2222-2222-222222222222"
       |  ) {
       |    id

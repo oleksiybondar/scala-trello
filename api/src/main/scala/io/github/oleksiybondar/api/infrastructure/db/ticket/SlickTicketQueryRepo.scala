@@ -64,6 +64,8 @@ final class SlickTicketQueryRepo[F[_]: Async](db: Database) extends TicketQueryR
           description = ticket.description,
           acceptanceCriteria = ticket.acceptanceCriteria,
           estimatedMinutes = ticket.originalEstimatedMinutes,
+          priority = ticket.priority.flatMap(_.toIntOption),
+          severityId = ticket.severityId,
           createdByUserId = ticket.createdByUserId.toString,
           assignedToUserId = ticket.assignedToUserId.map(_.toString),
           lastModifiedByUserId = ticket.lastModifiedByUserId.toString,

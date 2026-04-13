@@ -11,6 +11,8 @@ import io.github.oleksiybondar.api.domain.ticket.{
   TicketDescription,
   TicketId,
   TicketName,
+  TicketPriority,
+  TicketSeverityId,
   TicketStateId
 }
 import io.github.oleksiybondar.api.domain.user.UserId
@@ -59,6 +61,8 @@ object TicketApi {
   private val DescriptionArg    = Argument("description", OptionInputType(StringType))
   private val AcceptanceArg     = Argument("acceptanceCriteria", OptionInputType(StringType))
   private val EstimatedArg      = Argument("estimatedMinutes", OptionInputType(IntType))
+  private val PriorityArg       = Argument("priority", OptionInputType(IntType))
+  private val SeverityIdArg     = Argument("severityId", OptionInputType(StringType))
   private val StatusArg         = Argument("status", StringType)
   private val AssignedUserIdArg = Argument("assignedToUserId", OptionInputType(StringType))
 
@@ -86,6 +90,30 @@ object TicketApi {
           resolve = _.value.acceptanceCriteria
         ),
         Field("estimatedMinutes", OptionType(IntType), resolve = _.value.estimatedMinutes),
+        Field("priority", OptionType(IntType), resolve = _.value.priority),
+        Field("severityId", OptionType(StringType), resolve = _.value.severityId),
+        Field(
+          "severityName",
+          OptionType(StringType),
+          resolve =
+            ctx =>
+              ctx.value.severityName match {
+                case Some(value) => IO.pure(Some(value)).unsafeToFuture()
+                case None        =>
+                  ctx.value.severityId match {
+                    case Some(rawId) =>
+                      Try(rawId.toLong).toOption match {
+                        case Some(severityId) =>
+                          ctx.ctx.ticketSeverityRepo
+                            .findById(TicketSeverityId(severityId))
+                            .map(_.map(_.name.value))
+                            .unsafeToFuture()
+                        case None             => IO.pure(None).unsafeToFuture()
+                      }
+                    case None        => IO.pure(None).unsafeToFuture()
+                  }
+              }
+        ),
         Field("commentsCount", IntType, resolve = _.value.commentsCount),
         Field("trackedMinutes", IntType, resolve = _.value.trackedMinutes),
         Field(
@@ -227,13 +255,29 @@ object TicketApi {
         name = "createTicket",
         fieldType = TicketType,
         arguments =
-          BoardIdArg :: LegacyBoardIdArg :: TitleArg :: DescriptionArg :: AcceptanceArg :: EstimatedArg :: AssignedUserIdArg :: Nil,
+          BoardIdArg :: LegacyBoardIdArg :: TitleArg :: DescriptionArg :: AcceptanceArg :: EstimatedArg :: PriorityArg :: SeverityIdArg :: AssignedUserIdArg :: Nil,
         resolve = ctx =>
           withCurrentUser(ctx) { currentUserId =>
             for {
               boardId       <- IO.fromEither(parseRequiredBoardId(ctx))
               title         <- IO.fromEither(parseRequiredTitle(ctx.arg(TitleArg)))
               estimated     <- IO.fromEither(parseEstimatedMinutes(ctx.arg(EstimatedArg)))
+              priority      <- IO.fromEither(parsePriority(ctx.arg(PriorityArg)))
+              severityId    <- IO.fromEither(parseOptionalSeverityId(ctx.arg(SeverityIdArg)))
+              _             <- severityId match {
+                                 case Some(value) =>
+                                   ctx.ctx.ticketSeverityRepo
+                                     .findById(value)
+                                     .flatMap(
+                                       _.liftTo[IO](
+                                         InvalidTicketInput(
+                                           s"Unknown ticket severity: ${ctx.arg(SeverityIdArg).getOrElse("")}"
+                                         )
+                                       )
+                                     )
+                                     .void
+                                 case None        => IO.unit
+                               }
               assignedToId  <- IO.fromEither(parseOptionalUserId(ctx.arg(AssignedUserIdArg)))
               createdTicket <- ctx.ctx.ticketService.createTicket(
                                  CreateTicketCommand(
@@ -246,6 +290,10 @@ object TicketApi {
                                        .map(TicketAcceptanceCriteria(_)),
                                    assignedToUserId = assignedToId,
                                    originalEstimatedMinutes = estimated,
+                                   priority = priority.map(value =>
+                                     TicketPriority(value.toString)
+                                   ),
+                                   severityId = severityId,
                                    stateId = TicketStateId(1)
                                  ),
                                  currentUserId
@@ -500,6 +548,28 @@ object TicketApi {
       case _                        => Right(rawValue)
     }
 
+  private def parsePriority(
+      rawValue: Option[Int]
+  ): Either[InvalidTicketInput, Option[Int]] =
+    rawValue match {
+      case Some(value) if value < 0 || value > 9 =>
+        Left(InvalidTicketInput("Priority must be between 0 and 9"))
+      case _                                     => Right(rawValue)
+    }
+
+  private def parseOptionalSeverityId(
+      rawId: Option[String]
+  ): Either[InvalidTicketInput, Option[TicketSeverityId]] =
+    rawId.map(_.trim).filter(_.nonEmpty) match {
+      case Some(value) =>
+        Try(value.toLong)
+          .toEither
+          .left
+          .map(_ => InvalidTicketInput(s"Invalid ticket severity id: $value"))
+          .map(parsedValue => Some(TicketSeverityId(parsedValue)))
+      case None        => Right(None)
+    }
+
   private def parseTicketStatusName(
       rawStatus: String
   ): Either[InvalidTicketInput, io.github.oleksiybondar.api.domain.ticket.TicketStateName] =
@@ -528,6 +598,9 @@ object TicketApi {
       description = ticket.description.map(_.value),
       acceptanceCriteria = ticket.acceptanceCriteria.map(_.value),
       estimatedMinutes = ticket.originalEstimatedMinutes,
+      priority = ticket.priority.flatMap(value => Try(value.value.toInt).toOption),
+      severityId = ticket.severityId.map(_.value.toString),
+      severityName = None,
       createdByUserId = ticket.createdByUserId.value.toString,
       assignedToUserId = ticket.assignedToUserId.map(_.value.toString),
       lastModifiedByUserId = ticket.lastModifiedByUserId.value.toString,
@@ -547,6 +620,9 @@ object TicketApi {
       description = ticket.description,
       acceptanceCriteria = ticket.acceptanceCriteria,
       estimatedMinutes = ticket.estimatedMinutes,
+      priority = ticket.priority,
+      severityId = ticket.severityId.map(_.toString),
+      severityName = None,
       createdByUserId = ticket.createdByUserId,
       assignedToUserId = ticket.assignedToUserId,
       lastModifiedByUserId = ticket.lastModifiedByUserId,

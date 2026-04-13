@@ -31,6 +31,8 @@ export interface CreateBoardTicketInput {
   assignedToUserId: string | null;
   description: string;
   estimatedMinutes: number | null;
+  priority: number;
+  severityId: string | null;
   title: string;
 }
 
@@ -270,6 +272,8 @@ export const useTicketsService = ({
           boardId,
           description: input.description.trim().length > 0 ? input.description.trim() : null,
           estimatedMinutes: input.estimatedMinutes,
+          priority: input.priority,
+          severityId: input.severityId,
           title: input.title.trim()
         })
       });
