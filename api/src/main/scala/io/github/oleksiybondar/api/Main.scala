@@ -84,6 +84,8 @@ object Main extends IOApp.Simple {
                          modules.ticket.ticketService,
                          modules.ticket.ticketQueryRepo,
                          modules.dictionary.ticketStateRepo,
+                         modules.dictionary.ticketSeverityRepo,
+                         modules.dictionary.timeTrackingActivityRepo,
                          modules.timeTracking.timeTrackingService,
                          modules.comment.commentQueryRepo,
                          modules.timeTracking.timeTrackingQueryRepo,
@@ -109,6 +111,12 @@ object Main extends IOApp.Simple {
       ticketService: io.github.oleksiybondar.api.domain.ticket.TicketService[IO],
       ticketQueryRepo: io.github.oleksiybondar.api.infrastructure.db.ticket.TicketQueryRepo[IO],
       ticketStateRepo: io.github.oleksiybondar.api.infrastructure.db.ticket.TicketStateRepo[IO],
+      ticketSeverityRepo: io.github.oleksiybondar.api.infrastructure.db.ticket.TicketSeverityRepo[
+        IO
+      ],
+      timeTrackingActivityRepo: io.github.oleksiybondar.api.infrastructure.db.timeTracking.TimeTrackingActivityRepo[
+        IO
+      ],
       timeTrackingService: io.github.oleksiybondar.api.domain.timeTracking.TimeTrackingService[IO],
       commentQueryRepo: io.github.oleksiybondar.api.infrastructure.db.comment.CommentQueryRepo[IO],
       timeTrackingQueryRepo: io.github.oleksiybondar.api.infrastructure.db.timeTracking.TimeTrackingQueryRepo[
@@ -131,6 +139,8 @@ object Main extends IOApp.Simple {
           ticketService = ticketService,
           ticketQueryRepo = ticketQueryRepo,
           ticketStateRepo = ticketStateRepo,
+          ticketSeverityRepo = ticketSeverityRepo,
+          timeTrackingActivityRepo = timeTrackingActivityRepo,
           timeTrackingService = timeTrackingService,
           commentQueryRepo = commentQueryRepo,
           timeTrackingQueryRepo = timeTrackingQueryRepo,

@@ -1,8 +1,13 @@
-import { useContext } from "react";
+import { useDictionaries } from "@hooks/useDictionaries";
 
-import { RolesContext } from "@contexts/roles-context";
 import type { RolesContextValue } from "@contexts/roles-context";
 
 export const useRoles = (): RolesContextValue => {
-  return useContext(RolesContext);
+  const dictionaries = useDictionaries();
+
+  return {
+    isLoadingRoles: dictionaries.isLoadingDictionaries,
+    roles: dictionaries.roles,
+    rolesError: dictionaries.dictionariesError
+  };
 };

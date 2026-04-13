@@ -28,6 +28,7 @@ import io.github.oleksiybondar.api.testkit.support.{
   InMemoryRoleRepo,
   InMemoryTicketQueryRepo,
   InMemoryTicketRepo,
+  InMemoryTicketSeverityRepo,
   InMemoryTicketStateRepo,
   InMemoryTimeTrackingActivityRepo,
   InMemoryTimeTrackingQueryRepo,
@@ -149,6 +150,13 @@ object GraphQLFixtures {
                                        TicketStateFixtures.doneState
                                      )
                                    )
+      ticketSeverityRepo        <- InMemoryTicketSeverityRepo.create[IO](
+                                     List(
+                                       TicketSeverityFixtures.minorSeverity,
+                                       TicketSeverityFixtures.normalSeverity,
+                                       TicketSeverityFixtures.majorSeverity
+                                     )
+                                   )
       authRepo                  <- InMemoryAuthRepo.create[IO]()
       roleRepo                  <- InMemoryRoleRepo.create[IO](
                                      List(
@@ -262,6 +270,8 @@ object GraphQLFixtures {
                                        ticketService = ticketService,
                                        ticketQueryRepo = ticketQueryRepo,
                                        ticketStateRepo = ticketStateRepo,
+                                       ticketSeverityRepo = ticketSeverityRepo,
+                                       timeTrackingActivityRepo = timeTrackingActivityRepo,
                                        timeTrackingService = timeTrackingService,
                                        commentQueryRepo = commentQueryRepo,
                                        timeTrackingQueryRepo = timeTrackingQueryRepo,
