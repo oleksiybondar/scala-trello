@@ -2,6 +2,8 @@
 
 Monorepo for a task-board application with Scala backend and React frontend.
 
+This project was started as a practical Scala/Cats showcase, inspired by an ongoing application process. The goal was to ramp up quickly on a new stack and deliver a working end-to-end product that demonstrates hands-on backend and frontend implementation.
+
 ## Repository layout
 
 ```text
