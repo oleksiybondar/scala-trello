@@ -142,7 +142,32 @@ object TicketApi {
             ctx =>
               ctx.value.board match {
                 case Some(boardView) => IO.pure(Some(boardView)).unsafeToFuture()
-                case None            => IO.pure(None).unsafeToFuture()
+                case None            =>
+                  (for {
+                    currentUserId <- IO.fromOption(ctx.ctx.currentUserId)(
+                                       InvalidTicketInput(
+                                         "Authentication context is missing"
+                                       )
+                                     )
+                    boardId       <- IO.fromEither(
+                                       Try(UUID.fromString(ctx.value.boardId))
+                                         .toEither
+                                         .left
+                                         .map(_ =>
+                                           InvalidTicketInput(
+                                             s"Invalid board id: ${ctx.value.boardId}"
+                                           )
+                                         )
+                                         .map(BoardId(_))
+                                     )
+                    board         <- ctx.ctx.boardQueryRepo.findById(boardId, currentUserId)
+                  } yield board.map(boardRow =>
+                    TicketBoardSummaryView(
+                      id = boardRow.id.value.toString,
+                      name = boardRow.name,
+                      active = boardRow.active
+                    )
+                  )).unsafeToFuture()
               }
         ),
         Field(
@@ -260,9 +285,13 @@ object TicketApi {
                   .map(_.member.boardId)
                   .distinct
                   .traverse(boardId => ctx.ctx.ticketService.listTickets(boardId, currentUserId))
-              assignedTickets =
-                ticketsByBoard.flatten.filter(_.assignedToUserId.contains(currentUserId))
-            } yield assignedTickets.map(toView)
+              userTickets     =
+                ticketsByBoard.flatten.filter(ticket =>
+                  ticket.assignedToUserId.contains(
+                    currentUserId
+                  ) || ticket.createdByUserId == currentUserId
+                )
+            } yield userTickets.map(toView)
           }.unsafeToFuture()
       )
     )

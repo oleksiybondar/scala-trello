@@ -11,6 +11,7 @@ import { MyTimeRegistrationPage } from "@pages/MyTimeRegistrationPage";
 import { MyTicketsPage } from "@pages/MyTicketsPage";
 import { RegisterPage } from "@pages/RegisterPage";
 import { RootPage } from "@pages/RootPage";
+import { TicketPage } from "@pages/TicketPage";
 import { UserProfileSettingsPage } from "@pages/UserProfileSettingsPage";
 import { UserSecuritySettingsPage } from "@pages/UserSecuritySettingsPage";
 import { UserUiPreferencesSettingsPage } from "@pages/UserUiPreferencesSettingsPage";
@@ -55,6 +56,14 @@ export const router = createBrowserRouter([
     element: (
       <RequireAuthentication>
         <MyTimeRegistrationPage />
+      </RequireAuthentication>
+    )
+  },
+  {
+    path: "/tickets/:ticketId",
+    element: (
+      <RequireAuthentication>
+        <TicketPage />
       </RequireAuthentication>
     )
   },

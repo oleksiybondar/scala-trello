@@ -5,12 +5,13 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { AppPageLayout } from "@components/layout/AppPageLayout";
+import { MyTicketsTable } from "@components/tickets/my-tickets/MyTicketsTable";
 import { MyTicketsToolbar } from "@components/tickets/my-tickets/MyTicketsToolbar";
 import { useMyTickets } from "@hooks/useMyTickets";
 import { MyTicketsProvider } from "@providers/MyTicketsProvider";
 
 const MyTicketsPageBody = (): ReactElement => {
-  const { isLoadingMyTickets, myTicketsError } = useMyTickets();
+  const { isLoadingMyTickets, myTickets, myTicketsError } = useMyTickets();
 
   return (
     <AppPageLayout>
@@ -23,9 +24,7 @@ const MyTicketsPageBody = (): ReactElement => {
             Loading tickets...
           </Typography>
         ) : null}
-        <Typography color="text.secondary" variant="body1">
-          This page is a stub. Ticket-focused personal view is coming next.
-        </Typography>
+        {!isLoadingMyTickets && myTicketsError === null ? <MyTicketsTable tickets={myTickets} /> : null}
       </Stack>
     </AppPageLayout>
   );

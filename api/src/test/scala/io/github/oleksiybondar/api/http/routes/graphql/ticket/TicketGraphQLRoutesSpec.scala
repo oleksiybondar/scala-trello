@@ -159,7 +159,9 @@ class TicketGraphQLRoutesSpec extends FunSuite {
     )
   }
 
-  test("POST /graphql returns only tickets assigned to the current user for myTickets query") {
+  test(
+    "POST /graphql returns tickets assigned to or created by current user with nested board in myTickets query"
+  ) {
     val response = GraphQLFixtures.withGraphQLRoutes(
       users = List(
         UserFixtures.sampleUser,
@@ -173,6 +175,13 @@ class TicketGraphQLRoutesSpec extends FunSuite {
         TicketFixtures.ticket(
           id = TicketId(2),
           assignedToUserId = Some(UserFixtures.sampleUser.id)
+        ),
+        TicketFixtures.ticket(
+          id = TicketId(3),
+          createdByUserId = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222")),
+          assignedToUserId = Some(
+            UserId(UUID.fromString("22222222-2222-2222-2222-222222222222"))
+          )
         )
       )
     ) { ctx =>
@@ -182,14 +191,21 @@ class TicketGraphQLRoutesSpec extends FunSuite {
       } yield response
     }
 
-    val body          = response.as[Json].unsafeRunSync()
-    val myTicketsHead = body.hcursor.downField("data").downField("myTickets").downArray
+    val body       = response.as[Json].unsafeRunSync()
+    val myTickets  =
+      body.hcursor.downField("data").downField("myTickets").focus.flatMap(_.asArray).getOrElse(
+        Vector.empty
+      )
+    val ids        = myTickets.flatMap(_.hcursor.get[String]("id").toOption)
+    val boardNames = myTickets.flatMap(
+      _.hcursor.downField("board").get[String]("name").toOption
+    )
 
     assertEquals(response.status, Status.Ok)
-    assertEquals(myTicketsHead.get[String]("id").toOption, Some("2"))
+    assertEquals(ids.sorted, Vector("1", "2"))
     assertEquals(
-      myTicketsHead.get[String]("assignedToUserId").toOption,
-      Some(UserFixtures.sampleUser.id.value.toString)
+      boardNames.distinct,
+      Vector("Core Board")
     )
   }
 
@@ -307,6 +323,7 @@ class TicketGraphQLRoutesSpec extends FunSuite {
       |    id
       |    name
       |    assignedToUserId
+      |    board { name }
       |  }
       |}""".stripMargin
 
