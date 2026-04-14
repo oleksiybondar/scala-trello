@@ -30,9 +30,14 @@ export const AppNavBar = (): ReactElement => {
           </Link>
 
           {isAuthenticated ? (
-            <Button color="inherit" component={RouterLink} to="/boards">
-              My boards
-            </Button>
+            <>
+              <Button color="inherit" component={RouterLink} to="/boards">
+                My boards
+              </Button>
+              <Button color="inherit" component={RouterLink} to="/tickets">
+                My tickets
+              </Button>
+            </>
           ) : null}
         </Stack>
 
