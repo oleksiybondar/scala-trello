@@ -418,6 +418,54 @@ object TicketApi {
           }.unsafeToFuture()
       ),
       Field(
+        name = "changeTicketPriority",
+        fieldType = TicketType,
+        arguments = TicketIdArg :: PriorityArg :: Nil,
+        resolve = ctx =>
+          updateAndLoadTicket(ctx) { currentUserId =>
+            for {
+              ticketId <- IO.fromEither(parseTicketId(ctx.arg(TicketIdArg)))
+              priority <- IO.fromEither(parsePriority(ctx.arg(PriorityArg)))
+              updated  <- ctx.ctx.ticketService.changePriority(
+                            ticketId,
+                            currentUserId,
+                            priority.map(value => TicketPriority(value.toString))
+                          )
+            } yield (ticketId, updated, "Ticket priority could not be changed")
+          }.unsafeToFuture()
+      ),
+      Field(
+        name = "changeTicketSeverity",
+        fieldType = TicketType,
+        arguments = TicketIdArg :: SeverityIdArg :: Nil,
+        resolve = ctx =>
+          updateAndLoadTicket(ctx) { currentUserId =>
+            for {
+              ticketId   <- IO.fromEither(parseTicketId(ctx.arg(TicketIdArg)))
+              severityId <- IO.fromEither(parseOptionalSeverityId(ctx.arg(SeverityIdArg)))
+              _          <- severityId match {
+                              case Some(value) =>
+                                ctx.ctx.ticketSeverityRepo
+                                  .findById(value)
+                                  .flatMap(
+                                    _.liftTo[IO](
+                                      InvalidTicketInput(
+                                        s"Unknown ticket severity: ${ctx.arg(SeverityIdArg).getOrElse("")}"
+                                      )
+                                    )
+                                  )
+                                  .void
+                              case None        => IO.unit
+                            }
+              updated    <- ctx.ctx.ticketService.changeSeverity(
+                              ticketId,
+                              currentUserId,
+                              severityId
+                            )
+            } yield (ticketId, updated, "Ticket severity could not be changed")
+          }.unsafeToFuture()
+      ),
+      Field(
         name = "changeTicketStatus",
         fieldType = TicketType,
         arguments = TicketIdArg :: StatusArg :: Nil,

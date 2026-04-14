@@ -3,6 +3,7 @@ export { AuthContext } from "@contexts/auth-context";
 export { BoardsContext } from "@contexts/boards-context";
 export { CurrentUserContext } from "@contexts/current-user-context";
 export { MyTicketsContext } from "@contexts/my-tickets-context";
+export { TicketContext } from "@contexts/ticket-context";
 export { RolesContext } from "@contexts/roles-context";
 export { ThemeManagerContext } from "@contexts/theme-manager-context";
 export { TicketsContext } from "@contexts/tickets-context";

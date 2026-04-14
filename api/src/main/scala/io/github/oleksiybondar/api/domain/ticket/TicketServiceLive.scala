@@ -96,6 +96,20 @@ final class TicketServiceLive[F[_]: Temporal](
   ): F[Boolean] =
     updateTicket(ticketId, actorUserId)(_.copy(originalEstimatedMinutes = estimatedMinutes))
 
+  override def changePriority(
+      ticketId: TicketId,
+      actorUserId: UserId,
+      priority: Option[TicketPriority]
+  ): F[Boolean] =
+    updateTicket(ticketId, actorUserId)(_.copy(priority = priority))
+
+  override def changeSeverity(
+      ticketId: TicketId,
+      actorUserId: UserId,
+      severityId: Option[TicketSeverityId]
+  ): F[Boolean] =
+    updateTicket(ticketId, actorUserId)(_.copy(severityId = severityId))
+
   override def changeState(
       ticketId: TicketId,
       actorUserId: UserId,

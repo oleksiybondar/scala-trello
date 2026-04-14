@@ -4,5 +4,6 @@ export { useBoards } from "@hooks/useBoards";
 export { useCurrentUser } from "@hooks/useCurrentUser";
 export { useMyTickets } from "@hooks/useMyTickets";
 export { useRoles } from "@hooks/useRoles";
+export { useTicket } from "@hooks/useTicket";
 export { useTickets } from "@hooks/useTickets";
 export { useThemeManager } from "@hooks/useThemeManager";

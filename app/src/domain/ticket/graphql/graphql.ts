@@ -232,6 +232,38 @@ export const buildChangeTicketEstimatedTimeMutation = (
   `;
 };
 
+export const buildChangeTicketPriorityMutation = (
+  ticketId: string,
+  priority: number | null
+): string => {
+  return /* GraphQL */ `
+    mutation {
+      changeTicketPriority(
+        ticketId: ${serializeGraphQLString(ticketId)}
+        priority: ${serializeNullableGraphQLInt(priority)}
+      ) {
+        ${TICKET_FIELDS}
+      }
+    }
+  `;
+};
+
+export const buildChangeTicketSeverityMutation = (
+  ticketId: string,
+  severityId: string | null
+): string => {
+  return /* GraphQL */ `
+    mutation {
+      changeTicketSeverity(
+        ticketId: ${serializeGraphQLString(ticketId)}
+        severityId: ${serializeNullableGraphQLString(severityId)}
+      ) {
+        ${TICKET_FIELDS}
+      }
+    }
+  `;
+};
+
 export const buildChangeTicketStatusMutation = (
   ticketId: string,
   status: string

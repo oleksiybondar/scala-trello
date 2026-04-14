@@ -276,6 +276,12 @@ class TicketGraphQLRoutesSpec extends FunSuite {
                       graphqlRequest(changeEstimatedMutation, accessToken = Some(token))
                     )
         _        <- ctx.httpApp.run(
+                      graphqlRequest(changePriorityMutation, accessToken = Some(token))
+                    )
+        _        <- ctx.httpApp.run(
+                      graphqlRequest(changeSeverityMutation, accessToken = Some(token))
+                    )
+        _        <- ctx.httpApp.run(
                       graphqlRequest(changeStatusMutation, accessToken = Some(token))
                     )
         response <- ctx.httpApp.run(graphqlRequest(reassignMutation, accessToken = Some(token)))
@@ -293,6 +299,8 @@ class TicketGraphQLRoutesSpec extends FunSuite {
       Some("Updated acceptance criteria")
     )
     assertEquals(cursor.get[Int]("estimatedMinutes").toOption, Some(240))
+    assertEquals(cursor.get[Int]("priority").toOption, Some(2))
+    assertEquals(cursor.get[String]("severityId").toOption, Some("3"))
     assertEquals(cursor.get[String]("status").toOption, Some("in_progress"))
     assertEquals(
       cursor.get[String]("assignedToUserId").toOption,
@@ -451,6 +459,8 @@ class TicketGraphQLRoutesSpec extends FunSuite {
       |    description
       |    acceptanceCriteria
       |    estimatedMinutes
+      |    priority
+      |    severityId
       |    status
       |    assignedToUserId
       |  }
@@ -461,6 +471,22 @@ class TicketGraphQLRoutesSpec extends FunSuite {
       |  changeTicketStatus(ticketId: "1", status: "in progress") {
       |    id
       |    status
+      |  }
+      |}""".stripMargin
+
+  private val changePriorityMutation =
+    """mutation {
+      |  changeTicketPriority(ticketId: "1", priority: 2) {
+      |    id
+      |    priority
+      |  }
+      |}""".stripMargin
+
+  private val changeSeverityMutation =
+    """mutation {
+      |  changeTicketSeverity(ticketId: "1", severityId: "3") {
+      |    id
+      |    severityId
       |  }
       |}""".stripMargin
 

@@ -107,6 +107,14 @@ export interface ChangeTicketEstimatedTimeMutationResponse {
   changeTicketEstimatedTime: TicketResponse;
 }
 
+export interface ChangeTicketPriorityMutationResponse {
+  changeTicketPriority: TicketResponse;
+}
+
+export interface ChangeTicketSeverityMutationResponse {
+  changeTicketSeverity: TicketResponse;
+}
+
 export interface ChangeTicketStatusMutationResponse {
   changeTicketStatus: TicketResponse;
 }
