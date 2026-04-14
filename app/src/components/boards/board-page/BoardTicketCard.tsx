@@ -6,6 +6,7 @@ import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
+import Link from "@mui/material/Link";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
@@ -13,6 +14,7 @@ import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useTheme } from "@mui/material/styles";
+import { Link as RouterLink } from "react-router-dom";
 
 import { TicketAssigneeMenu } from "@components/boards/board-page/TicketAssigneeMenu";
 import {
@@ -140,10 +142,14 @@ export const BoardTicketCard = ({
                 }}
                 title={ticket.name}
               >
-                <Typography
+                <Link
                   className="BoardTicketCard-title"
                   color="text.primary"
+                  component={RouterLink}
                   fontWeight={700}
+                  onClick={event => {
+                    event.stopPropagation();
+                  }}
                   sx={{
                     display: "-webkit-box",
                     flex: 1,
@@ -153,10 +159,12 @@ export const BoardTicketCard = ({
                     WebkitBoxOrient: "vertical",
                     WebkitLineClamp: TITLE_LINES
                   }}
+                  to={`/tickets/${ticket.ticketId}`}
+                  underline="hover"
                   variant="body2"
                 >
                   {ticket.name}
-                </Typography>
+                </Link>
               </Tooltip>
             </Stack>
           </Box>
