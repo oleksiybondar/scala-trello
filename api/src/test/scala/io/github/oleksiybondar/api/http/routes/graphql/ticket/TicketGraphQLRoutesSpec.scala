@@ -3,6 +3,7 @@ package io.github.oleksiybondar.api.http.routes.graphql.ticket
 import cats.effect.unsafe.implicits.global
 import io.circe.Json
 import io.github.oleksiybondar.api.domain.permission.RoleId
+import io.github.oleksiybondar.api.domain.ticket.TicketId
 import io.github.oleksiybondar.api.domain.user.{UserId, Username}
 import io.github.oleksiybondar.api.testkit.fixtures.{
   BoardMemberFixtures,
@@ -82,6 +83,7 @@ class TicketGraphQLRoutesSpec extends FunSuite {
     assertEquals(ticketCursor.get[String]("name").toOption, Some("Implement login mutation"))
     assertEquals(ticketCursor.get[String]("status").toOption, Some("new"))
     assertEquals(ticketCursor.get[Int]("estimatedMinutes").toOption, Some(120))
+    assertEquals(ticketCursor.get[String]("severityId").toOption, Some("2"))
   }
 
   test("POST /graphql returns nested ticket comments and time entries") {
@@ -149,10 +151,98 @@ class TicketGraphQLRoutesSpec extends FunSuite {
     assertEquals(cursor.get[String]("name").toOption, Some("New GraphQL ticket"))
     assertEquals(cursor.get[String]("status").toOption, Some("new"))
     assertEquals(cursor.get[Int]("estimatedMinutes").toOption, Some(45))
+    assertEquals(cursor.get[Int]("priority").toOption, Some(5))
+    assertEquals(cursor.get[String]("severityId").toOption, Some("2"))
     assertEquals(
       cursor.get[String]("assignedToUserId").toOption,
       Some("22222222-2222-2222-2222-222222222222")
     )
+  }
+
+  test(
+    "POST /graphql returns tickets assigned to or created by current user with nested board in myTickets query"
+  ) {
+    val response = GraphQLFixtures.withGraphQLRoutes(
+      users = List(
+        UserFixtures.sampleUser,
+        UserFixtures.user(
+          id = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222")),
+          username = Some(Username("bob"))
+        )
+      ),
+      tickets = List(
+        TicketFixtures.sampleTicket,
+        TicketFixtures.ticket(
+          id = TicketId(2),
+          assignedToUserId = Some(UserFixtures.sampleUser.id)
+        ),
+        TicketFixtures.ticket(
+          id = TicketId(3),
+          createdByUserId = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222")),
+          assignedToUserId = Some(
+            UserId(UUID.fromString("22222222-2222-2222-2222-222222222222"))
+          )
+        )
+      )
+    ) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(graphqlRequest(myTicketsQuery, accessToken = Some(token)))
+      } yield response
+    }
+
+    val body       = response.as[Json].unsafeRunSync()
+    val myTickets  =
+      body.hcursor.downField("data").downField("myTickets").focus.flatMap(_.asArray).getOrElse(
+        Vector.empty
+      )
+    val ids        = myTickets.flatMap(_.hcursor.get[String]("id").toOption)
+    val boardNames = myTickets.flatMap(
+      _.hcursor.downField("board").get[String]("name").toOption
+    )
+
+    assertEquals(response.status, Status.Ok)
+    assertEquals(ids.sorted, Vector("1", "2"))
+    assertEquals(
+      boardNames.distinct,
+      Vector("Core Board")
+    )
+  }
+
+  test("POST /graphql returns only assigned tickets when myTickets assignedOnly is enabled") {
+    val response = GraphQLFixtures.withGraphQLRoutes(
+      users = List(
+        UserFixtures.sampleUser,
+        UserFixtures.user(
+          id = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222")),
+          username = Some(Username("bob"))
+        )
+      ),
+      tickets = List(
+        TicketFixtures.sampleTicket,
+        TicketFixtures.ticket(
+          id = TicketId(2),
+          assignedToUserId = Some(UserFixtures.sampleUser.id)
+        )
+      )
+    ) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(myTicketsAssignedOnlyQuery, accessToken = Some(token))
+                    )
+      } yield response
+    }
+
+    val body      = response.as[Json].unsafeRunSync()
+    val myTickets =
+      body.hcursor.downField("data").downField("myTickets").focus.flatMap(_.asArray).getOrElse(
+        Vector.empty
+      )
+    val ids       = myTickets.flatMap(_.hcursor.get[String]("id").toOption)
+
+    assertEquals(response.status, Status.Ok)
+    assertEquals(ids, Vector("2"))
   }
 
   test("POST /graphql updates ticket fields and reassigns the ticket") {
@@ -185,6 +275,15 @@ class TicketGraphQLRoutesSpec extends FunSuite {
         _        <- ctx.httpApp.run(
                       graphqlRequest(changeEstimatedMutation, accessToken = Some(token))
                     )
+        _        <- ctx.httpApp.run(
+                      graphqlRequest(changePriorityMutation, accessToken = Some(token))
+                    )
+        _        <- ctx.httpApp.run(
+                      graphqlRequest(changeSeverityMutation, accessToken = Some(token))
+                    )
+        _        <- ctx.httpApp.run(
+                      graphqlRequest(changeStatusMutation, accessToken = Some(token))
+                    )
         response <- ctx.httpApp.run(graphqlRequest(reassignMutation, accessToken = Some(token)))
       } yield response
     }
@@ -200,6 +299,9 @@ class TicketGraphQLRoutesSpec extends FunSuite {
       Some("Updated acceptance criteria")
     )
     assertEquals(cursor.get[Int]("estimatedMinutes").toOption, Some(240))
+    assertEquals(cursor.get[Int]("priority").toOption, Some(2))
+    assertEquals(cursor.get[String]("severityId").toOption, Some("3"))
+    assertEquals(cursor.get[String]("status").toOption, Some("in_progress"))
     assertEquals(
       cursor.get[String]("assignedToUserId").toOption,
       Some("22222222-2222-2222-2222-222222222222")
@@ -253,7 +355,28 @@ class TicketGraphQLRoutesSpec extends FunSuite {
       |      name
       |      status
       |      estimatedMinutes
+      |      priority
+      |      severityId
       |    }
+      |  }
+      |}""".stripMargin
+
+  private val myTicketsQuery =
+    """query {
+      |  myTickets {
+      |    id
+      |    name
+      |    assignedToUserId
+      |    board { name }
+      |  }
+      |}""".stripMargin
+
+  private val myTicketsAssignedOnlyQuery =
+    """query {
+      |  myTickets(assignedOnly: true) {
+      |    id
+      |    name
+      |    assignedToUserId
       |  }
       |}""".stripMargin
 
@@ -282,12 +405,16 @@ class TicketGraphQLRoutesSpec extends FunSuite {
       |    description: "Created from GraphQL"
       |    acceptanceCriteria: "It should work"
       |    estimatedMinutes: 45
+      |    priority: 5
+      |    severityId: "2"
       |    assignedToUserId: "22222222-2222-2222-2222-222222222222"
       |  ) {
       |    id
       |    name
       |    status
       |    estimatedMinutes
+      |    priority
+      |    severityId
       |    assignedToUserId
       |  }
       |}""".stripMargin
@@ -332,7 +459,34 @@ class TicketGraphQLRoutesSpec extends FunSuite {
       |    description
       |    acceptanceCriteria
       |    estimatedMinutes
+      |    priority
+      |    severityId
+      |    status
       |    assignedToUserId
+      |  }
+      |}""".stripMargin
+
+  private val changeStatusMutation =
+    """mutation {
+      |  changeTicketStatus(ticketId: "1", status: "in progress") {
+      |    id
+      |    status
+      |  }
+      |}""".stripMargin
+
+  private val changePriorityMutation =
+    """mutation {
+      |  changeTicketPriority(ticketId: "1", priority: 2) {
+      |    id
+      |    priority
+      |  }
+      |}""".stripMargin
+
+  private val changeSeverityMutation =
+    """mutation {
+      |  changeTicketSeverity(ticketId: "1", severityId: "3") {
+      |    id
+      |    severityId
       |  }
       |}""".stripMargin
 

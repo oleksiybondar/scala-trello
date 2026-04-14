@@ -6,10 +6,9 @@ import type {
   NormalizedQueryBoardsParams,
   QueryBoardsParams
 } from "@contexts/boards-context";
-import { filterBoards, getBoardOwnerOptions } from "@features/board/boardsApi";
-import { useCreateBoardMutation } from "@features/board/useCreateBoardMutation";
-import { useBoardsQuery } from "@features/board/useBoardsQuery";
-import type { CreateBoardInput } from "@models/board";
+import { filterBoards, getBoardOwnerOptions } from "../domain/board/boardsApi";
+import { useBoardsService } from "../domain/board/useBoardsService";
+import type { CreateBoardInput } from "../domain/board/graphql";
 
 const DEFAULT_QUERY_BOARDS_PARAMS = {
   page: 1,
@@ -36,31 +35,28 @@ export const BoardsProvider = ({
   const [currentParams, setCurrentParams] = useState(
     normalizeQueryBoardsParams(DEFAULT_QUERY_BOARDS_PARAMS)
   );
-  const boardsQuery = useBoardsQuery({
-    active: currentParams.showInactive ? undefined : true,
-    keyword: currentParams.keyword,
-    owner: currentParams.owner
+  const {
+    boards: visibleBoards,
+    boardsError,
+    createBoard,
+    isCreatingBoard,
+    isLoadingBoards
+  } = useBoardsService({
+    currentParams
   });
-  const ownerOptionsQuery = useBoardsQuery({
-    active: undefined
-  });
-  const createBoardMutation = useCreateBoardMutation();
-  const visibleBoards = boardsQuery.data ?? [];
-  const allBoards = ownerOptionsQuery.data ?? [];
 
   const value = {
     boards: filterBoards(visibleBoards, {
       page: currentParams.page
     }),
-    boardsError:
-      boardsQuery.error instanceof Error ? boardsQuery.error : null,
+    boardsError,
     createBoard: async (input: CreateBoardInput) => {
-      await createBoardMutation.mutateAsync(input);
+      await createBoard(input);
     },
     currentParams,
-    isCreatingBoard: createBoardMutation.isPending,
-    isLoadingBoards: boardsQuery.isLoading || ownerOptionsQuery.isLoading,
-    ownerOptions: getBoardOwnerOptions(allBoards),
+    isCreatingBoard,
+    isLoadingBoards,
+    ownerOptions: getBoardOwnerOptions(visibleBoards),
     queryBoards: (params: QueryBoardsParams) => {
       setCurrentParams(currentState => {
         return normalizeQueryBoardsParams({

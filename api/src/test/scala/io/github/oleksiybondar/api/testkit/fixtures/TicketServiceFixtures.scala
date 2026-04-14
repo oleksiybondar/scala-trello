@@ -5,7 +5,7 @@ import cats.effect.unsafe.implicits.global
 import io.github.oleksiybondar.api.domain.board.{Board, BoardMember}
 import io.github.oleksiybondar.api.domain.permission.{Permission, Role}
 import io.github.oleksiybondar.api.domain.ticket.{Ticket, TicketServiceLive}
-import io.github.oleksiybondar.api.testkit.support.InMemoryTicketRepo
+import io.github.oleksiybondar.api.testkit.support.{InMemoryTicketRepo, InMemoryTicketStateRepo}
 
 object TicketServiceFixtures {
 
@@ -24,28 +24,38 @@ object TicketServiceFixtures {
   )(run: TicketServiceContext => IO[A]): A =
     (
       for {
-        ticketRepo <- InMemoryTicketRepo.create[IO](tickets)
-        result     <- IO.pure(
-                        BoardAccessServiceFixtures.withBoardAccessService(
-                          dashboards = dashboards,
-                          members = members,
-                          roles = roles,
-                          permissions = permissions
-                        ) { accessCtx =>
-                          run(
-                            TicketServiceContext(
-                              ticketRepo = ticketRepo,
-                              boardAccessFixtures = accessCtx,
-                              ticketService = new TicketServiceLive[IO](
-                                ticketRepo,
-                                accessCtx.dashboardRepo,
-                                accessCtx.dashboardAccessService,
-                                accessCtx.membershipFixtures.dashboardMembershipService
-                              )
-                            )
-                          )
-                        }
-                      )
+        ticketRepo      <- InMemoryTicketRepo.create[IO](tickets)
+        ticketStateRepo <- InMemoryTicketStateRepo.create[IO](
+                             List(
+                               TicketStateFixtures.newState,
+                               TicketStateFixtures.inProgressState,
+                               TicketStateFixtures.codeReviewState,
+                               TicketStateFixtures.inTestingState,
+                               TicketStateFixtures.doneState
+                             )
+                           )
+        result          <- IO.pure(
+                             BoardAccessServiceFixtures.withBoardAccessService(
+                               dashboards = dashboards,
+                               members = members,
+                               roles = roles,
+                               permissions = permissions
+                             ) { accessCtx =>
+                               run(
+                                 TicketServiceContext(
+                                   ticketRepo = ticketRepo,
+                                   boardAccessFixtures = accessCtx,
+                                   ticketService = new TicketServiceLive[IO](
+                                     ticketRepo,
+                                     ticketStateRepo,
+                                     accessCtx.dashboardRepo,
+                                     accessCtx.dashboardAccessService,
+                                     accessCtx.membershipFixtures.dashboardMembershipService
+                                   )
+                                 )
+                               )
+                             }
+                           )
       } yield result
     ).unsafeRunSync()
 }

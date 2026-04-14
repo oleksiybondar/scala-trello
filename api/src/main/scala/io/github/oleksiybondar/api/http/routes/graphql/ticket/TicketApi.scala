@@ -11,6 +11,8 @@ import io.github.oleksiybondar.api.domain.ticket.{
   TicketDescription,
   TicketId,
   TicketName,
+  TicketPriority,
+  TicketSeverityId,
   TicketStateId
 }
 import io.github.oleksiybondar.api.domain.user.UserId
@@ -29,6 +31,7 @@ import io.github.oleksiybondar.api.http.routes.graphql.user.{UserApi, UserView}
 import sangria.execution.UserFacingError
 import sangria.schema.{
   Argument,
+  BooleanType,
   Field,
   IntType,
   ListType,
@@ -59,7 +62,11 @@ object TicketApi {
   private val DescriptionArg    = Argument("description", OptionInputType(StringType))
   private val AcceptanceArg     = Argument("acceptanceCriteria", OptionInputType(StringType))
   private val EstimatedArg      = Argument("estimatedMinutes", OptionInputType(IntType))
+  private val PriorityArg       = Argument("priority", OptionInputType(IntType))
+  private val SeverityIdArg     = Argument("severityId", OptionInputType(StringType))
+  private val StatusArg         = Argument("status", StringType)
   private val AssignedUserIdArg = Argument("assignedToUserId", OptionInputType(StringType))
+  private val AssignedOnlyArg   = Argument("assignedOnly", OptionInputType(BooleanType))
 
   val TicketBoardSummaryType: ObjectType[GraphQLContext, TicketBoardSummaryView] =
     ObjectType(
@@ -85,6 +92,30 @@ object TicketApi {
           resolve = _.value.acceptanceCriteria
         ),
         Field("estimatedMinutes", OptionType(IntType), resolve = _.value.estimatedMinutes),
+        Field("priority", OptionType(IntType), resolve = _.value.priority),
+        Field("severityId", OptionType(StringType), resolve = _.value.severityId),
+        Field(
+          "severityName",
+          OptionType(StringType),
+          resolve =
+            ctx =>
+              ctx.value.severityName match {
+                case Some(value) => IO.pure(Some(value)).unsafeToFuture()
+                case None        =>
+                  ctx.value.severityId match {
+                    case Some(rawId) =>
+                      Try(rawId.toLong).toOption match {
+                        case Some(severityId) =>
+                          ctx.ctx.ticketSeverityRepo
+                            .findById(TicketSeverityId(severityId))
+                            .map(_.map(_.name.value))
+                            .unsafeToFuture()
+                        case None             => IO.pure(None).unsafeToFuture()
+                      }
+                    case None        => IO.pure(None).unsafeToFuture()
+                  }
+              }
+        ),
         Field("commentsCount", IntType, resolve = _.value.commentsCount),
         Field("trackedMinutes", IntType, resolve = _.value.trackedMinutes),
         Field(
@@ -113,7 +144,32 @@ object TicketApi {
             ctx =>
               ctx.value.board match {
                 case Some(boardView) => IO.pure(Some(boardView)).unsafeToFuture()
-                case None            => IO.pure(None).unsafeToFuture()
+                case None            =>
+                  (for {
+                    currentUserId <- IO.fromOption(ctx.ctx.currentUserId)(
+                                       InvalidTicketInput(
+                                         "Authentication context is missing"
+                                       )
+                                     )
+                    boardId       <- IO.fromEither(
+                                       Try(UUID.fromString(ctx.value.boardId))
+                                         .toEither
+                                         .left
+                                         .map(_ =>
+                                           InvalidTicketInput(
+                                             s"Invalid board id: ${ctx.value.boardId}"
+                                           )
+                                         )
+                                         .map(BoardId(_))
+                                     )
+                    board         <- ctx.ctx.boardQueryRepo.findById(boardId, currentUserId)
+                  } yield board.map(boardRow =>
+                    TicketBoardSummaryView(
+                      id = boardRow.id.value.toString,
+                      name = boardRow.name,
+                      active = boardRow.active
+                    )
+                  )).unsafeToFuture()
               }
         ),
         Field(
@@ -217,6 +273,31 @@ object TicketApi {
               tickets <- ctx.ctx.ticketService.listTickets(boardId, currentUserId)
             } yield tickets.map(toView)
           }.unsafeToFuture()
+      ),
+      Field(
+        name = "myTickets",
+        fieldType = ListType(TicketType),
+        arguments = AssignedOnlyArg :: Nil,
+        resolve = ctx =>
+          withCurrentUser(ctx) { currentUserId =>
+            val assignedOnly = ctx.arg(AssignedOnlyArg).getOrElse(false)
+            for {
+              memberships    <-
+                ctx.ctx.dashboardMembershipService.listMembershipsForUser(currentUserId)
+              ticketsByBoard <-
+                memberships
+                  .map(_.member.boardId)
+                  .distinct
+                  .traverse(boardId => ctx.ctx.ticketService.listTickets(boardId, currentUserId))
+              userTickets     = ticketsByBoard.flatten.filter { ticket =>
+                                  if (assignedOnly) ticket.assignedToUserId.contains(currentUserId)
+                                  else
+                                    ticket.assignedToUserId.contains(
+                                      currentUserId
+                                    ) || ticket.createdByUserId == currentUserId
+                                }
+            } yield userTickets.map(toView)
+          }.unsafeToFuture()
       )
     )
 
@@ -226,13 +307,29 @@ object TicketApi {
         name = "createTicket",
         fieldType = TicketType,
         arguments =
-          BoardIdArg :: LegacyBoardIdArg :: TitleArg :: DescriptionArg :: AcceptanceArg :: EstimatedArg :: AssignedUserIdArg :: Nil,
+          BoardIdArg :: LegacyBoardIdArg :: TitleArg :: DescriptionArg :: AcceptanceArg :: EstimatedArg :: PriorityArg :: SeverityIdArg :: AssignedUserIdArg :: Nil,
         resolve = ctx =>
           withCurrentUser(ctx) { currentUserId =>
             for {
               boardId       <- IO.fromEither(parseRequiredBoardId(ctx))
               title         <- IO.fromEither(parseRequiredTitle(ctx.arg(TitleArg)))
               estimated     <- IO.fromEither(parseEstimatedMinutes(ctx.arg(EstimatedArg)))
+              priority      <- IO.fromEither(parsePriority(ctx.arg(PriorityArg)))
+              severityId    <- IO.fromEither(parseOptionalSeverityId(ctx.arg(SeverityIdArg)))
+              _             <- severityId match {
+                                 case Some(value) =>
+                                   ctx.ctx.ticketSeverityRepo
+                                     .findById(value)
+                                     .flatMap(
+                                       _.liftTo[IO](
+                                         InvalidTicketInput(
+                                           s"Unknown ticket severity: ${ctx.arg(SeverityIdArg).getOrElse("")}"
+                                         )
+                                       )
+                                     )
+                                     .void
+                                 case None        => IO.unit
+                               }
               assignedToId  <- IO.fromEither(parseOptionalUserId(ctx.arg(AssignedUserIdArg)))
               createdTicket <- ctx.ctx.ticketService.createTicket(
                                  CreateTicketCommand(
@@ -245,6 +342,10 @@ object TicketApi {
                                        .map(TicketAcceptanceCriteria(_)),
                                    assignedToUserId = assignedToId,
                                    originalEstimatedMinutes = estimated,
+                                   priority = priority.map(value =>
+                                     TicketPriority(value.toString)
+                                   ),
+                                   severityId = severityId,
                                    stateId = TicketStateId(1)
                                  ),
                                  currentUserId
@@ -314,6 +415,76 @@ object TicketApi {
               updated   <-
                 ctx.ctx.ticketService.changeEstimatedTime(ticketId, currentUserId, estimated)
             } yield (ticketId, updated, "Ticket estimated time could not be changed")
+          }.unsafeToFuture()
+      ),
+      Field(
+        name = "changeTicketPriority",
+        fieldType = TicketType,
+        arguments = TicketIdArg :: PriorityArg :: Nil,
+        resolve = ctx =>
+          updateAndLoadTicket(ctx) { currentUserId =>
+            for {
+              ticketId <- IO.fromEither(parseTicketId(ctx.arg(TicketIdArg)))
+              priority <- IO.fromEither(parsePriority(ctx.arg(PriorityArg)))
+              updated  <- ctx.ctx.ticketService.changePriority(
+                            ticketId,
+                            currentUserId,
+                            priority.map(value => TicketPriority(value.toString))
+                          )
+            } yield (ticketId, updated, "Ticket priority could not be changed")
+          }.unsafeToFuture()
+      ),
+      Field(
+        name = "changeTicketSeverity",
+        fieldType = TicketType,
+        arguments = TicketIdArg :: SeverityIdArg :: Nil,
+        resolve = ctx =>
+          updateAndLoadTicket(ctx) { currentUserId =>
+            for {
+              ticketId   <- IO.fromEither(parseTicketId(ctx.arg(TicketIdArg)))
+              severityId <- IO.fromEither(parseOptionalSeverityId(ctx.arg(SeverityIdArg)))
+              _          <- severityId match {
+                              case Some(value) =>
+                                ctx.ctx.ticketSeverityRepo
+                                  .findById(value)
+                                  .flatMap(
+                                    _.liftTo[IO](
+                                      InvalidTicketInput(
+                                        s"Unknown ticket severity: ${ctx.arg(SeverityIdArg).getOrElse("")}"
+                                      )
+                                    )
+                                  )
+                                  .void
+                              case None        => IO.unit
+                            }
+              updated    <- ctx.ctx.ticketService.changeSeverity(
+                              ticketId,
+                              currentUserId,
+                              severityId
+                            )
+            } yield (ticketId, updated, "Ticket severity could not be changed")
+          }.unsafeToFuture()
+      ),
+      Field(
+        name = "changeTicketStatus",
+        fieldType = TicketType,
+        arguments = TicketIdArg :: StatusArg :: Nil,
+        resolve = ctx =>
+          updateAndLoadTicket(ctx) { currentUserId =>
+            for {
+              ticketId   <- IO.fromEither(parseTicketId(ctx.arg(TicketIdArg)))
+              statusName <- IO.fromEither(parseTicketStatusName(ctx.arg(StatusArg)))
+              state      <- ctx.ctx.ticketStateRepo
+                              .findByName(statusName)
+                              .flatMap(
+                                _.liftTo[IO](
+                                  InvalidTicketInput(
+                                    s"Unknown ticket status: ${ctx.arg(StatusArg).trim}"
+                                  )
+                                )
+                              )
+              updated    <- ctx.ctx.ticketService.changeState(ticketId, currentUserId, state.id)
+            } yield (ticketId, updated, "Ticket status could not be changed")
           }.unsafeToFuture()
       ),
       Field(
@@ -477,6 +648,37 @@ object TicketApi {
       case _                        => Right(rawValue)
     }
 
+  private def parsePriority(
+      rawValue: Option[Int]
+  ): Either[InvalidTicketInput, Option[Int]] =
+    rawValue match {
+      case Some(value) if value < 0 || value > 9 =>
+        Left(InvalidTicketInput("Priority must be between 0 and 9"))
+      case _                                     => Right(rawValue)
+    }
+
+  private def parseOptionalSeverityId(
+      rawId: Option[String]
+  ): Either[InvalidTicketInput, Option[TicketSeverityId]] =
+    rawId.map(_.trim).filter(_.nonEmpty) match {
+      case Some(value) =>
+        Try(value.toLong)
+          .toEither
+          .left
+          .map(_ => InvalidTicketInput(s"Invalid ticket severity id: $value"))
+          .map(parsedValue => Some(TicketSeverityId(parsedValue)))
+      case None        => Right(None)
+    }
+
+  private def parseTicketStatusName(
+      rawStatus: String
+  ): Either[InvalidTicketInput, io.github.oleksiybondar.api.domain.ticket.TicketStateName] =
+    Option(rawStatus)
+      .map(_.trim.toLowerCase.replace(' ', '_'))
+      .filter(_.nonEmpty)
+      .toRight(InvalidTicketInput("Status is required"))
+      .map(io.github.oleksiybondar.api.domain.ticket.TicketStateName(_))
+
   private def normalizeOptionalText(rawValue: Option[String]): Option[String] =
     rawValue.map(_.trim).filter(_.nonEmpty)
 
@@ -496,6 +698,9 @@ object TicketApi {
       description = ticket.description.map(_.value),
       acceptanceCriteria = ticket.acceptanceCriteria.map(_.value),
       estimatedMinutes = ticket.originalEstimatedMinutes,
+      priority = ticket.priority.flatMap(value => Try(value.value.toInt).toOption),
+      severityId = ticket.severityId.map(_.value.toString),
+      severityName = None,
       createdByUserId = ticket.createdByUserId.value.toString,
       assignedToUserId = ticket.assignedToUserId.map(_.value.toString),
       lastModifiedByUserId = ticket.lastModifiedByUserId.value.toString,
@@ -515,6 +720,9 @@ object TicketApi {
       description = ticket.description,
       acceptanceCriteria = ticket.acceptanceCriteria,
       estimatedMinutes = ticket.estimatedMinutes,
+      priority = ticket.priority,
+      severityId = ticket.severityId.map(_.toString),
+      severityName = None,
       createdByUserId = ticket.createdByUserId,
       assignedToUserId = ticket.assignedToUserId,
       lastModifiedByUserId = ticket.lastModifiedByUserId,

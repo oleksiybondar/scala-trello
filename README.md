@@ -1,62 +1,45 @@
 # Introduction Into Scala
 
-Practice monorepo for learning Scala, functional programming, Cats, Cats Effect, and a TypeScript frontend stack.
+Monorepo for a task-board application with Scala backend and React frontend.
 
-The product is a dashboard-oriented task management application with authentication, dashboard membership, roles, ticket workflow, ticket comments, and time logging.
-
-Core product scope:
-
-- authenticated users can create and own dashboards
-- users can participate in multiple dashboards with different roles per dashboard
-- dashboard access is based on seeded roles such as `admin`, `contributor`, and `viewer`
-- tickets live inside dashboards and move through seeded workflow states
-- tickets can carry severity, assignment, estimation, component, scope, and acceptance criteria data
-- each ticket has a comment thread
-- time can be logged against tickets using seeded activity types such as development, testing, review, and planning
-- authentication supports local email/password today and may expand later
-- users remain local application users regardless of registration method
-- backend uses REST for auth, health/docs, Swagger, and GraphiQL
-- backend uses GraphQL for business/domain features
-- frontend uses Vite, React, TypeScript, and MUI for fast UI bootstrap
-
-This repository is intentionally a monorepo because it is a training project. In a production-oriented setup, the backend and frontend would likely live in separate repositories.
+This project was started as a practical Scala/Cats showcase, inspired by an ongoing application process. The goal was to ramp up quickly on a new stack and deliver a working end-to-end product that demonstrates hands-on backend and frontend implementation.
 
 ## Repository layout
 
 ```text
 .
-├── api/      Scala 3 backend
-├── app/      Vite + React + TypeScript frontend
-└── scripts/  shared monorepo tooling
+├── api/      Scala 3 backend (REST + GraphQL)
+├── app/      React + TypeScript frontend
+└── scripts/  shared quality/check scripts
 ```
 
-Project-specific documentation:
+## Product coverage
 
-- [`api/README.md`](./api/README.md)
-- [`app/README.md`](./app/README.md)
+- authentication and session lifecycle
+- user profile and account management
+- boards with membership and role-based access
+- board settings and ownership management
+- tickets with state workflow, assignment, priority, severity, estimates, and acceptance criteria
+- comments on tickets
+- time tracking entries with activity classification
+- personal ticket views and ticket details editing
 
-## Running the project
+## Run locally
 
 Prerequisites:
 
 - JDK 17+ and `sbt`
 - Node.js and `npm`
-- Docker or a local PostgreSQL instance
+- Docker (or local PostgreSQL)
 
-Install shared Git hooks from the repository root:
-
-```bash
-sh ./scripts/install-hooks.sh
-```
-
-Start PostgreSQL for the backend:
+Start DB:
 
 ```bash
 cd api
 docker compose up -d
 ```
 
-Run backend migration and server:
+Run backend:
 
 ```bash
 cd api
@@ -64,34 +47,30 @@ sbt migrate
 sbt app
 ```
 
-Run frontend checks:
+Run frontend:
 
 ```bash
 cd app
-npm run lint
-npm run typecheck
+npm install
+npm run dev
 ```
 
-## Quality gates
+## Quality commands
 
-The monorepo uses shared root hooks that dispatch checks by changed paths:
-
-- `api/`: `scalafmt`, `scalafix`, compile-time linting, `scapegoat`, and coverage rules
-- `app/`: `eslint`, `tsc --noEmit`, production build, and unit tests
-- CI only: `jscpd` duplication checks
-
-The backend also enforces explicit public/protected result types and bans mutable or exception-style syntax such as `var`, `throw`, `return`, `while`, `asInstanceOf`, and `isInstanceOf`.
-
-Manual runs:
+From repository root:
 
 ```bash
 sh ./scripts/run-api-checks.sh pre-commit
 sh ./scripts/run-api-checks.sh build
 sh ./scripts/run-api-checks.sh migrate
 sh ./scripts/run-api-checks.sh coverage
+
 sh ./scripts/run-app-checks.sh pre-commit
 sh ./scripts/run-app-checks.sh build
 sh ./scripts/run-app-checks.sh test
 ```
 
-This is a learning-first project. Clear structure, incremental delivery, and explicit tradeoffs matter more here than shipping features quickly.
+Project docs:
+
+- [`api/README.md`](./api/README.md)
+- [`app/README.md`](./app/README.md)

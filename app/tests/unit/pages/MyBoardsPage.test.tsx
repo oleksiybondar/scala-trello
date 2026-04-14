@@ -25,9 +25,14 @@ describe("MyBoardsPage", () => {
     const queryBoards = vi.fn();
 
     vi.mocked(useCurrentUser).mockReturnValue({
+      changeEmail: vi.fn(),
+      changePassword: vi.fn(),
+      changeUsername: vi.fn(),
       currentUser: null,
       refreshCurrentUser: vi.fn(),
       setCurrentUser: vi.fn(),
+      updateAvatar: vi.fn(),
+      updateProfile: vi.fn(),
       userId: null
     });
 
@@ -76,9 +81,14 @@ describe("MyBoardsPage", () => {
 
   test("renders not found state when search is active and no boards match", () => {
     vi.mocked(useCurrentUser).mockReturnValue({
+      changeEmail: vi.fn(),
+      changePassword: vi.fn(),
+      changeUsername: vi.fn(),
       currentUser: null,
       refreshCurrentUser: vi.fn(),
       setCurrentUser: vi.fn(),
+      updateAvatar: vi.fn(),
+      updateProfile: vi.fn(),
       userId: null
     });
 

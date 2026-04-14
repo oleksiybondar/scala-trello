@@ -44,7 +44,152 @@ describe("BoardCard", () => {
             lastName: "Montgomery",
             userId: "user-1"
           },
-          ownerUserId: "user-1"
+          ownerUserId: "user-1",
+          tickets: [
+            {
+              acceptanceCriteria: "API merged",
+              assignedTo: null,
+              assignedToUserId: null,
+              boardId: "board-1",
+              commentsCount: 1,
+              createdAt: "2026-04-05T08:30:00Z",
+              createdBy: null,
+              createdByUserId: "user-2",
+              description: "Create GraphQL schema",
+              estimatedMinutes: 120,
+              lastModifiedBy: null,
+              lastModifiedByUserId: "user-2",
+              modifiedAt: "2026-04-05T09:00:00Z",
+              name: "Schema",
+              priority: null,
+              severityId: null,
+              severityName: null,
+              status: "new",
+              ticketId: "ticket-1",
+              timeEntries: [
+                {
+                  activityCode: "DEV",
+                  activityId: "1",
+                  activityName: "Development",
+                  description: "Initial work",
+                  durationMinutes: 90,
+                  entryId: "entry-1",
+                  loggedAt: "2026-04-05T09:00:00Z",
+                  ticket: null,
+                  ticketId: "ticket-1",
+                  user: null,
+                  userId: "user-2"
+                }
+              ],
+              trackedMinutes: 90
+            },
+            {
+              acceptanceCriteria: null,
+              assignedTo: null,
+              assignedToUserId: null,
+              boardId: "board-1",
+              commentsCount: 0,
+              createdAt: "2026-04-05T10:00:00Z",
+              createdBy: null,
+              createdByUserId: "user-2",
+              description: null,
+              estimatedMinutes: 60,
+              lastModifiedBy: null,
+              lastModifiedByUserId: "user-2",
+              modifiedAt: "2026-04-05T10:30:00Z",
+              name: "Resolver",
+              priority: null,
+              severityId: null,
+              severityName: null,
+              status: "in progress",
+              ticketId: "ticket-2",
+              timeEntries: [
+                {
+                  activityCode: "DEV",
+                  activityId: "1",
+                  activityName: "Development",
+                  description: null,
+                  durationMinutes: 45,
+                  entryId: "entry-2",
+                  loggedAt: "2026-04-05T10:30:00Z",
+                  ticket: null,
+                  ticketId: "ticket-2",
+                  user: null,
+                  userId: "user-2"
+                }
+              ],
+              trackedMinutes: 45
+            },
+            {
+              acceptanceCriteria: null,
+              assignedTo: null,
+              assignedToUserId: null,
+              boardId: "board-1",
+              commentsCount: 0,
+              createdAt: "2026-04-05T11:00:00Z",
+              createdBy: null,
+              createdByUserId: "user-2",
+              description: null,
+              estimatedMinutes: 30,
+              lastModifiedBy: null,
+              lastModifiedByUserId: "user-2",
+              modifiedAt: "2026-04-05T11:30:00Z",
+              name: "Review",
+              priority: null,
+              severityId: null,
+              severityName: null,
+              status: "code review",
+              ticketId: "ticket-3",
+              timeEntries: [],
+              trackedMinutes: 0
+            },
+            {
+              acceptanceCriteria: null,
+              assignedTo: null,
+              assignedToUserId: null,
+              boardId: "board-1",
+              commentsCount: 0,
+              createdAt: "2026-04-05T12:00:00Z",
+              createdBy: null,
+              createdByUserId: "user-2",
+              description: null,
+              estimatedMinutes: 15,
+              lastModifiedBy: null,
+              lastModifiedByUserId: "user-2",
+              modifiedAt: "2026-04-05T12:30:00Z",
+              name: "Testing",
+              priority: null,
+              severityId: null,
+              severityName: null,
+              status: "in testing",
+              ticketId: "ticket-4",
+              timeEntries: [],
+              trackedMinutes: 0
+            },
+            {
+              acceptanceCriteria: null,
+              assignedTo: null,
+              assignedToUserId: null,
+              boardId: "board-1",
+              commentsCount: 0,
+              createdAt: "2026-04-05T13:00:00Z",
+              createdBy: null,
+              createdByUserId: "user-2",
+              description: null,
+              estimatedMinutes: 30,
+              lastModifiedBy: null,
+              lastModifiedByUserId: "user-2",
+              modifiedAt: "2026-04-05T13:30:00Z",
+              name: "Done",
+              priority: null,
+              severityId: null,
+              severityName: null,
+              status: "done",
+              ticketId: "ticket-5",
+              timeEntries: [],
+              trackedMinutes: 0
+            }
+          ]
         }}
       />
     );
@@ -62,16 +207,15 @@ describe("BoardCard", () => {
     expect(screen.getByText("2")).toBeInTheDocument();
     expect(screen.getByText("Active")).toBeInTheDocument();
 
-    expect(screen.getByText("New: 5")).toBeInTheDocument();
-    expect(screen.getByText("In progress: 3")).toBeInTheDocument();
-    expect(screen.getByText("Code review: 2")).toBeInTheDocument();
-    expect(screen.getByText("In Testing: 2")).toBeInTheDocument();
-    expect(screen.getByText("Done: 4")).toBeInTheDocument();
+    expect(screen.getByText("New: 1")).toBeInTheDocument();
+    expect(screen.getByText("In progress: 1")).toBeInTheDocument();
+    expect(screen.getByText("Code review: 1")).toBeInTheDocument();
+    expect(screen.getByText("In Testing: 1")).toBeInTheDocument();
+    expect(screen.getByText("Done: 1")).toBeInTheDocument();
 
     expect(screen.getByText("Time tracking")).toBeInTheDocument();
     expect(screen.getByText(/^Es:/)).toBeInTheDocument();
     expect(screen.getByText(/^Act:/)).toBeInTheDocument();
-    expect(screen.getByText(/^Overdue:/)).toBeInTheDocument();
-    expect(screen.getByLabelText("Time tracking line chart")).toBeInTheDocument();
+    expect(screen.getByLabelText("Time velocity chart")).toBeInTheDocument();
   });
 });

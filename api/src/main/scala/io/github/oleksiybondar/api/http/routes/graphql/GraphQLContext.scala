@@ -15,8 +15,15 @@ import io.github.oleksiybondar.api.domain.user.{UserId, UserService}
 import io.github.oleksiybondar.api.infrastructure.db.board.BoardQueryRepo
 import io.github.oleksiybondar.api.infrastructure.db.comment.CommentQueryRepo
 import io.github.oleksiybondar.api.infrastructure.db.permission.RoleQueryRepo
-import io.github.oleksiybondar.api.infrastructure.db.ticket.{TicketQueryRepo, TicketStateRepo}
-import io.github.oleksiybondar.api.infrastructure.db.timeTracking.TimeTrackingQueryRepo
+import io.github.oleksiybondar.api.infrastructure.db.ticket.{
+  TicketQueryRepo,
+  TicketSeverityRepo,
+  TicketStateRepo
+}
+import io.github.oleksiybondar.api.infrastructure.db.timeTracking.{
+  TimeTrackingActivityRepo,
+  TimeTrackingQueryRepo
+}
 
 /** Per-request GraphQL context carrying services and the authenticated user identity. */
 final case class GraphQLContext(
@@ -42,6 +49,10 @@ final case class GraphQLContext(
     ticketQueryRepo: TicketQueryRepo[IO],
     /** Ticket state repo used for status/name expansion in GraphQL views. */
     ticketStateRepo: TicketStateRepo[IO],
+    /** Ticket severity repo exposed to dictionary queries. */
+    ticketSeverityRepo: TicketSeverityRepo[IO],
+    /** Time tracking activity repo exposed to dictionary queries. */
+    timeTrackingActivityRepo: TimeTrackingActivityRepo[IO],
     /** Time tracking service exposed to time entry queries and mutations. */
     timeTrackingService: TimeTrackingService[IO],
     /** Joined comment read repo used for optimized nested reads. */

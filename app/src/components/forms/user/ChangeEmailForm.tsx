@@ -10,12 +10,8 @@ import Typography from "@mui/material/Typography";
 import { EmailInput } from "@components/form-elements/email/EmailInput";
 import type { EmailInputValidation } from "@components/form-elements/email/EmailInput";
 import { FormActionButtons } from "@components/forms/user/FormActionButtons";
-import { useUserSettingsMutation } from "@features/user/useUserSettingsMutation";
 import { createAsyncSubmitHandler } from "@helpers/createAsyncActionBuilder";
-import { requestGraphQL } from "@helpers/requestGraphQL";
 import { useCurrentUser } from "@hooks/useCurrentUser";
-import { buildChangeEmailMutation } from "@models/user";
-import type { GraphQLCurrentUserResponse, UserMutationResponse } from "@models/user";
 
 interface ChangeEmailFormProps {
   disabled?: boolean;
@@ -24,8 +20,7 @@ interface ChangeEmailFormProps {
 export const ChangeEmailForm = ({
   disabled = false
 }: ChangeEmailFormProps): ReactElement => {
-  const { currentUser } = useCurrentUser();
-  const { applyUpdatedUser, getGraphQLAuthContext } = useUserSettingsMutation();
+  const { changeEmail, currentUser } = useCurrentUser();
   const persistedEmail = currentUser?.email ?? "";
   const [email, setEmail] = useState(persistedEmail);
   const [validation, setValidation] = useState<EmailInputValidation | null>(null);
@@ -52,29 +47,13 @@ export const ChangeEmailForm = ({
     setErrorMessage(null);
   };
 
-  const handleApply = createAsyncSubmitHandler<
-    UserMutationResponse,
-    GraphQLCurrentUserResponse
-  >()
+  const handleApply = createAsyncSubmitHandler()
     .when(() => !isDisabled && isValid && hasChanged)
     .onStart(() => {
       setErrorMessage(null);
       setIsSubmitting(true);
     })
-    .request(() =>
-      requestGraphQL<UserMutationResponse>({
-        ...getGraphQLAuthContext(),
-        document: buildChangeEmailMutation(trimmedEmail)
-      })
-    )
-    .verify((response: UserMutationResponse) => {
-      if (response.changeEmail === undefined) {
-        throw new Error("GraphQL response did not include the updated user.");
-      }
-
-      return response.changeEmail;
-    })
-    .onSuccess(applyUpdatedUser)
+    .request(() => changeEmail(trimmedEmail))
     .onError((error: unknown) => {
       setErrorMessage(
         error instanceof Error ? error.message : "Failed to update the email."

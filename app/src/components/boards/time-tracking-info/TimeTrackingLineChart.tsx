@@ -4,6 +4,7 @@ import Box from "@mui/material/Box";
 import { alpha, useTheme } from "@mui/material/styles";
 
 import { TimeTrackingLegendItem } from "@components/boards/time-tracking-info/TimeTrackingLegendItem";
+import { parseTimeTrackingDurationToMinutes } from "@helpers/timeTrackingConversions";
 import type { TimeTrackingStats } from "@components/boards/time-tracking-info/types";
 
 interface TimeTrackingLineChartProps {
@@ -16,21 +17,6 @@ interface ChartSeries {
   value: string;
   values: number[];
 }
-
-const parseDurationToMinutes = (value: string): number => {
-  const normalized = value.trim().toLowerCase();
-  const durationPattern = /^(?:(\d+)\s*h)?(?::?(\d+)\s*m?)?$/;
-  const match = durationPattern.exec(normalized);
-
-  if (match === null) {
-    return 0;
-  }
-
-  const hours = Number.parseInt(match[1] ?? "0", 10);
-  const minutes = Number.parseInt(match[2] ?? "0", 10);
-
-  return hours * 60 + minutes;
-};
 
 const createPath = (values: number[], height: number, width: number): string => {
   const maxValue = Math.max(...values, 1);
@@ -52,8 +38,8 @@ export const TimeTrackingLineChart = ({
   const theme = useTheme();
   const width = 220;
   const height = 72;
-  const estimatedMinutes = parseDurationToMinutes(stats.estimatedTime);
-  const loggedMinutes = parseDurationToMinutes(stats.loggedTime);
+  const estimatedMinutes = parseTimeTrackingDurationToMinutes(stats.estimatedTime);
+  const loggedMinutes = parseTimeTrackingDurationToMinutes(stats.loggedTime);
 
   const series: ChartSeries[] = [
     {

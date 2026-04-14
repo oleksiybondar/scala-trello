@@ -99,6 +99,8 @@ final class SlickBoardQueryRepo[F[_]: Async](db: Database) extends BoardQueryRep
               description = ticket.description,
               acceptanceCriteria = ticket.acceptanceCriteria,
               estimatedMinutes = ticket.originalEstimatedMinutes,
+              priority = ticket.priority.flatMap(_.toIntOption),
+              severityId = ticket.severityId,
               trackedMinutes = trackedMinutes,
               createdByUserId = ticket.createdByUserId.toString,
               assignedToUserId = ticket.assignedToUserId.map(_.toString),

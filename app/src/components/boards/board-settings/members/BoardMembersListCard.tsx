@@ -1,6 +1,5 @@
 import type { ChangeEvent, ReactElement } from "react";
 import { useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
 
 import Alert from "@mui/material/Alert";
 import Card from "@mui/material/Card";
@@ -17,21 +16,24 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 
 import { Person } from "@components/avatar/Person";
-import { useBoardMemberMutation } from "@features/board/useBoardMemberMutation";
-import { useBoardMembersQuery } from "@features/board/useBoardMembersQuery";
 import { useBoard } from "@hooks/useBoard";
 import { useCurrentUser } from "@hooks/useCurrentUser";
 import { useRoles } from "@hooks/useRoles";
 import { formatRoleLabel } from "./formatRoleLabel";
 
 export const BoardMembersListCard = (): ReactElement => {
-  const { boardId = "" } = useParams();
-  const { boardPermissionAccess } = useBoard();
+  const {
+    boardPermissionAccess,
+    changeBoardMemberRole,
+    isLoadingMembers,
+    isRemovingBoardMember,
+    isUpdatingBoardMemberRole,
+    members,
+    membersError,
+    removeBoardMember
+  } = useBoard();
   const { userId: currentUserId } = useCurrentUser();
   const { roles } = useRoles();
-  const { data: members = [], isLoading } = useBoardMembersQuery(boardId);
-  const { changeBoardMemberRoleMutation, removeBoardMemberMutation } =
-    useBoardMemberMutation();
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [draftRoleId, setDraftRoleId] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -56,18 +58,14 @@ export const BoardMembersListCard = (): ReactElement => {
   };
 
   const handleSaveRole = async (userId: string, roleId: string): Promise<void> => {
-    if (boardId.length === 0 || roleId.length === 0 || !boardPermissionAccess.canModify) {
+    if (roleId.length === 0 || !boardPermissionAccess.canModify) {
       return;
     }
 
     setErrorMessage(null);
 
     try {
-      await changeBoardMemberRoleMutation.mutateAsync({
-        boardId,
-        roleId,
-        userId
-      });
+      await changeBoardMemberRole(userId, roleId);
       setEditingUserId(null);
       setDraftRoleId("");
     } catch (error: unknown) {
@@ -96,10 +94,7 @@ export const BoardMembersListCard = (): ReactElement => {
     setErrorMessage(null);
 
     try {
-      await removeBoardMemberMutation.mutateAsync({
-        boardId,
-        userId
-      });
+      await removeBoardMember(userId);
     } catch (error: unknown) {
       setErrorMessage(
         error instanceof Error ? error.message : "Failed to remove the board member."
@@ -116,6 +111,7 @@ export const BoardMembersListCard = (): ReactElement => {
       <CardContent>
         <Stack padding={3} spacing={3}>
           {errorMessage !== null ? <Alert severity="error">{errorMessage}</Alert> : null}
+          {membersError !== null ? <Alert severity="error">{membersError.message}</Alert> : null}
           <Stack spacing={1}>
             <Typography variant="h5">Members</Typography>
             <Typography color="textSecondary" variant="body2">
@@ -123,19 +119,19 @@ export const BoardMembersListCard = (): ReactElement => {
             </Typography>
           </Stack>
 
-          {isLoading ? (
+          {isLoadingMembers ? (
             <Typography color="text.secondary" variant="body2">
               Loading members...
             </Typography>
           ) : null}
 
-          {!isLoading && members.length === 0 ? (
+          {!isLoadingMembers && members.length === 0 ? (
             <Typography color="text.secondary" variant="body2">
               No members found for this board.
             </Typography>
           ) : null}
 
-          {!isLoading && members.length > 0 ? (
+          {!isLoadingMembers && members.length > 0 ? (
             <Stack divider={<Divider />} spacing={2}>
               {members.map(member => (
                 <Stack
@@ -174,7 +170,7 @@ export const BoardMembersListCard = (): ReactElement => {
                       }
                       disabled={
                         !boardPermissionAccess.canModify ||
-                        changeBoardMemberRoleMutation.isPending ||
+                        isUpdatingBoardMemberRole ||
                         (editingUserId === member.userId && draftRoleId.length === 0)
                       }
                       onClick={() => {
@@ -194,7 +190,7 @@ export const BoardMembersListCard = (): ReactElement => {
                     </IconButton>
                     <IconButton
                       aria-label="Remove member"
-                      disabled={!boardPermissionAccess.canDelete || removeBoardMemberMutation.isPending}
+                      disabled={!boardPermissionAccess.canDelete || isRemovingBoardMember}
                       onClick={() => {
                         void handleRemoveMember(member.userId);
                       }}

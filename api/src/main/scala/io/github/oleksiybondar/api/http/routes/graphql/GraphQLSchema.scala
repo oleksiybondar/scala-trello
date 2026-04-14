@@ -2,6 +2,7 @@ package io.github.oleksiybondar.api.http.routes.graphql
 
 import io.github.oleksiybondar.api.http.routes.graphql.board.BoardApi
 import io.github.oleksiybondar.api.http.routes.graphql.comment.CommentApi
+import io.github.oleksiybondar.api.http.routes.graphql.dictionary.DictionaryApi
 import io.github.oleksiybondar.api.http.routes.graphql.permission.RoleApi
 import io.github.oleksiybondar.api.http.routes.graphql.ticket.TicketApi
 import io.github.oleksiybondar.api.http.routes.graphql.timeTracking.TimeTrackingApi
@@ -18,6 +19,7 @@ object GraphQLSchema {
         (
           UserApi.queryFields ++
             RoleApi.queryFields ++
+            DictionaryApi.queryFields ++
             BoardApi.queryFields ++
             TicketApi.queryFields ++
             TimeTrackingApi.queryFields ++

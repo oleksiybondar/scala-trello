@@ -2,7 +2,7 @@ import {
   loginRequest,
   logoutRequest,
   refreshRequest
-} from "@features/auth/authApi";
+} from "../../../../src/domain/auth/authApi";
 
 describe("authApi", () => {
   afterEach(() => {

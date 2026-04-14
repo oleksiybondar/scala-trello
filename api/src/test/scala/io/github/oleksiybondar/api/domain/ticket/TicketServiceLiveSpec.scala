@@ -8,7 +8,8 @@ import io.github.oleksiybondar.api.testkit.fixtures.{
   PermissionFixtures,
   RoleFixtures,
   TicketFixtures,
-  TicketServiceFixtures
+  TicketServiceFixtures,
+  TicketStateFixtures
 }
 import munit.FunSuite
 
@@ -189,6 +190,29 @@ class TicketServiceLiveSpec extends FunSuite {
     }
 
     assertEquals(result, (true, Some(Some(240))))
+  }
+
+  test("changeState updates the ticket state when the actor can modify tickets") {
+    val existing = TicketFixtures.sampleTicket
+
+    val result = TicketServiceFixtures.withTicketService(
+      tickets = List(existing),
+      dashboards = List(BoardFixtures.sampleDashboard),
+      members = List(BoardMemberFixtures.sampleMember),
+      roles = List(RoleFixtures.adminRole),
+      permissions = List(PermissionFixtures.adminTicketPermission)
+    ) { ctx =>
+      for {
+        modified <- ctx.ticketService.changeState(
+                      existing.id,
+                      BoardMemberFixtures.sampleMember.userId,
+                      TicketStateFixtures.codeReviewState.id
+                    )
+        stored   <- ctx.ticketRepo.findById(existing.id)
+      } yield (modified, stored.map(_.stateId))
+    }
+
+    assertEquals(result, (true, Some(TicketStateFixtures.codeReviewState.id)))
   }
 
   test("changeTitle returns false when the actor lacks ticket modify permission") {

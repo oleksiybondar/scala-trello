@@ -1,7 +1,7 @@
 import { createContext } from "react";
 
-import type { CreateBoardInput } from "@models/board";
-import type { Board } from "@models/board";
+import type { CreateBoardInput } from "../domain/board/graphql";
+import type { Board } from "../domain/board/graphql";
 
 export interface BoardOwnerOption {
   label: string;

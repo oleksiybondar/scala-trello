@@ -26,6 +26,8 @@ final case class BoardQueryTicketRow(
     description: Option[String],
     acceptanceCriteria: Option[String],
     estimatedMinutes: Option[Int],
+    priority: Option[Int],
+    severityId: Option[Long],
     trackedMinutes: Int,
     createdByUserId: String,
     assignedToUserId: Option[String],

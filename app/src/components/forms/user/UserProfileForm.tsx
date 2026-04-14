@@ -9,12 +9,8 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
 import { FormActionButtons } from "@components/forms/user/FormActionButtons";
-import { useUserSettingsMutation } from "@features/user/useUserSettingsMutation";
 import { createAsyncSubmitHandler } from "@helpers/createAsyncActionBuilder";
-import { requestGraphQL } from "@helpers/requestGraphQL";
 import { useCurrentUser } from "@hooks/useCurrentUser";
-import { buildUpdateProfileMutation } from "@models/user";
-import type { GraphQLCurrentUserResponse, UserMutationResponse } from "@models/user";
 
 interface UserProfileFormProps {
   disabled?: boolean;
@@ -38,8 +34,7 @@ const getProfileState = (
 export const UserProfileForm = ({
   disabled = false
 }: UserProfileFormProps): ReactElement => {
-  const { currentUser } = useCurrentUser();
-  const { applyUpdatedUser, getGraphQLAuthContext } = useUserSettingsMutation();
+  const { currentUser, updateProfile } = useCurrentUser();
   const persistedState = getProfileState(
     currentUser?.firstName,
     currentUser?.lastName
@@ -80,10 +75,7 @@ export const UserProfileForm = ({
     setErrorMessage(null);
   };
 
-  const handleApply = createAsyncSubmitHandler<
-    UserMutationResponse,
-    GraphQLCurrentUserResponse
-  >()
+  const handleApply = createAsyncSubmitHandler()
     .when(() => {
       setIsTouched(true);
 
@@ -93,20 +85,10 @@ export const UserProfileForm = ({
       setErrorMessage(null);
       setIsSubmitting(true);
     })
-    .request(() =>
-      requestGraphQL<UserMutationResponse>({
-        ...getGraphQLAuthContext(),
-        document: buildUpdateProfileMutation(trimmedFirstName, trimmedLastName)
-      })
-    )
-    .verify((response: UserMutationResponse) => {
-      if (response.updateProfile === undefined) {
-        throw new Error("GraphQL response did not include the updated user.");
-      }
-
-      return response.updateProfile;
+    .request(() => updateProfile(trimmedFirstName, trimmedLastName))
+    .onSuccess(() => {
+      setIsTouched(false);
     })
-    .onSuccess(applyUpdatedUser)
     .onError((error: unknown) => {
       setErrorMessage(
         error instanceof Error

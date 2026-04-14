@@ -1,21 +1,22 @@
 import { renderHook } from "@testing-library/react";
 
-import type { AuthTokenResponse } from "@features/auth/types";
-import type { AuthSession } from "@features/auth/types";
-import type { AuthStateApi } from "@features/auth/useAuthState";
-import { useAuthService } from "@features/auth/useAuthService";
+import type { AuthTokenResponse } from "../../../../src/domain/auth/types";
+import type { AuthSession } from "../../../../src/domain/auth/types";
+import type { AuthStateApi } from "../../../../src/domain/auth/useAuthState";
+import { useAuthService } from "../../../../src/domain/auth/useAuthService";
 
-vi.mock("@features/auth/authApi", () => ({
+vi.mock("../../../../src/domain/auth/authApi", () => ({
   loginRequest: vi.fn(),
   logoutRequest: vi.fn(),
-  refreshRequest: vi.fn()
+  refreshRequest: vi.fn(),
+  registerRequest: vi.fn()
 }));
 
 import {
   loginRequest,
   logoutRequest,
   refreshRequest
-} from "@features/auth/authApi";
+} from "../../../../src/domain/auth/authApi";
 
 const createAuthState = (
   overrides: Partial<AuthStateApi> = {}

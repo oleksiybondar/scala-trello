@@ -3,13 +3,14 @@ import { useCallback, useEffect, useState } from "react";
 
 import { CurrentUserContext } from "@contexts/current-user-context";
 import type { CurrentUserContextValue } from "@contexts/current-user-context";
-import { meRequest } from "@features/auth/authApi";
+import { meRequest } from "../domain/auth/authApi";
 import { createAsyncSubmitHandler } from "@helpers/createAsyncActionBuilder";
 import { useAuth } from "@hooks/useAuth";
 import {
   mapAuthCurrentUserResponseToCurrentUser
-} from "@models/user";
-import type { AuthCurrentUserResponse, CurrentUser } from "@models/user";
+} from "../domain/user/graphql";
+import type { AuthCurrentUserResponse, CurrentUser } from "../domain/user/graphql";
+import { useUserService } from "../domain/user/useUserService";
 
 export const CurrentUserProvider = ({
   children
@@ -80,13 +81,22 @@ export const CurrentUserProvider = ({
   }, [accessToken, loadCurrentUserHandler, session]);
 
   const userId = currentUser?.userId ?? null;
+  const {changeEmail, changePassword, changeUsername, updateAvatar, updateProfile} = useUserService({
+    refreshCurrentUser: loadCurrentUserHandler,
+    setCurrentUser
+  });
 
   return (
     <CurrentUserContext.Provider
       value={{
+        changeEmail,
+        changePassword,
+        changeUsername,
         currentUser,
         refreshCurrentUser: loadCurrentUserHandler,
         setCurrentUser,
+        updateAvatar,
+        updateProfile,
         userId
       }}
     >
