@@ -119,6 +119,16 @@ export const buildTicketsQuery = (boardId: string): string => {
   `;
 };
 
+export const buildMyTicketsQuery = (): string => {
+  return /* GraphQL */ `
+    query {
+      myTickets {
+        ${TICKET_FIELDS}
+      }
+    }
+  `;
+};
+
 interface BuildCreateTicketMutationParams {
   acceptanceCriteria?: string | null;
   assignedToUserId?: string | null;

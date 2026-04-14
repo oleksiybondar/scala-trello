@@ -3,6 +3,7 @@ package io.github.oleksiybondar.api.http.routes.graphql.ticket
 import cats.effect.unsafe.implicits.global
 import io.circe.Json
 import io.github.oleksiybondar.api.domain.permission.RoleId
+import io.github.oleksiybondar.api.domain.ticket.TicketId
 import io.github.oleksiybondar.api.domain.user.{UserId, Username}
 import io.github.oleksiybondar.api.testkit.fixtures.{
   BoardMemberFixtures,
@@ -158,6 +159,40 @@ class TicketGraphQLRoutesSpec extends FunSuite {
     )
   }
 
+  test("POST /graphql returns only tickets assigned to the current user for myTickets query") {
+    val response = GraphQLFixtures.withGraphQLRoutes(
+      users = List(
+        UserFixtures.sampleUser,
+        UserFixtures.user(
+          id = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222")),
+          username = Some(Username("bob"))
+        )
+      ),
+      tickets = List(
+        TicketFixtures.sampleTicket,
+        TicketFixtures.ticket(
+          id = TicketId(2),
+          assignedToUserId = Some(UserFixtures.sampleUser.id)
+        )
+      )
+    ) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(graphqlRequest(myTicketsQuery, accessToken = Some(token)))
+      } yield response
+    }
+
+    val body          = response.as[Json].unsafeRunSync()
+    val myTicketsHead = body.hcursor.downField("data").downField("myTickets").downArray
+
+    assertEquals(response.status, Status.Ok)
+    assertEquals(myTicketsHead.get[String]("id").toOption, Some("2"))
+    assertEquals(
+      myTicketsHead.get[String]("assignedToUserId").toOption,
+      Some(UserFixtures.sampleUser.id.value.toString)
+    )
+  }
+
   test("POST /graphql updates ticket fields and reassigns the ticket") {
     val response = GraphQLFixtures.withGraphQLRoutes(
       users = List(
@@ -263,6 +298,15 @@ class TicketGraphQLRoutesSpec extends FunSuite {
       |      priority
       |      severityId
       |    }
+      |  }
+      |}""".stripMargin
+
+  private val myTicketsQuery =
+    """query {
+      |  myTickets {
+      |    id
+      |    name
+      |    assignedToUserId
       |  }
       |}""".stripMargin
 

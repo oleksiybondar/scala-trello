@@ -83,6 +83,10 @@ export interface TicketsQueryResponse {
   tickets: TicketResponse[];
 }
 
+export interface MyTicketsQueryResponse {
+  myTickets: TicketResponse[];
+}
+
 export interface CreateTicketMutationResponse {
   createTicket: TicketResponse;
 }

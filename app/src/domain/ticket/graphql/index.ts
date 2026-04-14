@@ -5,6 +5,7 @@ export {
   buildChangeTicketStatusMutation,
   buildChangeTicketTitleMutation,
   buildCreateTicketMutation,
+  buildMyTicketsQuery,
   buildReassignTicketMutation,
   buildTicketQuery,
   buildTicketsQuery
@@ -17,6 +18,7 @@ export type {
   ChangeTicketStatusMutationResponse,
   ChangeTicketTitleMutationResponse,
   CreateTicketMutationResponse,
+  MyTicketsQueryResponse,
   ReassignTicketMutationResponse,
   TicketBoardSummaryResponse,
   TicketCommentResponse,

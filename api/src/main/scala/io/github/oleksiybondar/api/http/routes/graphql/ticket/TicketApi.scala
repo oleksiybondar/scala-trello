@@ -246,6 +246,24 @@ object TicketApi {
               tickets <- ctx.ctx.ticketService.listTickets(boardId, currentUserId)
             } yield tickets.map(toView)
           }.unsafeToFuture()
+      ),
+      Field(
+        name = "myTickets",
+        fieldType = ListType(TicketType),
+        resolve = ctx =>
+          withCurrentUser(ctx) { currentUserId =>
+            for {
+              memberships    <-
+                ctx.ctx.dashboardMembershipService.listMembershipsForUser(currentUserId)
+              ticketsByBoard <-
+                memberships
+                  .map(_.member.boardId)
+                  .distinct
+                  .traverse(boardId => ctx.ctx.ticketService.listTickets(boardId, currentUserId))
+              assignedTickets =
+                ticketsByBoard.flatten.filter(_.assignedToUserId.contains(currentUserId))
+            } yield assignedTickets.map(toView)
+          }.unsafeToFuture()
       )
     )
 

@@ -37,6 +37,9 @@ export const AppNavBar = (): ReactElement => {
               <Button color="inherit" component={RouterLink} to="/tickets">
                 My tickets
               </Button>
+              <Button color="inherit" component={RouterLink} to="/time-registration">
+                My time registration
+              </Button>
             </>
           ) : null}
         </Stack>
