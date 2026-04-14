@@ -8,6 +8,7 @@ import TextField from "@mui/material/TextField";
 
 import { BoardTicketsPriorityFilter } from "@components/boards/board-page/BoardTicketsPriorityFilter";
 import { BoardTicketsSeverityFilter } from "@components/boards/board-page/BoardTicketsSeverityFilter";
+import { ToolbarSwitchControl } from "@components/toolbar/ToolbarSwitchControl";
 import { useAuth } from "@hooks/useAuth";
 import { useMyTickets } from "@hooks/useMyTickets";
 import { useSeverities } from "@hooks/useSeverities";
@@ -76,6 +77,17 @@ export const MyTicketsToolbar = (): ReactElement => {
               size="small"
               sx={{ flex: 1, minWidth: { md: 220, xs: "100%" } }}
               value={currentParams.keyword ?? ""}
+            />
+            <ToolbarSwitchControl
+              checked={currentParams.assignedOnly}
+              label="Assigned on me"
+              onChange={checked => {
+                queryMyTickets({
+                  assignedOnly: checked,
+                  page: 1
+                });
+              }}
+              size="small"
             />
 
             <BoardTicketsSeverityFilter

@@ -3,6 +3,7 @@ import { createContext } from "react";
 import type { Ticket } from "../domain/ticket/graphql";
 
 export interface QueryMyTicketsParams {
+  assignedOnly?: boolean | undefined;
   keyword?: string | undefined;
   page?: number | undefined;
   priorities?: number[] | undefined;
@@ -10,6 +11,7 @@ export interface QueryMyTicketsParams {
 }
 
 export interface NormalizedQueryMyTicketsParams {
+  assignedOnly: boolean;
   keyword?: string | undefined;
   page: number;
   priorities: number[];
@@ -31,6 +33,7 @@ const missingMyTicketsProvider = (): never => {
 
 export const MyTicketsContext = createContext<MyTicketsContextValue>({
   currentParams: {
+    assignedOnly: false,
     page: 1,
     priorities: [],
     severityIds: []

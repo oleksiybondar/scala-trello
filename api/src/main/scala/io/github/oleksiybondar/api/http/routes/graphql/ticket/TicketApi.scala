@@ -31,6 +31,7 @@ import io.github.oleksiybondar.api.http.routes.graphql.user.{UserApi, UserView}
 import sangria.execution.UserFacingError
 import sangria.schema.{
   Argument,
+  BooleanType,
   Field,
   IntType,
   ListType,
@@ -65,6 +66,7 @@ object TicketApi {
   private val SeverityIdArg     = Argument("severityId", OptionInputType(StringType))
   private val StatusArg         = Argument("status", StringType)
   private val AssignedUserIdArg = Argument("assignedToUserId", OptionInputType(StringType))
+  private val AssignedOnlyArg   = Argument("assignedOnly", OptionInputType(BooleanType))
 
   val TicketBoardSummaryType: ObjectType[GraphQLContext, TicketBoardSummaryView] =
     ObjectType(
@@ -275,8 +277,10 @@ object TicketApi {
       Field(
         name = "myTickets",
         fieldType = ListType(TicketType),
+        arguments = AssignedOnlyArg :: Nil,
         resolve = ctx =>
           withCurrentUser(ctx) { currentUserId =>
+            val assignedOnly = ctx.arg(AssignedOnlyArg).getOrElse(false)
             for {
               memberships    <-
                 ctx.ctx.dashboardMembershipService.listMembershipsForUser(currentUserId)
@@ -285,12 +289,13 @@ object TicketApi {
                   .map(_.member.boardId)
                   .distinct
                   .traverse(boardId => ctx.ctx.ticketService.listTickets(boardId, currentUserId))
-              userTickets     =
-                ticketsByBoard.flatten.filter(ticket =>
-                  ticket.assignedToUserId.contains(
-                    currentUserId
-                  ) || ticket.createdByUserId == currentUserId
-                )
+              userTickets     = ticketsByBoard.flatten.filter { ticket =>
+                                  if (assignedOnly) ticket.assignedToUserId.contains(currentUserId)
+                                  else
+                                    ticket.assignedToUserId.contains(
+                                      currentUserId
+                                    ) || ticket.createdByUserId == currentUserId
+                                }
             } yield userTickets.map(toView)
           }.unsafeToFuture()
       )

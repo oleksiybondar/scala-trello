@@ -41,7 +41,7 @@ export const useMyTicketsService = ({
 
       const response = await requestGraphQL<MyTicketsQueryResponse>({
         accessToken,
-        document: buildMyTicketsQuery(),
+        document: buildMyTicketsQuery(currentParams.assignedOnly),
         tokenType: session.tokenType
       });
 
@@ -49,6 +49,7 @@ export const useMyTicketsService = ({
     },
     queryKey: [
       "my-tickets",
+      currentParams.assignedOnly ? "assigned-only" : "assigned-or-created",
       currentParams.keyword ?? "",
       currentParams.page,
       currentParams.priorities.join(","),

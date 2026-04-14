@@ -9,6 +9,7 @@ import type {
 import { useMyTicketsService } from "../domain/ticket/useMyTicketsService";
 
 const DEFAULT_QUERY_MY_TICKETS_PARAMS: NormalizedQueryMyTicketsParams = {
+  assignedOnly: false,
   page: 1,
   priorities: [],
   severityIds: []
@@ -18,6 +19,7 @@ const normalizeQueryMyTicketsParams = (
   params: QueryMyTicketsParams
 ): NormalizedQueryMyTicketsParams => {
   return {
+    assignedOnly: params.assignedOnly ?? DEFAULT_QUERY_MY_TICKETS_PARAMS.assignedOnly,
     keyword: params.keyword,
     page: params.page ?? DEFAULT_QUERY_MY_TICKETS_PARAMS.page,
     priorities: params.priorities ?? DEFAULT_QUERY_MY_TICKETS_PARAMS.priorities,

@@ -209,6 +209,42 @@ class TicketGraphQLRoutesSpec extends FunSuite {
     )
   }
 
+  test("POST /graphql returns only assigned tickets when myTickets assignedOnly is enabled") {
+    val response = GraphQLFixtures.withGraphQLRoutes(
+      users = List(
+        UserFixtures.sampleUser,
+        UserFixtures.user(
+          id = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222")),
+          username = Some(Username("bob"))
+        )
+      ),
+      tickets = List(
+        TicketFixtures.sampleTicket,
+        TicketFixtures.ticket(
+          id = TicketId(2),
+          assignedToUserId = Some(UserFixtures.sampleUser.id)
+        )
+      )
+    ) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(UserFixtures.sampleUser.id)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(myTicketsAssignedOnlyQuery, accessToken = Some(token))
+                    )
+      } yield response
+    }
+
+    val body      = response.as[Json].unsafeRunSync()
+    val myTickets =
+      body.hcursor.downField("data").downField("myTickets").focus.flatMap(_.asArray).getOrElse(
+        Vector.empty
+      )
+    val ids       = myTickets.flatMap(_.hcursor.get[String]("id").toOption)
+
+    assertEquals(response.status, Status.Ok)
+    assertEquals(ids, Vector("2"))
+  }
+
   test("POST /graphql updates ticket fields and reassigns the ticket") {
     val response = GraphQLFixtures.withGraphQLRoutes(
       users = List(
@@ -324,6 +360,15 @@ class TicketGraphQLRoutesSpec extends FunSuite {
       |    name
       |    assignedToUserId
       |    board { name }
+      |  }
+      |}""".stripMargin
+
+  private val myTicketsAssignedOnlyQuery =
+    """query {
+      |  myTickets(assignedOnly: true) {
+      |    id
+      |    name
+      |    assignedToUserId
       |  }
       |}""".stripMargin
 
