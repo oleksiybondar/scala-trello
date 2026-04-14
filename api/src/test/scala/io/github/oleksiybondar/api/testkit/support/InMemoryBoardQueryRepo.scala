@@ -68,6 +68,9 @@ final class InMemoryBoardQueryRepo[F[_]: Sync](
                 description = ticket.description.map(_.value),
                 acceptanceCriteria = ticket.acceptanceCriteria.map(_.value),
                 estimatedMinutes = ticket.originalEstimatedMinutes,
+                priority =
+                  ticket.priority.flatMap(value => scala.util.Try(value.value.toInt).toOption),
+                severityId = ticket.severityId.map(_.value),
                 trackedMinutes = timeEntries
                   .filter(_.ticketId == ticket.id)
                   .map(_.durationMinutes.value)

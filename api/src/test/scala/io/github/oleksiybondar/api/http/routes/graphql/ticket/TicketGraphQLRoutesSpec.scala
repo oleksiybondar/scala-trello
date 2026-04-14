@@ -82,6 +82,7 @@ class TicketGraphQLRoutesSpec extends FunSuite {
     assertEquals(ticketCursor.get[String]("name").toOption, Some("Implement login mutation"))
     assertEquals(ticketCursor.get[String]("status").toOption, Some("new"))
     assertEquals(ticketCursor.get[Int]("estimatedMinutes").toOption, Some(120))
+    assertEquals(ticketCursor.get[String]("severityId").toOption, Some("2"))
   }
 
   test("POST /graphql returns nested ticket comments and time entries") {
@@ -149,6 +150,8 @@ class TicketGraphQLRoutesSpec extends FunSuite {
     assertEquals(cursor.get[String]("name").toOption, Some("New GraphQL ticket"))
     assertEquals(cursor.get[String]("status").toOption, Some("new"))
     assertEquals(cursor.get[Int]("estimatedMinutes").toOption, Some(45))
+    assertEquals(cursor.get[Int]("priority").toOption, Some(5))
+    assertEquals(cursor.get[String]("severityId").toOption, Some("2"))
     assertEquals(
       cursor.get[String]("assignedToUserId").toOption,
       Some("22222222-2222-2222-2222-222222222222")
@@ -257,6 +260,8 @@ class TicketGraphQLRoutesSpec extends FunSuite {
       |      name
       |      status
       |      estimatedMinutes
+      |      priority
+      |      severityId
       |    }
       |  }
       |}""".stripMargin
@@ -294,6 +299,8 @@ class TicketGraphQLRoutesSpec extends FunSuite {
       |    name
       |    status
       |    estimatedMinutes
+      |    priority
+      |    severityId
       |    assignedToUserId
       |  }
       |}""".stripMargin

@@ -28,6 +28,8 @@ class SlickBoardQueryRepoSpec extends FunSuite {
         assertEquals(board.tickets.length, 1)
         assertEquals(board.tickets.head.name, "Implement login mutation")
         assertEquals(board.tickets.head.estimatedMinutes, Some(120))
+        assertEquals(board.tickets.head.priority, None)
+        assertEquals(board.tickets.head.severityId, Some(2L))
         assertEquals(board.tickets.head.trackedMinutes, 90)
       }
     }
