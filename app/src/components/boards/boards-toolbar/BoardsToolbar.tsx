@@ -1,5 +1,6 @@
 import type { ReactElement } from "react";
 
+import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 
 import { BoardsOwnerFilter } from "@components/boards/boards-toolbar/BoardsOwnerFilter";
@@ -38,47 +39,56 @@ export const BoardsToolbar = ({ onCreateBoard }: BoardsToolbarProps): ReactEleme
   ];
 
   return (
-    <Stack
-      alignItems={{ md: "center", xs: "stretch" }}
-      direction={{ md: "row", xs: "column" }}
-      justifyContent="space-between"
-      spacing={1.5}
+    <Paper
+      sx={{
+        minHeight: 56,
+        px: 2,
+        py: 1.5
+      }}
+      variant="outlined"
     >
       <Stack
-        direction={{ sm: "row", xs: "column" }}
+        alignItems={{ md: "center", xs: "stretch" }}
+        direction={{ md: "row", xs: "column" }}
+        justifyContent="space-between"
         spacing={1.5}
-        sx={{ flex: 1 }}
       >
-        <BoardsSearchInput
-          onChange={value => {
-            queryBoards({
-              keyword: value.length > 0 ? value : undefined,
-              page: 1
-            });
-          }}
-          value={currentParams.keyword ?? ""}
-        />
-        <BoardsOwnerFilter
-          onChange={value => {
-            queryBoards({
-              owner: value,
-              page: 1
-            });
-          }}
-          options={toolbarOwnerOptions}
-          value={currentParams.owner}
-        />
-        <BoardsShowInactiveToggle
-          checked={currentParams.showInactive}
-          onChange={checked => {
-            queryBoards({
-              page: 1,
-              showInactive: checked
-            });
-          }}
-        />
+        <Stack
+          direction={{ sm: "row", xs: "column" }}
+          spacing={1.5}
+          sx={{ flex: 1 }}
+        >
+          <BoardsSearchInput
+            onChange={value => {
+              queryBoards({
+                keyword: value.length > 0 ? value : undefined,
+                page: 1
+              });
+            }}
+            value={currentParams.keyword ?? ""}
+          />
+          <BoardsOwnerFilter
+            onChange={value => {
+              queryBoards({
+                owner: value,
+                page: 1
+              });
+            }}
+            options={toolbarOwnerOptions}
+            value={currentParams.owner}
+          />
+          <BoardsShowInactiveToggle
+            checked={currentParams.showInactive}
+            onChange={checked => {
+              queryBoards({
+                page: 1,
+                showInactive: checked
+              });
+            }}
+          />
+        </Stack>
+        <CreateBoardToolbarButton onClick={onCreateBoard} />
       </Stack>
-      <CreateBoardToolbarButton onClick={onCreateBoard} />
-    </Stack>
+    </Paper>
   );
 };

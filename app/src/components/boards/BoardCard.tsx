@@ -13,7 +13,7 @@ import { canManageBoardSettings } from "../../domain/board/boardPermissions";
 import { formatMinutesToTimeTrackingDuration } from "@helpers/timeTrackingConversions";
 import type { Board } from "../../domain/board/graphql";
 import type { TicketStateCounts } from "@components/boards/tickets-info/types";
-import type { TimeTrackingStats } from "@components/boards/time-tracking-info/types";
+import type { TimeVelocityStats } from "@components/charts/TimeVelocityChart";
 
 interface BoardCardProps {
   board: Board;
@@ -44,7 +44,7 @@ const getTicketCounts = (board: Board): TicketStateCounts => {
   }, createEmptyTicketCounts());
 };
 
-const getTimeTrackingStats = (board: Board): TimeTrackingStats => {
+const getTimeTrackingStats = (board: Board): TimeVelocityStats => {
   const estimatedMinutes = board.tickets.reduce((sum, ticket) => {
     return sum + (ticket.estimatedMinutes ?? 0);
   }, 0);

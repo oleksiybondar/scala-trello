@@ -31,7 +31,6 @@ const BoardPageBody = (): ReactElement => {
         <BoardPageHeader />
         <Box
           sx={{
-            backgroundColor: "background.paper",
             position: "sticky",
             top: { xs: 64, sm: 64 },
             zIndex: theme => theme.zIndex.appBar - 1

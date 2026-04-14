@@ -4,8 +4,8 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import { useTheme } from "@mui/material/styles";
 
-import { TicketPieChart } from "@components/boards/tickets-info/TicketPieChart";
-import { TicketPieChartLegendItem } from "@components/boards/tickets-info/TicketPieChartLegendItem";
+import { DonutChart } from "@components/charts/DonutChart";
+import { DonutChartLegendItem } from "@components/charts/DonutChartLegendItem";
 import type { TicketStateCounts } from "@components/boards/tickets-info/types";
 import {
   boardTicketStates,
@@ -52,12 +52,13 @@ export const TicketsInfo = ({ ticketCounts }: TicketsInfoProps): ReactElement =>
           spacing={1}
           sx={{ flex: "0 0 160px", minWidth: 140 }}
         >
-          <TicketPieChart
+          <DonutChart
+            centerLabel="Total"
+            centerValue={totalTickets}
             segments={segments.map(segment => ({
               color: segment.color,
               value: segment.count
             }))}
-            total={totalTickets}
           />
         </Stack>
 
@@ -67,11 +68,10 @@ export const TicketsInfo = ({ ticketCounts }: TicketsInfoProps): ReactElement =>
           sx={{ flex: 1, maxWidth: 280, minWidth: 0 }}
         >
           {segments.map(segment => (
-            <TicketPieChartLegendItem
+            <DonutChartLegendItem
               color={segment.color}
-              count={segment.count}
               key={segment.key}
-              title={segment.title}
+              value={`${segment.title}: ${String(segment.count)}`}
             />
           ))}
         </Stack>

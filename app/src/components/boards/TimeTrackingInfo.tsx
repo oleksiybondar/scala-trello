@@ -4,11 +4,13 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import { TimeTrackingLineChart } from "@components/boards/time-tracking-info/TimeTrackingLineChart";
-import type { TimeTrackingStats } from "@components/boards/time-tracking-info/types";
+import {
+  TimeVelocityChart,
+  type TimeVelocityStats
+} from "@components/charts/TimeVelocityChart";
 
 interface TimeTrackingInfoProps {
-  stats: TimeTrackingStats;
+  stats: TimeVelocityStats;
 }
 
 export const TimeTrackingInfo = ({ stats }: TimeTrackingInfoProps): ReactElement => {
@@ -42,7 +44,7 @@ export const TimeTrackingInfo = ({ stats }: TimeTrackingInfoProps): ReactElement
           ) : null}
         </Stack>
 
-        <TimeTrackingLineChart stats={stats} />
+        <TimeVelocityChart stats={stats} />
       </Stack>
     </Paper>
   );
