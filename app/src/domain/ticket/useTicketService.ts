@@ -5,6 +5,7 @@ import { useAuth } from "@hooks/useAuth";
 import {
   buildChangeTicketAcceptanceCriteriaMutation,
   buildChangeTicketDescriptionMutation,
+  buildChangeTicketEstimatedTimeMutation,
   buildChangeTicketPriorityMutation,
   buildChangeTicketSeverityMutation,
   buildChangeTicketTitleMutation,
@@ -14,6 +15,7 @@ import {
 import type {
   ChangeTicketAcceptanceCriteriaMutationResponse,
   ChangeTicketDescriptionMutationResponse,
+  ChangeTicketEstimatedTimeMutationResponse,
   ChangeTicketPriorityMutationResponse,
   ChangeTicketSeverityMutationResponse,
   ChangeTicketTitleMutationResponse,
@@ -28,12 +30,14 @@ interface UseTicketServiceParams {
 interface UseTicketServiceResult {
   changeTicketAcceptanceCriteria: (acceptanceCriteria: string | null) => Promise<Ticket>;
   changeTicketDescription: (description: string | null) => Promise<Ticket>;
+  changeTicketEstimatedTime: (estimatedMinutes: number | null) => Promise<Ticket>;
   changeTicketPriority: (priority: number | null) => Promise<Ticket>;
   changeTicketSeverity: (severityId: string | null) => Promise<Ticket>;
   changeTicketTitle: (title: string) => Promise<Ticket>;
   isLoadingTicket: boolean;
   isUpdatingTicketAcceptanceCriteria: boolean;
   isUpdatingTicketDescription: boolean;
+  isUpdatingTicketEstimatedTime: boolean;
   isUpdatingTicketPriority: boolean;
   isUpdatingTicketSeverity: boolean;
   isUpdatingTicketTitle: boolean;
@@ -117,6 +121,25 @@ export const useTicketService = ({
     }
   });
 
+  const changeTicketEstimatedTimeMutation = useMutation({
+    mutationFn: async (estimatedMinutes: number | null) => {
+      if (session === null) {
+        throw new Error("Authentication context is required for ticket operations.");
+      }
+
+      const response = await requestGraphQL<ChangeTicketEstimatedTimeMutationResponse>({
+        accessToken,
+        document: buildChangeTicketEstimatedTimeMutation(ticketId, estimatedMinutes),
+        tokenType: session.tokenType
+      });
+
+      return mapTicketResponseToTicket(response.changeTicketEstimatedTime);
+    },
+    onSuccess: nextTicket => {
+      updateCachedTicket(nextTicket);
+    }
+  });
+
   const changeTicketSeverityMutation = useMutation({
     mutationFn: async (severityId: string | null) => {
       if (session === null) {
@@ -181,6 +204,9 @@ export const useTicketService = ({
     changeTicketDescription: async (description: string | null) => {
       return changeTicketDescriptionMutation.mutateAsync(description);
     },
+    changeTicketEstimatedTime: async (estimatedMinutes: number | null) => {
+      return changeTicketEstimatedTimeMutation.mutateAsync(estimatedMinutes);
+    },
     changeTicketPriority: async (priority: number | null) => {
       return changeTicketPriorityMutation.mutateAsync(priority);
     },
@@ -193,6 +219,7 @@ export const useTicketService = ({
     isLoadingTicket: ticketQuery.isLoading,
     isUpdatingTicketAcceptanceCriteria: changeTicketAcceptanceCriteriaMutation.isPending,
     isUpdatingTicketDescription: changeTicketDescriptionMutation.isPending,
+    isUpdatingTicketEstimatedTime: changeTicketEstimatedTimeMutation.isPending,
     isUpdatingTicketPriority: changeTicketPriorityMutation.isPending,
     isUpdatingTicketSeverity: changeTicketSeverityMutation.isPending,
     isUpdatingTicketTitle: changeTicketTitleMutation.isPending,

@@ -6,6 +6,7 @@ import type { Ticket } from "../domain/ticket/graphql";
 export interface TicketContextValue {
   changeTicketAcceptanceCriteria: (acceptanceCriteria: string | null) => Promise<Ticket>;
   changeTicketDescription: (description: string | null) => Promise<Ticket>;
+  changeTicketEstimatedTime: (estimatedMinutes: number | null) => Promise<Ticket>;
   changeTicketPriority: (priority: number | null) => Promise<Ticket>;
   changeTicketSeverity: (severityId: string | null) => Promise<Ticket>;
   changeTicketTitle: (title: string) => Promise<Ticket>;
@@ -14,6 +15,7 @@ export interface TicketContextValue {
   isLoadingTicket: boolean;
   isUpdatingTicketAcceptanceCriteria: boolean;
   isUpdatingTicketDescription: boolean;
+  isUpdatingTicketEstimatedTime: boolean;
   isUpdatingTicketPriority: boolean;
   isUpdatingTicketSeverity: boolean;
   isUpdatingTicketTitle: boolean;
@@ -30,6 +32,7 @@ const missingTicketProvider = (): never => {
 export const TicketContext = createContext<TicketContextValue>({
   changeTicketAcceptanceCriteria: missingTicketProvider,
   changeTicketDescription: missingTicketProvider,
+  changeTicketEstimatedTime: missingTicketProvider,
   changeTicketPriority: missingTicketProvider,
   changeTicketSeverity: missingTicketProvider,
   changeTicketTitle: missingTicketProvider,
@@ -38,6 +41,7 @@ export const TicketContext = createContext<TicketContextValue>({
   isLoadingTicket: false,
   isUpdatingTicketAcceptanceCriteria: false,
   isUpdatingTicketDescription: false,
+  isUpdatingTicketEstimatedTime: false,
   isUpdatingTicketPriority: false,
   isUpdatingTicketSeverity: false,
   isUpdatingTicketTitle: false,

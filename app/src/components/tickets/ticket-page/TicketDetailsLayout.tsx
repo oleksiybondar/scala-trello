@@ -19,6 +19,7 @@ import {
   TimeVelocityChart,
   type TimeVelocityStats
 } from "@components/charts/TimeVelocityChart";
+import { TimeInput } from "@components/time-tracking/TimeInput";
 import { TicketPrioritySelect } from "@components/tickets/TicketPrioritySelect";
 import { TicketSeveritySelect } from "@components/tickets/TicketSeveritySelect";
 import type { Ticket } from "../../../domain/ticket/graphql";
@@ -87,6 +88,7 @@ export const TicketDetailsLayout = ({
   const {
     changeTicketAcceptanceCriteria,
     changeTicketDescription,
+    changeTicketEstimatedTime,
     changeTicketPriority,
     changeTicketSeverity,
     changeTicketTitle,
@@ -94,6 +96,7 @@ export const TicketDetailsLayout = ({
     isLoadingSeverities,
     isUpdatingTicketAcceptanceCriteria,
     isUpdatingTicketDescription,
+    isUpdatingTicketEstimatedTime,
     isUpdatingTicketPriority,
     isUpdatingTicketSeverity,
     isUpdatingTicketTitle,
@@ -102,10 +105,12 @@ export const TicketDetailsLayout = ({
   const [title, setTitle] = useState(ticket.name);
   const [priority, setPriority] = useState(ticket.priority ?? 5);
   const [severityId, setSeverityId] = useState(ticket.severityId);
+  const [estimatedMinutes, setEstimatedMinutes] = useState(ticket.estimatedMinutes);
   const [description, setDescription] = useState(ticket.description ?? "");
   const [acceptanceCriteria, setAcceptanceCriteria] = useState(ticket.acceptanceCriteria ?? "");
   const [titleError, setTitleError] = useState<string | null>(null);
   const [prioritySeverityError, setPrioritySeverityError] = useState<string | null>(null);
+  const [estimatedTimeError, setEstimatedTimeError] = useState<string | null>(null);
   const [descriptionError, setDescriptionError] = useState<string | null>(null);
   const [acceptanceCriteriaError, setAcceptanceCriteriaError] = useState<string | null>(null);
 
@@ -113,6 +118,7 @@ export const TicketDetailsLayout = ({
     setTitle(ticket.name);
     setPriority(ticket.priority ?? 5);
     setSeverityId(ticket.severityId);
+    setEstimatedMinutes(ticket.estimatedMinutes);
     setDescription(ticket.description ?? "");
     setAcceptanceCriteria(ticket.acceptanceCriteria ?? "");
   }, [ticket]);
@@ -130,11 +136,13 @@ export const TicketDetailsLayout = ({
   const isOverdue = timeVelocityStats.overdueTime !== "0h:00m";
   const hasTitleChanged = title.trim() !== ticket.name.trim();
   const hasPrioritySeverityChanged = priority !== (ticket.priority ?? 5) || severityId !== ticket.severityId;
+  const hasEstimatedTimeChanged = estimatedMinutes !== ticket.estimatedMinutes;
   const hasDescriptionChanged = description.trim() !== (ticket.description ?? "").trim();
   const hasAcceptanceCriteriaChanged =
     acceptanceCriteria.trim() !== (ticket.acceptanceCriteria ?? "").trim();
   const isTitleDisabled = isUpdatingTicketTitle;
   const isPrioritySeverityDisabled = isUpdatingTicketPriority || isUpdatingTicketSeverity;
+  const isEstimatedTimeDisabled = isUpdatingTicketEstimatedTime;
   const isDescriptionDisabled = isUpdatingTicketDescription;
   const isAcceptanceCriteriaDisabled = isUpdatingTicketAcceptanceCriteria;
 
@@ -276,6 +284,56 @@ export const TicketDetailsLayout = ({
                                 : "Failed to update ticket priority or severity."
                             );
                           });
+                      }}
+                      variant="contained"
+                    >
+                      Apply
+                    </Button>
+                  </Stack>
+                ) : null}
+              </Stack>
+            </CardContent>
+          </Card>
+
+          <Card variant="outlined">
+            <CardContent>
+              <Stack padding={3} spacing={3}>
+                {estimatedTimeError !== null ? <Alert severity="error">{estimatedTimeError}</Alert> : null}
+                <Stack spacing={1}>
+                  <Typography variant="h5">Estimated time</Typography>
+                  <Typography color="text.secondary" variant="body2">
+                    Set how much time this ticket is expected to take.
+                  </Typography>
+                </Stack>
+                <TimeInput
+                  disabled={isEstimatedTimeDisabled}
+                  label="Estimated time"
+                  onChange={setEstimatedMinutes}
+                  value={estimatedMinutes}
+                />
+                {hasEstimatedTimeChanged ? (
+                  <Stack direction={{ sm: "row", xs: "column-reverse" }} justifyContent="flex-end" spacing={1.5}>
+                    <Button
+                      disabled={isEstimatedTimeDisabled}
+                      onClick={() => {
+                        setEstimatedMinutes(ticket.estimatedMinutes);
+                        setEstimatedTimeError(null);
+                      }}
+                      variant="outlined"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      disabled={isEstimatedTimeDisabled}
+                      onClick={() => {
+                        setEstimatedTimeError(null);
+                        void changeTicketEstimatedTime(estimatedMinutes).catch((error: unknown) => {
+                          setEstimatedTimeError(
+                            error instanceof Error
+                              ? error.message
+                              : "Failed to update ticket estimated time."
+                          );
+                        });
                       }}
                       variant="contained"
                     >
