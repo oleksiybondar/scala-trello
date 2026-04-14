@@ -216,6 +216,6 @@ describe("BoardCard", () => {
     expect(screen.getByText("Time tracking")).toBeInTheDocument();
     expect(screen.getByText(/^Es:/)).toBeInTheDocument();
     expect(screen.getByText(/^Act:/)).toBeInTheDocument();
-    expect(screen.getByLabelText("Time tracking line chart")).toBeInTheDocument();
+    expect(screen.getByLabelText("Time velocity chart")).toBeInTheDocument();
   });
 });
