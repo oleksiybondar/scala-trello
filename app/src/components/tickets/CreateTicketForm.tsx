@@ -6,7 +6,6 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
 
 import { TicketPrioritySelect } from "@components/tickets/TicketPrioritySelect";
 import { TicketSeveritySelect } from "@components/tickets/TicketSeveritySelect";
@@ -97,11 +96,6 @@ export const CreateTicketForm = ({
     <Stack component="form" onSubmit={handleSubmit} spacing={0}>
       <DialogContent dividers>
         <Stack spacing={3}>
-          <Typography color="text.secondary" variant="body2">
-            Draft the ticket details here. Submission wiring comes next once the
-            ticket mutation flow is connected.
-          </Typography>
-
           <TextField
             autoFocus
             disabled={isSubmitting}
@@ -125,6 +119,31 @@ export const CreateTicketForm = ({
             }}
             value={formState.title}
           />
+
+          <Stack direction={{ md: "row", xs: "column" }} spacing={2}>
+            <TicketSeveritySelect
+                disabled={isSubmitting}
+                onChange={severityId => {
+                  setFormState(currentState => ({
+                    ...currentState,
+                    severityId
+                  }));
+                }}
+                severities={severities}
+                value={formState.severityId}
+            />
+
+            <TicketPrioritySelect
+                disabled={isSubmitting}
+                onChange={priority => {
+                  setFormState(currentState => ({
+                    ...currentState,
+                    priority
+                  }));
+                }}
+                value={formState.priority}
+            />
+          </Stack>
 
           <TextField
             disabled={isSubmitting}
@@ -177,31 +196,6 @@ export const CreateTicketForm = ({
             }}
             value={formState.estimatedMinutes}
           />
-
-          <Stack direction={{ md: "row", xs: "column" }} spacing={2}>
-            <TicketSeveritySelect
-              disabled={isSubmitting}
-              onChange={severityId => {
-                setFormState(currentState => ({
-                  ...currentState,
-                  severityId
-                }));
-              }}
-              severities={severities}
-              value={formState.severityId}
-            />
-
-            <TicketPrioritySelect
-              disabled={isSubmitting}
-              onChange={priority => {
-                setFormState(currentState => ({
-                  ...currentState,
-                  priority
-                }));
-              }}
-              value={formState.priority}
-            />
-          </Stack>
         </Stack>
       </DialogContent>
 

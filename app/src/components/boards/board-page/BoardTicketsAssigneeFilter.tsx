@@ -1,11 +1,7 @@
 import type { ReactElement } from "react";
 
-import FormControl from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import ListItemText from "@mui/material/ListItemText";
-import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
-
+import { Person } from "@components/avatar/Person";
+import { BoardTicketsMultiSelectFilter } from "@components/boards/board-page/BoardTicketsMultiSelectFilter";
 import type { BoardMember } from "../../../domain/board/graphql";
 
 interface BoardTicketsAssigneeFilterProps {
@@ -19,39 +15,28 @@ export const BoardTicketsAssigneeFilter = ({
   selectedUserIds,
   setSelectedUserIds
 }: BoardTicketsAssigneeFilterProps): ReactElement => {
+  const options = members.map(member => {
+    const label =
+      member.user === null
+        ? member.userId
+        : `${member.user.firstName} ${member.user.lastName}`;
+
+    return {
+      label,
+      menuContent: <Person fallbackLabel={member.userId} person={member.user} />,
+      value: member.userId
+    };
+  });
+
   return (
-    <FormControl size="small" sx={{ minWidth: { md: 240, xs: "100%" } }}>
-      <InputLabel id="board-ticket-assignee-filter-label">Assignees</InputLabel>
-      <Select
-        label="Assignees"
-        labelId="board-ticket-assignee-filter-label"
-        multiple
-        onChange={event => {
-          const value = event.target.value;
-
-          setSelectedUserIds(typeof value === "string" ? value.split(",").filter(Boolean) : value);
-        }}
-        renderValue={selected => {
-          if (selected.length === 0) {
-            return "Everyone";
-          }
-
-          return `${String(selected.length)} selected`;
-        }}
-        value={selectedUserIds}
-      >
-        {members.map(member => (
-          <MenuItem key={member.userId} value={member.userId}>
-            <ListItemText
-              primary={
-                member.user === null
-                  ? member.userId
-                  : `${member.user.firstName} ${member.user.lastName}`
-              }
-            />
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
+    <BoardTicketsMultiSelectFilter
+      emptyLabel="Everyone"
+      label="Assignees"
+      labelId="board-ticket-assignee-filter-label"
+      onChange={setSelectedUserIds}
+      options={options}
+      sxMinWidth={240}
+      value={selectedUserIds}
+    />
   );
 };

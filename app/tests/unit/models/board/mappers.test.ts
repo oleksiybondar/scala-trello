@@ -77,6 +77,9 @@ describe("board mappers", () => {
             lastModifiedByUserId: "user-3",
             modifiedAt: "2026-04-08T11:30:00Z",
             name: "Board metrics",
+            priority: 2,
+            severityId: "3",
+            severityName: "major",
             status: "in progress",
             timeEntries: [
               {
@@ -175,6 +178,9 @@ describe("board mappers", () => {
           lastModifiedByUserId: "user-3",
           modifiedAt: "2026-04-08T11:30:00Z",
           name: "Board metrics",
+          priority: 2,
+          severityId: "3",
+          severityName: "major",
           status: "in progress",
           ticketId: "ticket-1",
           timeEntries: [

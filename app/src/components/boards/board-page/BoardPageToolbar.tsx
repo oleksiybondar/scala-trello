@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import Button from "@mui/material/Button";
@@ -9,13 +9,22 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 
 import { BoardTicketsAssigneeFilter } from "@components/boards/board-page/BoardTicketsAssigneeFilter";
+import { BoardTicketsPriorityFilter } from "@components/boards/board-page/BoardTicketsPriorityFilter";
+import { BoardTicketsSeverityFilter } from "@components/boards/board-page/BoardTicketsSeverityFilter";
 import { CreateTicketDialog } from "@components/tickets/CreateTicketDialog";
 import { useBoard } from "@hooks/useBoard";
+import { useSeverities } from "@hooks/useSeverities";
 import { useTickets } from "@hooks/useTickets";
 
 export const BoardPageToolbar = (): ReactElement => {
   const [isCreateTicketDialogOpen, setIsCreateTicketDialogOpen] = useState(false);
   const { members } = useBoard();
+  const {
+    hasLoadedSeverities,
+    isLoadingSeverities,
+    loadSeverities,
+    severities
+  } = useSeverities();
   const {
     assignedToUserIds,
     codeReviewTickets,
@@ -25,7 +34,11 @@ export const BoardPageToolbar = (): ReactElement => {
     newTickets,
     searchKeywords,
     setAssignedToUserIds,
+    setSelectedPriorities,
+    setSelectedSeverityIds,
     setSearchKeywords,
+    selectedPriorities,
+    selectedSeverityIds,
     ticketsCount
   } = useTickets();
   const filteredTicketsCount =
@@ -34,6 +47,14 @@ export const BoardPageToolbar = (): ReactElement => {
     codeReviewTickets.length +
     inTestingTickets.length +
     doneTickets.length;
+
+  useEffect(() => {
+    if (hasLoadedSeverities || isLoadingSeverities) {
+      return;
+    }
+
+    void loadSeverities();
+  }, [hasLoadedSeverities, isLoadingSeverities, loadSeverities]);
 
   return (
     <>
@@ -81,6 +102,15 @@ export const BoardPageToolbar = (): ReactElement => {
                 members={members}
                 selectedUserIds={assignedToUserIds}
                 setSelectedUserIds={setAssignedToUserIds}
+              />
+              <BoardTicketsSeverityFilter
+                severities={severities}
+                selectedSeverityIds={selectedSeverityIds}
+                setSelectedSeverityIds={setSelectedSeverityIds}
+              />
+              <BoardTicketsPriorityFilter
+                selectedPriorities={selectedPriorities}
+                setSelectedPriorities={setSelectedPriorities}
               />
             </Stack>
           </Stack>

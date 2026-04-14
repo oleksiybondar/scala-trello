@@ -4,7 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { TicketsContext } from "@contexts/tickets-context";
 import type { TicketsContextValue } from "@contexts/tickets-context";
 import { useBoard } from "@hooks/useBoard";
-import { useTicketsFilteringService } from "../domain/ticket/useTicketsFilteringService";
+import {
+  compareTicketsByPriority,
+  useTicketsFilteringService
+} from "../domain/ticket/useTicketsFilteringService";
 import { useTicketsState } from "@providers/tickets/useTicketsState";
 import type {
   Board,
@@ -24,6 +27,16 @@ import { useTicketsService } from "../domain/ticket/useTicketsService";
 const selectTicketsByStatus = (tickets: Ticket[], status: string): Ticket[] => {
   return tickets.filter(ticket => {
     return ticket.status?.trim().toLowerCase() === status;
+  });
+};
+
+const selectAndSortTicketsByStatus = (
+  tickets: Ticket[],
+  status: string,
+  direction: "high_to_low" | "low_to_high"
+): Ticket[] => {
+  return selectTicketsByStatus(tickets, status).sort((left, right) => {
+    return compareTicketsByPriority(left, right, direction);
   });
 };
 
@@ -91,9 +104,9 @@ const mapBoardTicketToTicket = (board: Board | null, ticket: BoardTicket): Ticke
     lastModifiedByUserId: ticket.lastModifiedByUserId,
     modifiedAt: ticket.modifiedAt,
     name: ticket.name,
-    priority: null,
-    severityId: null,
-    severityName: null,
+    priority: ticket.priority,
+    severityId: ticket.severityId,
+    severityName: ticket.severityName,
     status: ticket.status,
     ticketId: ticket.ticketId,
     timeEntries: ticket.timeEntries.map(mapTimeEntry),
@@ -136,52 +149,81 @@ export const TicketsProvider = ({
   }, [board]);
 
   useEffect(() => {
-    ticketsState.setNewTickets(selectTicketsByStatus(ticketsFilteringService.applyFiltering(), "new"));
+    ticketsState.setNewTickets(
+      selectAndSortTicketsByStatus(
+        ticketsFilteringService.applyFiltering(),
+        "new",
+        ticketsFilteringService.columnPriorityDirections.new
+      )
+    );
   }, [
     bootstrapVersion,
     ticketsFilteringService.applyFiltering,
+    ticketsFilteringService.columnPriorityDirections.new,
     ticketsState.newTicketsRevision,
     ticketsState.setNewTickets
   ]);
 
   useEffect(() => {
     ticketsState.setInProgressTickets(
-      selectTicketsByStatus(ticketsFilteringService.applyFiltering(), "in_progress")
+      selectAndSortTicketsByStatus(
+        ticketsFilteringService.applyFiltering(),
+        "in_progress",
+        ticketsFilteringService.columnPriorityDirections.in_progress
+      )
     );
   }, [
     bootstrapVersion,
     ticketsFilteringService.applyFiltering,
+    ticketsFilteringService.columnPriorityDirections.in_progress,
     ticketsState.inProgressTicketsRevision,
     ticketsState.setInProgressTickets
   ]);
 
   useEffect(() => {
     ticketsState.setCodeReviewTickets(
-      selectTicketsByStatus(ticketsFilteringService.applyFiltering(), "code_review")
+      selectAndSortTicketsByStatus(
+        ticketsFilteringService.applyFiltering(),
+        "code_review",
+        ticketsFilteringService.columnPriorityDirections.code_review
+      )
     );
   }, [
     bootstrapVersion,
     ticketsFilteringService.applyFiltering,
+    ticketsFilteringService.columnPriorityDirections.code_review,
     ticketsState.codeReviewTicketsRevision,
     ticketsState.setCodeReviewTickets
   ]);
 
   useEffect(() => {
     ticketsState.setInTestingTickets(
-      selectTicketsByStatus(ticketsFilteringService.applyFiltering(), "in_testing")
+      selectAndSortTicketsByStatus(
+        ticketsFilteringService.applyFiltering(),
+        "in_testing",
+        ticketsFilteringService.columnPriorityDirections.in_testing
+      )
     );
   }, [
     bootstrapVersion,
     ticketsFilteringService.applyFiltering,
+    ticketsFilteringService.columnPriorityDirections.in_testing,
     ticketsState.inTestingTicketsRevision,
     ticketsState.setInTestingTickets
   ]);
 
   useEffect(() => {
-    ticketsState.setDoneTickets(selectTicketsByStatus(ticketsFilteringService.applyFiltering(), "done"));
+    ticketsState.setDoneTickets(
+      selectAndSortTicketsByStatus(
+        ticketsFilteringService.applyFiltering(),
+        "done",
+        ticketsFilteringService.columnPriorityDirections.done
+      )
+    );
   }, [
     bootstrapVersion,
     ticketsFilteringService.applyFiltering,
+    ticketsFilteringService.columnPriorityDirections.done,
     ticketsState.doneTicketsRevision,
     ticketsState.setDoneTickets
   ]);
@@ -201,12 +243,18 @@ export const TicketsProvider = ({
     isReloadingTickets: ticketsService.isReloadingTickets,
     isTransitioningTicketState: ticketsService.isTransitioningTicketState,
     newTickets: ticketsState.newTickets,
+    columnPriorityDirections: ticketsFilteringService.columnPriorityDirections,
     reassignTicket: ticketsService.reassignTicket,
     reloadTickets: ticketsService.reloadTickets,
     resetFilters: ticketsFilteringService.resetFilters,
     searchKeywords: ticketsFilteringService.searchKeywords,
+    setColumnPriorityDirection: ticketsFilteringService.setColumnPriorityDirection,
     setAssignedToUserIds: ticketsFilteringService.setAssignedToUserIds,
+    setSelectedPriorities: ticketsFilteringService.setSelectedPriorities,
+    setSelectedSeverityIds: ticketsFilteringService.setSelectedSeverityIds,
     setSearchKeywords: ticketsFilteringService.setSearchKeywords,
+    selectedPriorities: ticketsFilteringService.selectedPriorities,
+    selectedSeverityIds: ticketsFilteringService.selectedSeverityIds,
     tickets,
     ticketsCount,
     ticketsError: ticketsService.ticketsError,

@@ -11,15 +11,18 @@ import {
   resolveBoardTicketStateColor
 } from "@helpers/boardTicketState";
 import type { TicketsServiceStatus } from "../../../domain/ticket/useTicketsService";
+import type { TicketStatusKey } from "../../../domain/ticket/useTicketsService";
 
 export const BoardMainArea = (): ReactElement => {
   const theme = useTheme();
   const {
+    columnPriorityDirections,
     codeReviewTickets,
     doneTickets,
     inProgressTickets,
     inTestingTickets,
     newTickets,
+    setColumnPriorityDirection,
     transitionTicketState
   } = useTickets();
   const columnTickets = {
@@ -34,6 +37,12 @@ export const BoardMainArea = (): ReactElement => {
     status: TicketsServiceStatus
   ): void => {
     void transitionTicketState(ticketId, status);
+  };
+  const handleToggleColumnDirection = (columnKey: TicketStatusKey): void => {
+    setColumnPriorityDirection(
+      columnKey,
+      columnPriorityDirections[columnKey] === "high_to_low" ? "low_to_high" : "high_to_low"
+    );
   };
 
   return (
@@ -62,6 +71,10 @@ export const BoardMainArea = (): ReactElement => {
             onDrop={ticketId => {
               handleColumnDrop(ticketId, column.status);
             }}
+            onPriorityDirectionToggle={() => {
+              handleToggleColumnDirection(column.key);
+            }}
+            priorityDirection={columnPriorityDirections[column.key]}
             tickets={columnTickets[column.key]}
             title={column.title}
           />

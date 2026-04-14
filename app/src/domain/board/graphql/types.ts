@@ -56,6 +56,9 @@ export interface BoardTicket {
   lastModifiedByUserId: string;
   modifiedAt: string;
   name: string;
+  priority: number | null;
+  severityId: string | null;
+  severityName: string | null;
   status: string | null;
   ticketId: string;
   timeEntries: BoardTimeTrackingEntry[];

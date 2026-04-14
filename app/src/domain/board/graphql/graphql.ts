@@ -44,6 +44,9 @@ const BOARD_FIELDS = `
     description
     acceptanceCriteria
     estimatedMinutes
+    priority
+    severityId
+    severityName
     commentsCount
     trackedMinutes
     status

@@ -1,18 +1,25 @@
 import { useRef, useState } from "react";
 import type { DragEvent, ReactElement } from "react";
 
+import ArrowDownwardRoundedIcon from "@mui/icons-material/ArrowDownwardRounded";
+import ArrowUpwardRoundedIcon from "@mui/icons-material/ArrowUpwardRounded";
 import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
 
 import { BoardTicketCard } from "@components/boards/board-page/BoardTicketCard";
 import type { Ticket } from "../../../domain/ticket/graphql";
+import type { TicketPrioritySorting } from "../../../domain/ticket/useTicketsFilteringService";
 
 interface BoardColumnProps {
   background?: string;
+  onPriorityDirectionToggle?: () => void;
   onDrop?: (ticketId: string) => void;
+  priorityDirection?: TicketPrioritySorting;
   tickets: Ticket[];
   title: string;
 }
@@ -21,7 +28,9 @@ const DRAGGED_TICKET_ID_DATA_KEY = "application/x-board-ticket-id";
 
 export const BoardColumn = ({
   background,
+  onPriorityDirectionToggle,
   onDrop,
+  priorityDirection = "high_to_low",
   tickets,
   title
 }: BoardColumnProps): ReactElement => {
@@ -125,7 +134,30 @@ export const BoardColumn = ({
           zIndex: 1
         }}
       >
-        <Typography variant="h6">{title}</Typography>
+        <Stack alignItems="center" direction="row" justifyContent="space-between" spacing={1}>
+          <Typography variant="h6">{title}</Typography>
+          <Tooltip
+            title={
+              priorityDirection === "high_to_low"
+                ? "Priority: highest first"
+                : "Priority: lowest first"
+            }
+          >
+            <IconButton
+              aria-label={`Toggle priority direction for ${title}`}
+              onClick={() => {
+                onPriorityDirectionToggle?.();
+              }}
+              size="small"
+            >
+              {priorityDirection === "high_to_low" ? (
+                <ArrowUpwardRoundedIcon fontSize="small" />
+              ) : (
+                <ArrowDownwardRoundedIcon fontSize="small" />
+              )}
+            </IconButton>
+          </Tooltip>
+        </Stack>
       </Box>
 
       <Stack
