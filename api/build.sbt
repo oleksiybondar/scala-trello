@@ -1,3 +1,5 @@
+import com.typesafe.sbt.packager.archetypes.JavaAppPackaging
+
 ThisBuild / scalaVersion := "3.3.3"
 ThisBuild / organization := "io.github.oleksiybondar"
 ThisBuild / version := "0.1.0-SNAPSHOT"
@@ -5,9 +7,14 @@ ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 
 lazy val root = (project in file("."))
+  .enablePlugins(JavaAppPackaging)
   .settings(
     name := "api",
     Test / parallelExecution := false,
+    Compile / mainClass := Some("io.github.oleksiybondar.api.Main"),
+    Universal / javaOptions ++= Seq(
+      "-Dconfig.resource=application.conf"
+    ),
 
     scalacOptions ++= Seq(
       "-deprecation",
@@ -80,6 +87,8 @@ addCommandAlias(
   "lint",
   "; compile; Test / compile; scalafixAll --check; Test / scalafixAll --check; scapegoat; Test / scapegoat"
 )
+addCommandAlias("packageApp", "; clean; stage")
+addCommandAlias("distApp", "; clean; dist")
 addCommandAlias(
   "coverageCheck",
   "; clean; coverage; test; coverageReport; coverageOff"
