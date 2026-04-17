@@ -200,6 +200,19 @@ const updateTicketAssignee = async (
   return mapTicketResponseToTicket(response.reassignTicket);
 };
 
+const hasServerManagedTicketChanges = (
+  nextTicket: Ticket,
+  currentTicket: Ticket
+): boolean => {
+  return (
+    nextTicket.name !== currentTicket.name ||
+    nextTicket.description !== currentTicket.description ||
+    nextTicket.acceptanceCriteria !== currentTicket.acceptanceCriteria ||
+    nextTicket.estimatedMinutes !== currentTicket.estimatedMinutes ||
+    nextTicket.assignedToUserId !== currentTicket.assignedToUserId
+  );
+};
+
 export const useTicketsService = ({
   boardId,
   ticketsRef,
@@ -347,23 +360,31 @@ export const useTicketsService = ({
         throw new Error(`Ticket ${ticketId} was not found.`);
       }
 
-      const nextTicket = updater(currentTicket);
+      const desiredTicket = updater(currentTicket);
 
-      if (nextTicket.status !== currentTicket.status) {
+      if (desiredTicket.status !== currentTicket.status) {
         throw new Error(
           "Changing ticket status is not supported by the current backend GraphQL schema."
         );
       }
 
+      if (!hasServerManagedTicketChanges(desiredTicket, currentTicket)) {
+        return desiredTicket;
+      }
+
       let latestTicket = currentTicket;
 
-      latestTicket = await updateTicketTitle(nextTicket, currentTicket, accessToken);
-      latestTicket = await updateTicketDescription(nextTicket, latestTicket, accessToken);
-      latestTicket = await updateTicketAcceptanceCriteria(nextTicket, latestTicket, accessToken);
-      latestTicket = await updateTicketEstimatedTime(nextTicket, latestTicket, accessToken);
-      latestTicket = await updateTicketAssignee(nextTicket, latestTicket, accessToken);
+      latestTicket = await updateTicketTitle(desiredTicket, currentTicket, accessToken);
+      latestTicket = await updateTicketDescription(desiredTicket, latestTicket, accessToken);
+      latestTicket = await updateTicketAcceptanceCriteria(desiredTicket, latestTicket, accessToken);
+      latestTicket = await updateTicketEstimatedTime(desiredTicket, latestTicket, accessToken);
+      latestTicket = await updateTicketAssignee(desiredTicket, latestTicket, accessToken);
 
-      return latestTicket;
+      return {
+        ...latestTicket,
+        timeEntries: desiredTicket.timeEntries,
+        trackedMinutes: desiredTicket.trackedMinutes
+      };
     },
     onSuccess: (nextTicket, variables) => {
       applyLocalTicketUpdate(variables.ticketId, () => nextTicket);
