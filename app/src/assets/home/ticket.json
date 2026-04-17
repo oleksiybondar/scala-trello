@@ -1,0 +1,221 @@
+{
+  "acceptanceCriteria": "Schema and resolvers are covered with tests.",
+  "assignedTo": {
+    "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+    "firstName": "Alexandra",
+    "lastName": "Montgomery",
+    "userId": "user-1"
+  },
+  "assignedToUserId": "user-1",
+  "board": {
+    "active": true,
+    "boardId": "landing-board-demo",
+    "name": "Platform Sprint"
+  },
+  "boardId": "landing-board-demo",
+  "comments": [],
+  "commentsCount": 2,
+  "createdAt": "2026-04-05T08:30:00Z",
+  "createdBy": {
+    "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+    "firstName": "Alexandra",
+    "lastName": "Montgomery",
+    "userId": "user-1"
+  },
+  "createdByUserId": "user-1",
+  "description": "Create GraphQL schema and resolver endpoints.",
+  "estimatedMinutes": 180,
+  "lastModifiedBy": {
+    "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+    "firstName": "Taylor",
+    "lastName": "Nguyen",
+    "userId": "user-2"
+  },
+  "lastModifiedByUserId": "user-2",
+  "modifiedAt": "2026-04-05T14:30:00Z",
+  "name": "Schema",
+  "priority": 1,
+  "severityId": "1",
+  "severityName": "critical",
+  "status": "in progress",
+  "ticketId": "ticket-1",
+  "timeEntries": [
+    {
+      "activityCode": "development",
+      "activityId": "1",
+      "activityName": "Development",
+      "description": "Scaffold schema types",
+      "durationMinutes": 90,
+      "entryId": "entry-1",
+      "loggedAt": "2026-04-05T09:00:00Z",
+      "ticket": {
+        "description": "Create GraphQL schema and resolver endpoints.",
+        "ticketId": "ticket-1",
+        "title": "Schema"
+      },
+      "ticketId": "ticket-1",
+      "user": {
+        "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+        "firstName": "Taylor",
+        "lastName": "Nguyen",
+        "userId": "user-2"
+      },
+      "userId": "user-2"
+    },
+    {
+      "activityCode": "debugging",
+      "activityId": "8",
+      "activityName": "Debugging",
+      "description": null,
+      "durationMinutes": 45,
+      "entryId": "entry-2",
+      "loggedAt": "2026-04-05T12:30:00Z",
+      "ticket": {
+        "description": "Create GraphQL schema and resolver endpoints.",
+        "ticketId": "ticket-1",
+        "title": "Schema"
+      },
+      "ticketId": "ticket-1",
+      "user": {
+        "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+        "firstName": "Taylor",
+        "lastName": "Nguyen",
+        "userId": "user-2"
+      },
+      "userId": "user-2"
+    },
+    {
+      "activityCode": "testing",
+      "activityId": "2",
+      "activityName": "Testing",
+      "description": null,
+      "durationMinutes": 30,
+      "entryId": "entry-4",
+      "loggedAt": "2026-04-05T14:00:00Z",
+      "ticket": {
+        "description": "Create GraphQL schema and resolver endpoints.",
+        "ticketId": "ticket-1",
+        "title": "Schema"
+      },
+      "ticketId": "ticket-1",
+      "user": {
+        "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+        "firstName": "Sam",
+        "lastName": "Jordan",
+        "userId": "user-3"
+      },
+      "userId": "user-3"
+    },
+    {
+      "activityCode": "planning",
+      "activityId": "3",
+      "activityName": "Planning",
+      "description": "Clarify scope and split work",
+      "durationMinutes": 20,
+      "entryId": "entry-5",
+      "loggedAt": "2026-04-05T08:40:00Z",
+      "ticket": {
+        "description": "Create GraphQL schema and resolver endpoints.",
+        "ticketId": "ticket-1",
+        "title": "Schema"
+      },
+      "ticketId": "ticket-1",
+      "user": {
+        "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+        "firstName": "Alexandra",
+        "lastName": "Montgomery",
+        "userId": "user-1"
+      },
+      "userId": "user-1"
+    },
+    {
+      "activityCode": "design",
+      "activityId": "4",
+      "activityName": "Design",
+      "description": "Model initial schema relations",
+      "durationMinutes": 25,
+      "entryId": "entry-6",
+      "loggedAt": "2026-04-05T08:50:00Z",
+      "ticket": {
+        "description": "Create GraphQL schema and resolver endpoints.",
+        "ticketId": "ticket-1",
+        "title": "Schema"
+      },
+      "ticketId": "ticket-1",
+      "user": {
+        "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+        "firstName": "Alexandra",
+        "lastName": "Montgomery",
+        "userId": "user-1"
+      },
+      "userId": "user-1"
+    },
+    {
+      "activityCode": "documentation",
+      "activityId": "5",
+      "activityName": "Documentation",
+      "description": "Document endpoint contracts",
+      "durationMinutes": 15,
+      "entryId": "entry-7",
+      "loggedAt": "2026-04-05T11:00:00Z",
+      "ticket": {
+        "description": "Create GraphQL schema and resolver endpoints.",
+        "ticketId": "ticket-1",
+        "title": "Schema"
+      },
+      "ticketId": "ticket-1",
+      "user": {
+        "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+        "firstName": "Sam",
+        "lastName": "Jordan",
+        "userId": "user-3"
+      },
+      "userId": "user-3"
+    },
+    {
+      "activityCode": "refinement",
+      "activityId": "6",
+      "activityName": "Refinement",
+      "description": "Refine acceptance criteria",
+      "durationMinutes": 35,
+      "entryId": "entry-8",
+      "loggedAt": "2026-04-05T13:00:00Z",
+      "ticket": {
+        "description": "Create GraphQL schema and resolver endpoints.",
+        "ticketId": "ticket-1",
+        "title": "Schema"
+      },
+      "ticketId": "ticket-1",
+      "user": {
+        "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+        "firstName": "Taylor",
+        "lastName": "Nguyen",
+        "userId": "user-2"
+      },
+      "userId": "user-2"
+    },
+    {
+      "activityCode": "code_review",
+      "activityId": "7",
+      "activityName": "Code Review",
+      "description": "Review resolver implementation",
+      "durationMinutes": 40,
+      "entryId": "entry-9",
+      "loggedAt": "2026-04-05T15:10:00Z",
+      "ticket": {
+        "description": "Create GraphQL schema and resolver endpoints.",
+        "ticketId": "ticket-1",
+        "title": "Schema"
+      },
+      "ticketId": "ticket-1",
+      "user": {
+        "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+        "firstName": "Taylor",
+        "lastName": "Nguyen",
+        "userId": "user-2"
+      },
+      "userId": "user-2"
+    }
+  ],
+  "trackedMinutes": 300
+}

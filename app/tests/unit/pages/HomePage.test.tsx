@@ -26,12 +26,7 @@ describe("HomePage", () => {
         name: "Tickets carry effort tracking and discussion with them."
       })
     ).toBeInTheDocument();
-    expect(screen.getByText("Backend API sprint")).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "A board groups the sprint scope, its members, and the tickets moving through implementation, review, and testing."
-      )
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Platform Sprint" })).toBeInTheDocument();
     expect(
       screen.getByText(
         "Each ticket keeps its own estimate, logged work, and discussion, so the board shows both delivery state and effort visibility in one place."

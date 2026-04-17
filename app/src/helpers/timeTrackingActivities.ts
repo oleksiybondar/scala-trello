@@ -24,15 +24,11 @@ export type ActivityThemeColorToken =
 const ACTIVITY_THEME_COLOR_BY_CODE: Record<string, ActivityThemeColorToken> = {
   code_review: "info.main",
   debugging: "warning.main",
-  deployment: "secondary.main",
   design: "secondary.main",
   development: "primary.main",
-  devops: "secondary.main",
   documentation: "info.main",
-  meeting: "secondary.main",
-  qa: "success.main",
-  research: "info.main",
-  support: "warning.main",
+  planning: "info.main",
+  refinement: "warning.main",
   testing: "success.main"
 };
 

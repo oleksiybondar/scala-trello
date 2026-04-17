@@ -4,8 +4,7 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import { useTheme } from "@mui/material/styles";
 
-import { DonutChart } from "@components/charts/DonutChart";
-import { DonutChartLegendItem } from "@components/charts/DonutChartLegendItem";
+import { DonutChartWithLegend } from "@components/charts/DonutChartWithLegend";
 import type { TicketStateCounts } from "@components/boards/tickets-info/types";
 import {
   boardTicketStates,
@@ -46,35 +45,17 @@ export const TicketsInfo = ({ ticketCounts }: TicketsInfoProps): ReactElement =>
         spacing={2}
         sx={{ height: "100%" }}
       >
-        <Stack
-          alignItems="center"
-          justifyContent="center"
-          spacing={1}
-          sx={{ flex: "0 0 160px", minWidth: 140 }}
-        >
-          <DonutChart
-            centerLabel="Total"
-            centerValue={totalTickets}
-            segments={segments.map(segment => ({
-              color: segment.color,
-              value: segment.count
-            }))}
-          />
-        </Stack>
-
-        <Stack
-          justifyContent="center"
-          spacing={1}
-          sx={{ flex: 1, maxWidth: 280, minWidth: 0 }}
-        >
-          {segments.map(segment => (
-            <DonutChartLegendItem
-              color={segment.color}
-              key={segment.key}
-              value={`${segment.title}: ${String(segment.count)}`}
-            />
-          ))}
-        </Stack>
+        <DonutChartWithLegend
+          centerLabel="Total"
+          centerValue={totalTickets}
+          direction={{ md: "row", xs: "column" }}
+          items={segments.map(segment => ({
+            color: segment.color,
+            key: segment.key,
+            label: `${segment.title}: ${String(segment.count)}`,
+            value: segment.count
+          }))}
+        />
       </Stack>
     </Paper>
   );

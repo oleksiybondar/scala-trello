@@ -11,31 +11,21 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { useTheme } from "@mui/material/styles";
-import type { Theme } from "@mui/material/styles";
 
 import { Person } from "@components/avatar/Person";
-import { DonutChart } from "@components/charts/DonutChart";
-import { DonutChartLegendItem } from "@components/charts/DonutChartLegendItem";
 import {
   TimeVelocityChart,
   type TimeVelocityData
 } from "@components/charts/TimeVelocityChart";
+import { TimeTrackingActivityPieChart } from "@components/time-tracking/TimeTrackingActivityPieChart";
 import { TimeInput } from "@components/time-tracking/TimeInput";
 import { TicketActivityEntryList } from "@components/tickets/ticket-page/TicketActivityEntryList";
 import { TicketPrioritySelect } from "@components/tickets/TicketPrioritySelect";
 import { TicketSeveritySelect } from "@components/tickets/TicketSeveritySelect";
 import type { Ticket } from "../../../domain/ticket/graphql";
-import { formatMinutesToTimeTrackingDuration } from "@helpers/timeTrackingConversions";
-import {
-  type ActivityThemeColorToken,
-  buildTimeTrackingActivityColorMap,
-  buildTimeTrackingActivitySlices,
-  resolveActivityThemeColorToken,
-  resolveTimeTrackingActivityName
-} from "@helpers/timeTrackingActivities";
 import { useActivities } from "@hooks/useActivities";
 import { useTicket } from "@hooks/useTicket";
+import { useTimeTrackingActivityChart } from "@hooks/useTimeTrackingActivityChart";
 import { useTimeTracking } from "@hooks/useTimeTracking";
 
 interface TicketDetailsLayoutProps {
@@ -69,32 +59,9 @@ const normalizeOptionalText = (value: string): string | null => {
   return normalized.length === 0 ? null : normalized;
 };
 
-const resolveThemeColorByToken = (
-  theme: Theme,
-  token: ActivityThemeColorToken | null
-): string | null => {
-  switch (token) {
-    case "error.main":
-      return theme.palette.error.main;
-    case "info.main":
-      return theme.palette.info.main;
-    case "primary.main":
-      return theme.palette.primary.main;
-    case "secondary.main":
-      return theme.palette.secondary.main;
-    case "success.main":
-      return theme.palette.success.main;
-    case "warning.main":
-      return theme.palette.warning.main;
-    default:
-      return null;
-  }
-};
-
 export const TicketDetailsLayout = ({
   ticket
 }: TicketDetailsLayoutProps): ReactElement => {
-  const theme = useTheme();
   const { activities } = useActivities();
   const { openLogTimeModal } = useTimeTracking();
   const {
@@ -139,46 +106,10 @@ export const TicketDetailsLayout = ({
   const activityNameById = Object.fromEntries(
     activities.map(activity => [activity.activityId, activity.name])
   );
-  const uniqueActivityCount = new Set(
-    ticket.timeEntries.map(entry => {
-      return resolveTimeTrackingActivityName(
-        entry.activityName,
-        entry.activityCode,
-        entry.activityId,
-        activityNameById
-      );
-    })
-  ).size;
-  const fallbackActivityColors = [
-    theme.palette.primary.main,
-    theme.palette.success.main,
-    theme.palette.info.main,
-    theme.palette.warning.main,
-    theme.palette.secondary.main,
-    theme.palette.error.main
-  ];
-  const activitySlicesWithFallbackColors = buildTimeTrackingActivitySlices(
+  const { activityColorByName, activitySlices, totalActivityMinutes } = useTimeTrackingActivityChart(
     ticket.timeEntries,
-    Array.from({ length: Math.max(uniqueActivityCount, 1) }, (_, index) => {
-      return (
-        fallbackActivityColors[index % fallbackActivityColors.length] ?? theme.palette.primary.main
-      );
-    }),
     activityNameById
   );
-  const activitySlices = activitySlicesWithFallbackColors.map(slice => {
-    const mappedColor = resolveThemeColorByToken(
-      theme,
-      resolveActivityThemeColorToken(slice.activityCode)
-    );
-
-    return {
-      ...slice,
-      color: mappedColor ?? slice.color
-    };
-  });
-  const activityColorByName = buildTimeTrackingActivityColorMap(activitySlices);
-  const totalActivityMinutes = activitySlices.reduce((sum, slice) => sum + slice.minutes, 0);
   const hasTitleChanged = title.trim() !== ticket.name.trim();
   const hasPrioritySeverityChanged = priority !== (ticket.priority ?? 5) || severityId !== ticket.severityId;
   const hasEstimatedTimeChanged = estimatedMinutes !== ticket.estimatedMinutes;
@@ -523,38 +454,11 @@ export const TicketDetailsLayout = ({
           <Paper sx={{ p: 1.5 }} variant="outlined">
             <Stack spacing={1.5}>
               <Typography variant="subtitle2">Activity</Typography>
-              <Stack
-                alignItems="center"
-                direction={{ md: "row", xs: "column" }}
-                justifyContent="center"
-                spacing={2}
-              >
-                <Stack alignItems="center" justifyContent="center" spacing={1.25} sx={{ flex: "0 0 160px" }}>
-                  <DonutChart
-                    centerLabel="Logged"
-                    centerValue={formatMinutesToTimeTrackingDuration(totalActivityMinutes)}
-                    segments={activitySlices.map(slice => ({
-                      color: slice.color,
-                      value: slice.minutes
-                    }))}
-                  />
-                </Stack>
-                <Stack spacing={1} sx={{ flex: 1, minWidth: 0 }}>
-                  {activitySlices.length === 0 ? (
-                    <Typography color="text.secondary" variant="body2">
-                      No activity tracked yet.
-                    </Typography>
-                  ) : (
-                    activitySlices.map(slice => (
-                      <DonutChartLegendItem
-                        color={slice.color}
-                        key={slice.key}
-                        value={`${slice.name}: ${formatMinutesToTimeTrackingDuration(slice.minutes)}`}
-                      />
-                    ))
-                  )}
-                </Stack>
-              </Stack>
+              <TimeTrackingActivityPieChart
+                activitySlices={activitySlices}
+                emptyLegendText="No activity tracked yet."
+                totalActivityMinutes={totalActivityMinutes}
+              />
             </Stack>
           </Paper>
 

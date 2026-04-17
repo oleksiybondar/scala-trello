@@ -64,6 +64,12 @@ export const BoardTicketCardView = ({
   const canUseStateMenu = canUseActions && onStateChange !== undefined;
   const normalizedStatus = normalizeUiTicketStatus(ticket.status);
   const trackedTimeLabel = formatMinutesToTimeInput(ticket.trackedMinutes) || "00:00";
+  const estimatedTimeLabel =
+    ticket.estimatedMinutes === null ? "--:--" : (formatMinutesToTimeInput(ticket.estimatedMinutes) || "00:00");
+  const isOverEstimated =
+    ticket.estimatedMinutes !== null && ticket.trackedMinutes > ticket.estimatedMinutes;
+  const totalTimeColor =
+    ticket.estimatedMinutes === null ? "text.secondary" : isOverEstimated ? "error.main" : "success.main";
   const hasLongTitle = ticket.name.trim().length > 60;
   const hasLongDescription =
     ticket.description !== null && ticket.description.trim().length > 160;
@@ -296,9 +302,28 @@ export const BoardTicketCardView = ({
           </Box>
 
           <Stack alignItems="center" direction="row" spacing={0.5}>
-            <Typography color="text.secondary" variant="caption">
-              {trackedTimeLabel}
-            </Typography>
+            <Stack spacing={0} sx={{ minWidth: 0 }}>
+              <Typography
+                color="info.main"
+                sx={{
+                  lineHeight: 1.2,
+                  whiteSpace: "nowrap"
+                }}
+                variant="caption"
+              >
+                {estimatedTimeLabel}
+              </Typography>
+              <Typography
+                color={totalTimeColor}
+                sx={{
+                  lineHeight: 1.2,
+                  whiteSpace: "nowrap"
+                }}
+                variant="caption"
+              >
+                {trackedTimeLabel}
+              </Typography>
+            </Stack>
             {canRegisterTime && canUseActions && onLogTime !== undefined ? (
               <Tooltip title="Log time">
                 <IconButton

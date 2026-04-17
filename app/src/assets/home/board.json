@@ -1,0 +1,166 @@
+{
+  "active": false,
+  "boardId": "landing-board-demo",
+  "createdAt": "2026-04-01T08:00:00Z",
+  "createdBy": {
+    "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+    "firstName": "Taylor",
+    "lastName": "Nguyen",
+    "userId": "user-2"
+  },
+  "createdByUserId": "user-2",
+  "currentUserRole": {
+    "description": "Board administrator",
+    "permissions": [
+      {
+        "area": "dashboard",
+        "canCreate": true,
+        "canDelete": true,
+        "canModify": true,
+        "canRead": true,
+        "canReassign": true
+      }
+    ],
+    "roleId": "role-admin",
+    "roleName": "admin"
+  },
+  "description": "Planning board for platform work.",
+  "lastModifiedByUserId": "user-3",
+  "membersCount": 5,
+  "modifiedAt": "2026-04-06T09:00:00Z",
+  "name": "Platform Sprint",
+  "owner": {
+    "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+    "firstName": "Alexandra",
+    "lastName": "Montgomery",
+    "userId": "user-1"
+  },
+  "ownerUserId": "user-1",
+  "tickets": [
+    {
+      "acceptanceCriteria": "API merged",
+      "assignedTo": null,
+      "assignedToUserId": null,
+      "boardId": "landing-board-demo",
+      "commentsCount": 1,
+      "createdAt": "2026-04-05T08:30:00Z",
+      "createdBy": null,
+      "createdByUserId": "user-2",
+      "description": "Create GraphQL schema",
+      "estimatedMinutes": 180,
+      "lastModifiedBy": null,
+      "lastModifiedByUserId": "user-2",
+      "modifiedAt": "2026-04-05T09:00:00Z",
+      "name": "Schema",
+      "priority": 1,
+      "severityId": "1",
+      "severityName": "critical",
+      "status": "in progress",
+      "ticketId": "ticket-1",
+      "timeEntries": [
+        {
+          "activityCode": "development",
+          "activityId": "1",
+          "activityName": "Development",
+          "description": "Initial work",
+          "durationMinutes": 90,
+          "entryId": "entry-1",
+          "loggedAt": "2026-04-05T09:00:00Z",
+          "ticket": null,
+          "ticketId": "ticket-1",
+          "user": {
+            "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+            "firstName": "Taylor",
+            "lastName": "Nguyen",
+            "userId": "user-2"
+          },
+          "userId": "user-2"
+        },
+        {
+          "activityCode": "debugging",
+          "activityId": "8",
+          "activityName": "Debugging",
+          "description": null,
+          "durationMinutes": 45,
+          "entryId": "entry-2",
+          "loggedAt": "2026-04-05T12:30:00Z",
+          "ticket": null,
+          "ticketId": "ticket-1",
+          "user": {
+            "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+            "firstName": "Taylor",
+            "lastName": "Nguyen",
+            "userId": "user-2"
+          },
+          "userId": "user-2"
+        }
+      ],
+      "trackedMinutes": 135
+    },
+    {
+      "acceptanceCriteria": null,
+      "assignedTo": null,
+      "assignedToUserId": null,
+      "boardId": "landing-board-demo",
+      "commentsCount": 0,
+      "createdAt": "2026-04-05T10:00:00Z",
+      "createdBy": null,
+      "createdByUserId": "user-2",
+      "description": null,
+      "estimatedMinutes": 120,
+      "lastModifiedBy": null,
+      "lastModifiedByUserId": "user-2",
+      "modifiedAt": "2026-04-05T10:30:00Z",
+      "name": "Resolver",
+      "priority": 3,
+      "severityId": "2",
+      "severityName": "normal",
+      "status": "code review",
+      "ticketId": "ticket-2",
+      "timeEntries": [
+        {
+          "activityCode": "testing",
+          "activityId": "2",
+          "activityName": "Testing",
+          "description": null,
+          "durationMinutes": 60,
+          "entryId": "entry-3",
+          "loggedAt": "2026-04-05T14:00:00Z",
+          "ticket": null,
+          "ticketId": "ticket-2",
+          "user": {
+            "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+            "firstName": "Sam",
+            "lastName": "Jordan",
+            "userId": "user-3"
+          },
+          "userId": "user-3"
+        }
+      ],
+      "trackedMinutes": 60
+    },
+    {
+      "acceptanceCriteria": null,
+      "assignedTo": null,
+      "assignedToUserId": null,
+      "boardId": "landing-board-demo",
+      "commentsCount": 0,
+      "createdAt": "2026-04-05T11:00:00Z",
+      "createdBy": null,
+      "createdByUserId": "user-2",
+      "description": null,
+      "estimatedMinutes": 60,
+      "lastModifiedBy": null,
+      "lastModifiedByUserId": "user-2",
+      "modifiedAt": "2026-04-05T11:30:00Z",
+      "name": "Release prep",
+      "priority": 5,
+      "severityId": "3",
+      "severityName": "minor",
+      "status": "new",
+      "ticketId": "ticket-3",
+      "timeEntries": [],
+      "trackedMinutes": 0
+    }
+  ]
+}
