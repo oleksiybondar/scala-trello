@@ -43,6 +43,7 @@ interface UseTicketServiceResult {
   isUpdatingTicketTitle: boolean;
   ticket: Ticket | null;
   ticketError: Error | null;
+  updateTicket: (updater: (ticket: Ticket) => Ticket) => Promise<void>;
 }
 
 const createTicketQueryKey = (ticketId: string): [string, string] => ["ticket", ticketId];
@@ -224,6 +225,16 @@ export const useTicketService = ({
     isUpdatingTicketSeverity: changeTicketSeverityMutation.isPending,
     isUpdatingTicketTitle: changeTicketTitleMutation.isPending,
     ticket: ticketQuery.data ?? null,
-    ticketError: ticketQuery.error instanceof Error ? ticketQuery.error : null
+    ticketError: ticketQuery.error instanceof Error ? ticketQuery.error : null,
+    updateTicket: (updater: (ticket: Ticket) => Ticket) => {
+      const currentTicket = ticketQuery.data;
+
+      if (currentTicket === undefined || currentTicket === null) {
+        return Promise.resolve();
+      }
+
+      updateCachedTicket(updater(currentTicket));
+      return Promise.resolve();
+    }
   };
 };

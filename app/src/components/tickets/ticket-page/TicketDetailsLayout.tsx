@@ -1,6 +1,7 @@
 import type { ChangeEvent, ReactElement } from "react";
 import { useEffect, useState } from "react";
 
+import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
@@ -11,68 +12,55 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useTheme } from "@mui/material/styles";
+import type { Theme } from "@mui/material/styles";
 
 import { Person } from "@components/avatar/Person";
 import { DonutChart } from "@components/charts/DonutChart";
 import { DonutChartLegendItem } from "@components/charts/DonutChartLegendItem";
 import {
   TimeVelocityChart,
-  type TimeVelocityStats
+  type TimeVelocityData
 } from "@components/charts/TimeVelocityChart";
 import { TimeInput } from "@components/time-tracking/TimeInput";
+import { TicketActivityEntryList } from "@components/tickets/ticket-page/TicketActivityEntryList";
 import { TicketPrioritySelect } from "@components/tickets/TicketPrioritySelect";
 import { TicketSeveritySelect } from "@components/tickets/TicketSeveritySelect";
 import type { Ticket } from "../../../domain/ticket/graphql";
 import { formatMinutesToTimeTrackingDuration } from "@helpers/timeTrackingConversions";
+import {
+  type ActivityThemeColorToken,
+  buildTimeTrackingActivityColorMap,
+  buildTimeTrackingActivitySlices,
+  resolveActivityThemeColorToken,
+  resolveTimeTrackingActivityName
+} from "@helpers/timeTrackingActivities";
+import { useActivities } from "@hooks/useActivities";
 import { useTicket } from "@hooks/useTicket";
+import { useTimeTracking } from "@hooks/useTimeTracking";
 
 interface TicketDetailsLayoutProps {
   ticket: Ticket;
 }
 
-interface ActivitySlice {
-  color: string;
-  key: string;
-  minutes: number;
-  name: string;
-}
-
-const getTimeVelocityStats = (ticket: Ticket): TimeVelocityStats => {
+const getTimeVelocityData = (ticket: Ticket): TimeVelocityData => {
   const estimatedMinutes = ticket.estimatedMinutes ?? 0;
-  const loggedMinutes = ticket.timeEntries.reduce((sum, entry) => {
-    return sum + entry.durationMinutes;
-  }, 0);
+  const sortedEntries = [...ticket.timeEntries].sort((left, right) => {
+    return (
+      new Date(left.loggedAt).getTime() - new Date(right.loggedAt).getTime()
+    );
+  });
+  const actualSeriesMinutes: number[] = [];
+  let runningActualMinutes = 0;
+
+  sortedEntries.forEach(entry => {
+    runningActualMinutes += Math.max(0, entry.durationMinutes);
+    actualSeriesMinutes.push(runningActualMinutes);
+  });
 
   return {
-    estimatedTime: formatMinutesToTimeTrackingDuration(estimatedMinutes),
-    loggedTime: formatMinutesToTimeTrackingDuration(loggedMinutes),
-    overdueTime: formatMinutesToTimeTrackingDuration(loggedMinutes - estimatedMinutes)
+    actualSeriesMinutes: actualSeriesMinutes.length > 0 ? actualSeriesMinutes : [0],
+    estimatedMinutes
   };
-};
-
-const getActivitySlices = (ticket: Ticket, colors: string[]): ActivitySlice[] => {
-  const byActivity = ticket.timeEntries.reduce((state, entry) => {
-    const label = entry.activityName?.trim() ?? "";
-    const key = label.length > 0 ? label : "Unspecified activity";
-    const currentMinutes = state.get(key) ?? 0;
-
-    state.set(key, currentMinutes + entry.durationMinutes);
-
-    return state;
-  }, new Map<string, number>());
-
-  return [...byActivity.entries()]
-    .sort((left, right) => right[1] - left[1])
-    .map(([name, minutes], index) => {
-      const color = colors[index % colors.length] ?? "#9e9e9e";
-
-      return {
-        color,
-        key: `${name}-${String(index)}`,
-        minutes,
-        name
-      };
-    });
 };
 
 const normalizeOptionalText = (value: string): string | null => {
@@ -81,10 +69,34 @@ const normalizeOptionalText = (value: string): string | null => {
   return normalized.length === 0 ? null : normalized;
 };
 
+const resolveThemeColorByToken = (
+  theme: Theme,
+  token: ActivityThemeColorToken | null
+): string | null => {
+  switch (token) {
+    case "error.main":
+      return theme.palette.error.main;
+    case "info.main":
+      return theme.palette.info.main;
+    case "primary.main":
+      return theme.palette.primary.main;
+    case "secondary.main":
+      return theme.palette.secondary.main;
+    case "success.main":
+      return theme.palette.success.main;
+    case "warning.main":
+      return theme.palette.warning.main;
+    default:
+      return null;
+  }
+};
+
 export const TicketDetailsLayout = ({
   ticket
 }: TicketDetailsLayoutProps): ReactElement => {
   const theme = useTheme();
+  const { activities } = useActivities();
+  const { openLogTimeModal } = useTimeTracking();
   const {
     changeTicketAcceptanceCriteria,
     changeTicketDescription,
@@ -123,17 +135,50 @@ export const TicketDetailsLayout = ({
     setAcceptanceCriteria(ticket.acceptanceCriteria ?? "");
   }, [ticket]);
 
-  const timeVelocityStats = getTimeVelocityStats(ticket);
-  const activityColors = [
+  const timeVelocityData = getTimeVelocityData(ticket);
+  const activityNameById = Object.fromEntries(
+    activities.map(activity => [activity.activityId, activity.name])
+  );
+  const uniqueActivityCount = new Set(
+    ticket.timeEntries.map(entry => {
+      return resolveTimeTrackingActivityName(
+        entry.activityName,
+        entry.activityCode,
+        entry.activityId,
+        activityNameById
+      );
+    })
+  ).size;
+  const fallbackActivityColors = [
     theme.palette.primary.main,
     theme.palette.success.main,
-    theme.palette.warning.main,
     theme.palette.info.main,
+    theme.palette.warning.main,
+    theme.palette.secondary.main,
     theme.palette.error.main
   ];
-  const activitySlices = getActivitySlices(ticket, activityColors);
+  const activitySlicesWithFallbackColors = buildTimeTrackingActivitySlices(
+    ticket.timeEntries,
+    Array.from({ length: Math.max(uniqueActivityCount, 1) }, (_, index) => {
+      return (
+        fallbackActivityColors[index % fallbackActivityColors.length] ?? theme.palette.primary.main
+      );
+    }),
+    activityNameById
+  );
+  const activitySlices = activitySlicesWithFallbackColors.map(slice => {
+    const mappedColor = resolveThemeColorByToken(
+      theme,
+      resolveActivityThemeColorToken(slice.activityCode)
+    );
+
+    return {
+      ...slice,
+      color: mappedColor ?? slice.color
+    };
+  });
+  const activityColorByName = buildTimeTrackingActivityColorMap(activitySlices);
   const totalActivityMinutes = activitySlices.reduce((sum, slice) => sum + slice.minutes, 0);
-  const isOverdue = timeVelocityStats.overdueTime !== "0h:00m";
   const hasTitleChanged = title.trim() !== ticket.name.trim();
   const hasPrioritySeverityChanged = priority !== (ticket.priority ?? 5) || severityId !== ticket.severityId;
   const hasEstimatedTimeChanged = estimatedMinutes !== ticket.estimatedMinutes;
@@ -465,17 +510,12 @@ export const TicketDetailsLayout = ({
 
       <Grid size={{ lg: 4, xs: 12 }}>
         <Stack spacing={2}>
-          <Paper sx={{ p: 1.5 }} variant="outlined">
+          <Paper sx={{ minHeight: 210, p: 1.5 }} variant="outlined">
             <Stack spacing={1.25}>
               <Stack alignItems="center" direction="row" justifyContent="space-between" spacing={1}>
                 <Typography variant="subtitle2">Time velocity</Typography>
-                {isOverdue ? (
-                  <Typography color="warning.main" sx={{ fontWeight: 700 }} variant="caption">
-                    Overdue: {timeVelocityStats.overdueTime}
-                  </Typography>
-                ) : null}
               </Stack>
-              <TimeVelocityChart stats={timeVelocityStats} />
+              <TimeVelocityChart chartHeight={96} data={timeVelocityData} />
             </Stack>
           </Paper>
 
@@ -488,7 +528,7 @@ export const TicketDetailsLayout = ({
                 justifyContent="center"
                 spacing={2}
               >
-                <Stack alignItems="center" justifyContent="center" spacing={1} sx={{ flex: "0 0 160px" }}>
+                <Stack alignItems="center" justifyContent="center" spacing={1.25} sx={{ flex: "0 0 160px" }}>
                   <DonutChart
                     centerLabel="Logged"
                     centerValue={formatMinutesToTimeTrackingDuration(totalActivityMinutes)}
@@ -514,6 +554,31 @@ export const TicketDetailsLayout = ({
                   )}
                 </Stack>
               </Stack>
+            </Stack>
+          </Paper>
+
+          <Paper sx={{ p: 1.5 }} variant="outlined">
+            <Stack spacing={0}>
+              <Button
+                onClick={() => {
+                  openLogTimeModal(ticket.ticketId);
+                }}
+                size="small"
+                startIcon={<AccessTimeRoundedIcon fontSize="small" />}
+                variant="contained"
+              >
+                Register time
+              </Button>
+            </Stack>
+          </Paper>
+
+          <Paper sx={{ p: 1.5 }} variant="outlined">
+            <Stack spacing={1.5}>
+              <Typography variant="subtitle2">Activity log</Typography>
+              <TicketActivityEntryList
+                activityColorByName={activityColorByName}
+                entries={ticket.timeEntries}
+              />
             </Stack>
           </Paper>
         </Stack>

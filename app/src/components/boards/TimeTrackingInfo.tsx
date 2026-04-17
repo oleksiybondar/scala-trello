@@ -6,16 +6,14 @@ import Typography from "@mui/material/Typography";
 
 import {
   TimeVelocityChart,
-  type TimeVelocityStats
+  type TimeVelocityData
 } from "@components/charts/TimeVelocityChart";
 
 interface TimeTrackingInfoProps {
-  stats: TimeVelocityStats;
+  data: TimeVelocityData;
 }
 
-export const TimeTrackingInfo = ({ stats }: TimeTrackingInfoProps): ReactElement => {
-  const isOverdue = stats.overdueTime !== "0h:00m";
-
+export const TimeTrackingInfo = ({ data }: TimeTrackingInfoProps): ReactElement => {
   return (
     <Paper
       sx={{
@@ -33,18 +31,9 @@ export const TimeTrackingInfo = ({ stats }: TimeTrackingInfoProps): ReactElement
           spacing={1}
         >
           <Typography variant="subtitle2">Time tracking</Typography>
-          {isOverdue ? (
-            <Typography
-              color="warning.main"
-              sx={{ fontWeight: 700 }}
-              variant="caption"
-            >
-              Overdue: {stats.overdueTime}
-            </Typography>
-          ) : null}
         </Stack>
 
-        <TimeVelocityChart stats={stats} />
+        <TimeVelocityChart data={data} />
       </Stack>
     </Paper>
   );

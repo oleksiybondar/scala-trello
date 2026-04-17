@@ -34,7 +34,8 @@ export const TicketProvider = ({
     isUpdatingTicketSeverity,
     isUpdatingTicketTitle,
     ticket,
-    ticketError
+    ticketError,
+    updateTicket
   } = useTicketService({
     ticketId: normalizedTicketId
   });
@@ -68,7 +69,8 @@ export const TicketProvider = ({
         severities,
         ticket,
         ticketError,
-        ticketId: normalizedTicketId
+        ticketId: normalizedTicketId,
+        updateTicket
       }}
     >
       {children}

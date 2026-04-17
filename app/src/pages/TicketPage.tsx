@@ -10,6 +10,25 @@ import { AppPageLayout } from "@components/layout/AppPageLayout";
 import { TicketDetailsLayout } from "@components/tickets/ticket-page/TicketDetailsLayout";
 import { useTicket } from "@hooks/useTicket";
 import { TicketProvider } from "@providers/TicketProvider";
+import { TimeTrackingProvider } from "@providers/TimeTrackingProvider";
+import type { TimeTrackingEntry } from "../domain/time-tracking/graphql";
+import type { TicketTimeTrackingEntry } from "../domain/ticket/graphql";
+
+const mapEntryToTicketTimeEntry = (entry: TimeTrackingEntry): TicketTimeTrackingEntry => {
+  return {
+    activityCode: entry.activityCode,
+    activityId: entry.activityId,
+    activityName: entry.activityName,
+    description: entry.description,
+    durationMinutes: entry.durationMinutes,
+    entryId: entry.entryId,
+    loggedAt: entry.loggedAt,
+    ticket: entry.ticket,
+    ticketId: entry.ticketId,
+    user: entry.user,
+    userId: entry.userId
+  };
+};
 
 const TicketPageBody = (): ReactElement => {
   const { isLoadingTicket, ticket, ticketError, ticketId } = useTicket();
@@ -46,10 +65,38 @@ const TicketPageBody = (): ReactElement => {
   );
 };
 
+const TicketPageWithTimeTracking = (): ReactElement => {
+  const { updateTicket } = useTicket();
+
+  return (
+    <TimeTrackingProvider
+      onRegister={async entry => {
+        await updateTicket(currentTicket => {
+          if (currentTicket.ticketId !== entry.ticketId) {
+            return currentTicket;
+          }
+
+          if (currentTicket.timeEntries.some(timeEntry => timeEntry.entryId === entry.entryId)) {
+            return currentTicket;
+          }
+
+          return {
+            ...currentTicket,
+            timeEntries: [...currentTicket.timeEntries, mapEntryToTicketTimeEntry(entry)],
+            trackedMinutes: currentTicket.trackedMinutes + entry.durationMinutes
+          };
+        });
+      }}
+    >
+      <TicketPageBody />
+    </TimeTrackingProvider>
+  );
+};
+
 export const TicketPage = (): ReactElement => {
   return (
     <TicketProvider>
-      <TicketPageBody />
+      <TicketPageWithTimeTracking />
     </TicketProvider>
   );
 };
