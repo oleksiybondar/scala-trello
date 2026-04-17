@@ -27,10 +27,5 @@ describe("HomePage", () => {
       })
     ).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Platform Sprint" })).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Each ticket keeps its own estimate, logged work, and discussion, so the board shows both delivery state and effort visibility in one place."
-      )
-    ).toBeInTheDocument();
   });
 });

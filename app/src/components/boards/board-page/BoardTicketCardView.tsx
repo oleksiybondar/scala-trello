@@ -210,9 +210,11 @@ export const BoardTicketCardView = ({
             </Stack>
           </Box>
           <Tooltip title="Move ticket">
-            <IconButton disabled={!canUseStateMenu} onClick={handleOpenStateMenu} size="small">
-              <MoreVertRoundedIcon fontSize="small" />
-            </IconButton>
+            <span>
+              <IconButton disabled={!canUseStateMenu} onClick={handleOpenStateMenu} size="small">
+                <MoreVertRoundedIcon fontSize="small" />
+              </IconButton>
+            </span>
           </Tooltip>
           <Menu anchorEl={anchorEl} onClose={handleCloseStateMenu} open={anchorEl !== null}>
             {boardTicketStates
