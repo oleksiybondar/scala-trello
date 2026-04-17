@@ -185,6 +185,7 @@ export const TicketDetailsLayout = ({
   const hasDescriptionChanged = description.trim() !== (ticket.description ?? "").trim();
   const hasAcceptanceCriteriaChanged =
     acceptanceCriteria.trim() !== (ticket.acceptanceCriteria ?? "").trim();
+  const canRegisterTime = ticket.board?.active === true;
   const isTitleDisabled = isUpdatingTicketTitle;
   const isPrioritySeverityDisabled = isUpdatingTicketPriority || isUpdatingTicketSeverity;
   const isEstimatedTimeDisabled = isUpdatingTicketEstimatedTime;
@@ -559,16 +560,22 @@ export const TicketDetailsLayout = ({
 
           <Paper sx={{ p: 1.5 }} variant="outlined">
             <Stack spacing={0}>
-              <Button
-                onClick={() => {
-                  openLogTimeModal(ticket.ticketId);
-                }}
-                size="small"
-                startIcon={<AccessTimeRoundedIcon fontSize="small" />}
-                variant="contained"
-              >
-                Register time
-              </Button>
+              {canRegisterTime ? (
+                <Button
+                  onClick={() => {
+                    openLogTimeModal(ticket.ticketId);
+                  }}
+                  size="small"
+                  startIcon={<AccessTimeRoundedIcon fontSize="small" />}
+                  variant="contained"
+                >
+                  Register time
+                </Button>
+              ) : (
+                <Typography color="text.secondary" variant="caption">
+                  Time tracking is unavailable because the board is closed.
+                </Typography>
+              )}
             </Stack>
           </Paper>
 

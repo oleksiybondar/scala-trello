@@ -210,4 +210,55 @@ describe("BoardTicketCard", () => {
 
     expect(screen.queryByRole("button", { name: "Log time" })).not.toBeInTheDocument();
   });
+
+  test("disables interactive actions when disableActions is true", () => {
+    setupCommonMocks();
+
+    vi.mocked(useBoard).mockReturnValue({
+      activateBoard: vi.fn(),
+      board: {
+        ...board,
+        active: true
+      },
+      boardError: null,
+      boardPermissionAccess: {
+        canCreate: true,
+        canDelete: true,
+        canModify: true,
+        canRead: true,
+        canReassign: true
+      },
+      canManageBoardSettings: false,
+      changeBoardDescription: vi.fn(),
+      changeBoardMemberRole: vi.fn(),
+      changeBoardOwnership: vi.fn(),
+      changeBoardTitle: vi.fn(),
+      deactivateBoard: vi.fn(),
+      inviteBoardMember: vi.fn(),
+      isInvitingBoardMember: false,
+      isLoadingBoard: false,
+      isLoadingMembers: false,
+      isRemovingBoardMember: false,
+      isUpdatingBoardDescription: false,
+      isUpdatingBoardMemberRole: false,
+      isUpdatingBoardOwnership: false,
+      isUpdatingBoardStatus: false,
+      isUpdatingBoardTitle: false,
+      members: [],
+      membersError: null,
+      removeBoardMember: vi.fn()
+    });
+
+    renderApp(
+      <BoardTicketCard
+        disableActions
+        onDragEnd={vi.fn()}
+        onDragStart={vi.fn()}
+        ticket={ticket}
+      />
+    );
+
+    expect(screen.queryByRole("button", { name: "Log time" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Move ticket" })).toBeDisabled();
+  });
 });
