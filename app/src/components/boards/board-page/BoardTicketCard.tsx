@@ -48,9 +48,10 @@ export const BoardTicketCard = ({
 }: BoardTicketCardProps): ReactElement => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const theme = useTheme();
-  const { boardPermissionAccess, members } = useBoard();
+  const { board, boardPermissionAccess, members } = useBoard();
   const { reassignTicket, transitionTicketState } = useTickets();
   const { openLogTimeModal } = useTimeTracking();
+  const canRegisterTime = board?.active === true;
   const normalizedStatus = normalizeUiTicketStatus(ticket.status);
   const trackedTimeLabel = formatMinutesToTimeInput(ticket.trackedMinutes) || "00:00";
   const hasLongTitle = ticket.name.trim().length > 60;
@@ -264,16 +265,19 @@ export const BoardTicketCard = ({
             <Typography color="text.secondary" variant="caption">
               {trackedTimeLabel}
             </Typography>
-            <Tooltip title="Log time">
-              <IconButton
-                onClick={() => {
-                  openLogTimeModal(ticket.ticketId);
-                }}
-                size="small"
-              >
-                <AccessTimeRoundedIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
+            {canRegisterTime ? (
+              <Tooltip title="Log time">
+                <IconButton
+                  aria-label="Log time"
+                  onClick={() => {
+                    openLogTimeModal(ticket.ticketId);
+                  }}
+                  size="small"
+                >
+                  <AccessTimeRoundedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            ) : null}
           </Stack>
         </Stack>
       </Stack>

@@ -27,6 +27,7 @@ export { AppAvatar } from "@components/avatar/AppAvatar";
 export { CreateBoardDialog } from "@components/boards/CreateBoardDialog";
 export { CreateBoardForm } from "@components/boards/CreateBoardForm";
 export { TimeTrackingModal } from "@components/boards/board-page/TimeTrackingModal";
+export { TimeTrackingActivitySelect } from "@components/time-tracking/TimeTrackingActivitySelect";
 export { TimeInput } from "@components/time-tracking/TimeInput";
 export { CreateTicketDialog } from "@components/tickets/CreateTicketDialog";
 export { CreateTicketForm } from "@components/tickets/CreateTicketForm";
