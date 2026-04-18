@@ -6,7 +6,14 @@ export interface TimeTrackingUserSummaryResponse {
 }
 
 export interface TimeTrackingTicketSummaryResponse {
+  board?: TimeTrackingBoardSummaryResponse | null;
   description: string | null;
+  id: string;
+  title: string;
+}
+
+export interface TimeTrackingBoardSummaryResponse {
+  active: boolean;
   id: string;
   title: string;
 }

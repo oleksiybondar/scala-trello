@@ -6,8 +6,15 @@ export interface TimeTrackingUserSummary {
 }
 
 export interface TimeTrackingTicketSummary {
+  board: TimeTrackingBoardSummary | null;
   description: string | null;
   ticketId: string;
+  title: string;
+}
+
+export interface TimeTrackingBoardSummary {
+  active: boolean;
+  boardId: string;
   title: string;
 }
 

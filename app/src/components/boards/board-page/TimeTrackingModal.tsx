@@ -153,7 +153,9 @@ export const TimeTrackingModal = ({
             <TimeTrackingActivitySelect
               activities={activities}
               disabled={isLoadingActivities || isRegisteringTime}
-              onChange={setSelectedActivityId}
+              onChange={nextValue => {
+                setSelectedActivityId(typeof nextValue === "string" ? nextValue : (nextValue[0] ?? ""));
+              }}
               value={selectedActivityId}
             />
 
