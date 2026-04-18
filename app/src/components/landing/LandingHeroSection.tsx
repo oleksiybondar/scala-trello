@@ -89,7 +89,7 @@ export const LandingHeroSection = (): ReactElement => {
       >
         <Stack flex={1} spacing={2}>
           <Stack >
-            <Typography variant="h3">Track sprint work without enterprise bloat.</Typography>
+            <Typography variant="h4">Track sprint work without enterprise bloat.</Typography>
             <Typography color="text.secondary" maxWidth={560} variant="body1">
               Boards is a lightweight sprint board application for managing
               tickets, moving them through delivery states, and keeping planned
@@ -124,7 +124,7 @@ export const LandingHeroSection = (): ReactElement => {
           <Stack height="100%" justifyContent="space-between" spacing={3}>
             <Box
               sx={{
-                height: { md: 380, xs: 270 },
+                height: 235,
                 overflow: "hidden",
                 position: "relative",
                 width: "100%"

@@ -52,7 +52,7 @@ export const LandingBoardsSection = (): ReactElement => {
           <Box
             aria-label="Landing boards board-main-area preview"
             sx={{
-              height: 220,
+              height: 200,
               overflow: "hidden",
               position: "relative",
               width: "100%"
