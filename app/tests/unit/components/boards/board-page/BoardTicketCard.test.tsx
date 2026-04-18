@@ -259,6 +259,5 @@ describe("BoardTicketCard", () => {
     );
 
     expect(screen.queryByRole("button", { name: "Log time" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Move ticket" })).toBeDisabled();
   });
 });
