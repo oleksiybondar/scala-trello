@@ -314,6 +314,7 @@ export const MyTimeEntriesTable = ({ entries }: MyTimeEntriesTableProps): ReactE
                   <TableCell sx={{ minWidth: 160 }}>
                     {isEditing && currentDraft !== null ? (
                       <TimeInput
+                        compact
                         disabled={isUpdating}
                         onChange={value => {
                           setEditDraft(previousState => {
@@ -327,6 +328,7 @@ export const MyTimeEntriesTable = ({ entries }: MyTimeEntriesTableProps): ReactE
                             };
                           });
                         }}
+                        showFormatHint={false}
                         value={currentDraft.durationMinutes}
                       />
                     ) : (
