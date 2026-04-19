@@ -37,17 +37,22 @@ Scala 3 backend for the monorepo. It provides REST for auth/ops endpoints and Gr
 - dictionaries
   - queries: `ticketSeverities`, `timeTrackingActivities`
 - boards
-  - queries: `board`, `myBoards`, `boardMembers` (+ legacy aliases kept)
+  - queries: `board`, `myBoards(active, keyword, ownerUserId, offset, limit)`, `boardMembers` (+ legacy aliases kept)
   - mutations: create/update/deactivate board, ownership transfer, member invite/remove, member role changes
 - tickets
-  - queries: `ticket`, `tickets`, `myTickets(assignedOnly: Boolean)`
+  - queries: `ticket`, `tickets`, `myTickets(assignedOnly: Boolean, offset: Int, limit: Int)`
   - mutations: `createTicket`, `changeTicketTitle`, `changeTicketDescription`, `changeTicketAcceptanceCriteria`, `changeTicketEstimatedTime`, `changeTicketPriority`, `changeTicketSeverity`, `changeTicketStatus`, `reassignTicket`
 - comments
   - queries: `comment`, `comments`, `commentsByUser`
   - mutations: `postComment`, `updateCommentMessage`, `deleteComment`
 - time tracking
-  - queries: `timeTrackingEntry`, `timeTrackingEntriesByUser`, `timeTrackingEntriesByTicket`
+  - queries: `timeTrackingEntry`, `timeTrackingEntriesByUser(userId, offset, limit)`, `timeTrackingEntriesByTicket`
   - mutations: `createTimeTrackingEntry`, `updateTimeTrackingActivity`, `updateTimeTrackingDescription`, `updateTimeTrackingTime`, `deleteTimeTrackingEntry`
+
+## Access behavior highlights
+
+- inactive boards remain readable for board members (for example `board` and `boardMembers`)
+- write operations on inactive boards remain restricted by permission rules
 
 ## Database and migrations
 

@@ -21,8 +21,9 @@ This project was started as a practical Scala/Cats showcase, inspired by an ongo
 - board settings and ownership management
 - tickets with state workflow, assignment, priority, severity, estimates, and acceptance criteria
 - comments on tickets
-- time tracking entries with activity classification
+- time tracking entries with activity classification and inline editing
 - personal ticket views and ticket details editing
+- server-side pagination and infinite scrolling for my boards, my tickets, and my time registration
 
 ## Run locally
 
