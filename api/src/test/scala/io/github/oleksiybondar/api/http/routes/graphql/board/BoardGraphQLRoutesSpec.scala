@@ -945,7 +945,7 @@ class BoardGraphQLRoutesSpec extends FunSuite {
     assert(body.noSpaces.contains("Board title could not be changed"))
   }
 
-  test("POST /graphql denies access to an inactive board for non-owners") {
+  test("POST /graphql allows read access to an inactive board for members") {
     val inactiveBoard =
       io.github.oleksiybondar.api.testkit.fixtures.BoardFixtures.sampleDashboard.copy(active =
         false
@@ -985,7 +985,68 @@ class BoardGraphQLRoutesSpec extends FunSuite {
     val body = response.as[Json].unsafeRunSync()
 
     assertEquals(response.status, Status.Ok)
-    assert(body.noSpaces.contains("You do not have access to this board"))
+    val boardId =
+      body.hcursor
+        .downField("data")
+        .downField("board")
+        .get[String]("id")
+        .toOption
+    val errors  = body.hcursor.downField("errors").focus
+
+    assertEquals(boardId, Some(inactiveBoard.id.value.toString))
+    assertEquals(errors, None)
+  }
+
+  test("POST /graphql allows reading inactive board members for members") {
+    val inactiveBoard =
+      io.github.oleksiybondar.api.testkit.fixtures.BoardFixtures.sampleDashboard.copy(active =
+        false
+      )
+    val viewerMember  =
+      io.github.oleksiybondar.api.testkit.fixtures.BoardMemberFixtures.sampleMember.copy(
+        userId = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222")),
+        roleId = io.github.oleksiybondar.api.domain.permission.RoleId(3)
+      )
+
+    val response = withGraphQLRoutes(
+      users = List(
+        UserFixtures.sampleUser,
+        UserFixtures.user(
+          id = viewerMember.userId,
+          username = Some(Username("viewer")),
+          email = Some(Email("viewer@example.com")),
+          passwordHash = PasswordHash("hash:viewer"),
+          firstName = FirstName("Read"),
+          lastName = LastName("Only")
+        )
+      ),
+      dashboards = List(inactiveBoard),
+      members = List(viewerMember)
+    ) { ctx =>
+      for {
+        token    <- ctx.issueAccessToken(viewerMember.userId)
+        response <- ctx.httpApp.run(
+                      graphqlRequest(
+                        dashboardMembersQuery,
+                        accessToken = Some(token)
+                      )
+                    )
+      } yield response
+    }
+
+    val body    = response.as[Json].unsafeRunSync()
+    val members =
+      body.hcursor
+        .downField("data")
+        .downField("dashboardMembers")
+        .focus
+        .flatMap(_.asArray)
+        .getOrElse(Vector.empty)
+    val errors  = body.hcursor.downField("errors").focus
+
+    assertEquals(response.status, Status.Ok)
+    assertEquals(members.nonEmpty, true)
+    assertEquals(errors, None)
   }
 
   private val dashboardMembersQuery =

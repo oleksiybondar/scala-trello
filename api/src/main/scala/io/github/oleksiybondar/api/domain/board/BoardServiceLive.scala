@@ -44,6 +44,15 @@ final class BoardServiceLive[F[_]: Temporal](
       )
       .map(_.flatten)
       .map(_.filter(matchesFilters(_, filters)))
+      .map(_.sortBy(_.modifiedAt)(Ordering[java.time.Instant].reverse))
+
+  override def listDashboardsForUserPage(
+      userId: UserId,
+      filters: BoardQueryFilters,
+      offset: Int,
+      limit: Int
+  ): F[List[Board]] =
+    listDashboardsForUser(userId, filters).map(paginate(_, offset, limit))
 
   override def changeOwnership(
       dashboardId: BoardId,
@@ -243,5 +252,12 @@ final class BoardServiceLive[F[_]: Temporal](
     val matchesOwner      = filters.ownerUserId.forall(_ == board.ownerUserId)
 
     matchesActive && matchesKeyword && matchesOwner
+  }
+
+  private def paginate[A](items: List[A], offset: Int, limit: Int): List[A] = {
+    val normalizedOffset = math.max(0, offset)
+    val normalizedLimit  = math.max(0, limit)
+
+    items.slice(normalizedOffset, normalizedOffset + normalizedLimit)
   }
 }

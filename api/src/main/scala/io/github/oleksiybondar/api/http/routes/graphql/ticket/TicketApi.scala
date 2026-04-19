@@ -67,6 +67,8 @@ object TicketApi {
   private val StatusArg         = Argument("status", StringType)
   private val AssignedUserIdArg = Argument("assignedToUserId", OptionInputType(StringType))
   private val AssignedOnlyArg   = Argument("assignedOnly", OptionInputType(BooleanType))
+  private val OffsetArg         = Argument("offset", IntType, defaultValue = 0)
+  private val LimitArg          = Argument("limit", IntType, defaultValue = 30)
 
   val TicketBoardSummaryType: ObjectType[GraphQLContext, TicketBoardSummaryView] =
     ObjectType(
@@ -277,26 +279,15 @@ object TicketApi {
       Field(
         name = "myTickets",
         fieldType = ListType(TicketType),
-        arguments = AssignedOnlyArg :: Nil,
+        arguments = AssignedOnlyArg :: OffsetArg :: LimitArg :: Nil,
         resolve = ctx =>
           withCurrentUser(ctx) { currentUserId =>
             val assignedOnly = ctx.arg(AssignedOnlyArg).getOrElse(false)
-            for {
-              memberships    <-
-                ctx.ctx.dashboardMembershipService.listMembershipsForUser(currentUserId)
-              ticketsByBoard <-
-                memberships
-                  .map(_.member.boardId)
-                  .distinct
-                  .traverse(boardId => ctx.ctx.ticketService.listTickets(boardId, currentUserId))
-              userTickets     = ticketsByBoard.flatten.filter { ticket =>
-                                  if (assignedOnly) ticket.assignedToUserId.contains(currentUserId)
-                                  else
-                                    ticket.assignedToUserId.contains(
-                                      currentUserId
-                                    ) || ticket.createdByUserId == currentUserId
-                                }
-            } yield userTickets.map(toView)
+            val offset       = math.max(0, ctx.arg(OffsetArg))
+            val limit        = math.max(0, ctx.arg(LimitArg))
+            ctx.ctx.ticketService
+              .listMyTicketsPage(currentUserId, assignedOnly, offset, limit)
+              .map(_.map(toView))
           }.unsafeToFuture()
       )
     )

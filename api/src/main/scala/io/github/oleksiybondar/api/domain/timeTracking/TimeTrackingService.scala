@@ -32,6 +32,13 @@ trait TimeTrackingService[F[_]] {
 
   def listEntriesByUser(userId: UserId, actorUserId: UserId): F[List[TimeTrackingEntry]]
 
+  def listEntriesByUserPage(
+      userId: UserId,
+      actorUserId: UserId,
+      offset: Int,
+      limit: Int
+  ): F[List[TimeTrackingEntry]]
+
   def listEntriesByTicket(ticketId: TicketId, actorUserId: UserId): F[List[TimeTrackingEntry]]
 
   def listOwnEntries(actorUserId: UserId): F[List[TimeTrackingEntry]]

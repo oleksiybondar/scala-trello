@@ -6,7 +6,7 @@ import type {
   NormalizedQueryBoardsParams,
   QueryBoardsParams
 } from "@contexts/boards-context";
-import { filterBoards, getBoardOwnerOptions } from "../domain/board/boardsApi";
+import { getBoardOwnerOptions } from "../domain/board/boardsApi";
 import { useBoardsService } from "../domain/board/useBoardsService";
 import type { CreateBoardInput } from "../domain/board/graphql";
 
@@ -36,19 +36,21 @@ export const BoardsProvider = ({
     normalizeQueryBoardsParams(DEFAULT_QUERY_BOARDS_PARAMS)
   );
   const {
-    boards: visibleBoards,
+    boards,
+    canLoadMoreBoards,
     boardsError,
     createBoard,
     isCreatingBoard,
-    isLoadingBoards
+    isLoadingBoards,
+    isLoadingMoreBoards,
+    loadNextBoardsPage
   } = useBoardsService({
     currentParams
   });
 
   const value = {
-    boards: filterBoards(visibleBoards, {
-      page: currentParams.page
-    }),
+    boards,
+    canLoadMoreBoards,
     boardsError,
     createBoard: async (input: CreateBoardInput) => {
       await createBoard(input);
@@ -56,7 +58,9 @@ export const BoardsProvider = ({
     currentParams,
     isCreatingBoard,
     isLoadingBoards,
-    ownerOptions: getBoardOwnerOptions(visibleBoards),
+    isLoadingMoreBoards,
+    loadNextBoardsPage,
+    ownerOptions: getBoardOwnerOptions(boards),
     queryBoards: (params: QueryBoardsParams) => {
       setCurrentParams(currentState => {
         return normalizeQueryBoardsParams({

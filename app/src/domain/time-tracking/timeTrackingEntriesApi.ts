@@ -1,7 +1,7 @@
 import type { QueryTimeTrackingEntriesParams } from "@contexts/time-tracking-entries-context";
 import type { TimeTrackingEntry } from "./graphql";
 
-export const TIME_TRACKING_ENTRIES_PER_PAGE = 20;
+export const TIME_TRACKING_ENTRIES_PER_PAGE = 50;
 
 const filterBySearch = (entry: TimeTrackingEntry, keyword: string | undefined): boolean => {
   if (keyword === undefined || keyword.trim().length === 0) {
@@ -73,13 +73,9 @@ export const filterTimeTrackingEntries = (
   entries: TimeTrackingEntry[],
   params: QueryTimeTrackingEntriesParams
 ): TimeTrackingEntry[] => {
-  const page = params.page ?? 1;
-  const filteredEntries = applyFilters(entries, params).sort((left, right) => {
+  return applyFilters(entries, params).sort((left, right) => {
     return right.loggedAt.localeCompare(left.loggedAt);
   });
-  const offset = (page - 1) * TIME_TRACKING_ENTRIES_PER_PAGE;
-
-  return filteredEntries.slice(offset, offset + TIME_TRACKING_ENTRIES_PER_PAGE);
 };
 
 export const countTimeTrackingEntries = (

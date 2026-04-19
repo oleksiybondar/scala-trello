@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import { useState } from "react";
 
+import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
@@ -12,11 +13,18 @@ import { NoBoardsFound } from "@components/boards/NoBoardsFound";
 import { AppPageLayout } from "@components/layout/AppPageLayout";
 import { useBoards } from "@hooks/useBoards";
 import { useCurrentUser } from "@hooks/useCurrentUser";
+import { useInfiniteScrollTrigger } from "@hooks/useInfiniteScrollTrigger";
 import { BoardsProvider } from "@providers/BoardsProvider";
 
 const MyBoardsPageBody = (): ReactElement => {
   const [isCreateBoardDialogOpen, setIsCreateBoardDialogOpen] = useState(false);
-  const { boards, currentParams } = useBoards();
+  const {
+    boards,
+    canLoadMoreBoards,
+    currentParams,
+    isLoadingMoreBoards,
+    loadNextBoardsPage
+  } = useBoards();
   const { userId } = useCurrentUser();
 
   const hasKeywordFilter = (currentParams.keyword ?? "").trim().length > 0;
@@ -24,6 +32,11 @@ const MyBoardsPageBody = (): ReactElement => {
   const shouldShowInitialEmptyState =
     !hasKeywordFilter &&
     (currentParams.owner === undefined || isMeOwnerFilter);
+  const loadMoreSentinelRef = useInfiniteScrollTrigger({
+    canLoadMore: canLoadMoreBoards,
+    isLoadingMore: isLoadingMoreBoards,
+    onLoadMore: loadNextBoardsPage
+  });
 
   return (
     <AppPageLayout>
@@ -51,6 +64,12 @@ const MyBoardsPageBody = (): ReactElement => {
           {boards.map(board => (
             <BoardCard board={board} key={board.boardId} />
           ))}
+          <Box ref={loadMoreSentinelRef} sx={{ height: 1 }} />
+          {canLoadMoreBoards ? (
+            <Typography color="text.secondary" variant="body2">
+              {isLoadingMoreBoards ? "Loading more boards..." : "Scroll down to load more boards"}
+            </Typography>
+          ) : null}
         </Stack>
       )}
 

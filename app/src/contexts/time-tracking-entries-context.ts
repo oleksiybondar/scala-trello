@@ -21,8 +21,11 @@ export interface NormalizedQueryTimeTrackingEntriesParams {
 }
 
 export interface TimeTrackingEntriesContextValue {
+  canLoadMoreEntries: boolean;
   currentParams: NormalizedQueryTimeTrackingEntriesParams;
   isLoadingEntries: boolean;
+  isLoadingNextEntriesPage: boolean;
+  loadNextEntriesPage: () => Promise<void>;
   queryEntries: (params: QueryTimeTrackingEntriesParams) => void;
   timeTrackingEntries: TimeTrackingEntry[];
   timeTrackingEntriesError: Error | null;
@@ -34,6 +37,7 @@ const missingTimeTrackingEntriesProvider = (): never => {
 };
 
 export const TimeTrackingEntriesContext = createContext<TimeTrackingEntriesContextValue>({
+  canLoadMoreEntries: false,
   currentParams: {
     activityIds: [],
     boardIds: [],
@@ -41,6 +45,8 @@ export const TimeTrackingEntriesContext = createContext<TimeTrackingEntriesConte
     page: 1
   },
   isLoadingEntries: false,
+  isLoadingNextEntriesPage: false,
+  loadNextEntriesPage: missingTimeTrackingEntriesProvider,
   queryEntries: missingTimeTrackingEntriesProvider,
   timeTrackingEntries: [],
   timeTrackingEntriesError: null,

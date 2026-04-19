@@ -32,6 +32,14 @@ trait BoardService[F[_]] {
       filters: BoardQueryFilters = BoardQueryFilters()
   ): F[List[Board]]
 
+  /** Lists dashboards for the user with offset/limit pagination. */
+  def listDashboardsForUserPage(
+      userId: UserId,
+      filters: BoardQueryFilters = BoardQueryFilters(),
+      offset: Int = 0,
+      limit: Int = 10
+  ): F[List[Board]]
+
   /** Changes dashboard ownership when the acting user has sufficient dashboard rights. */
   def changeOwnership(
       dashboardId: BoardId,

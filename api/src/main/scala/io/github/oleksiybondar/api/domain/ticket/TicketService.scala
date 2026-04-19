@@ -21,6 +21,12 @@ trait TicketService[F[_]] {
   def createTicket(command: CreateTicketCommand, actorUserId: UserId): F[Option[Ticket]]
   def getTicket(id: TicketId): F[Option[Ticket]]
   def listTickets(boardId: BoardId, actorUserId: UserId): F[List[Ticket]]
+  def listMyTicketsPage(
+      actorUserId: UserId,
+      assignedOnly: Boolean,
+      offset: Int,
+      limit: Int
+  ): F[List[Ticket]]
   def changeTitle(ticketId: TicketId, actorUserId: UserId, title: TicketName): F[Boolean]
   def changeDescription(
       ticketId: TicketId,

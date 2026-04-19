@@ -38,6 +38,7 @@ describe("MyBoardsPage", () => {
 
     vi.mocked(useBoards).mockReturnValue({
       boards: [],
+      canLoadMoreBoards: false,
       boardsError: null,
       createBoard,
       currentParams: {
@@ -48,6 +49,8 @@ describe("MyBoardsPage", () => {
       },
       isCreatingBoard: false,
       isLoadingBoards: false,
+      isLoadingMoreBoards: false,
+      loadNextBoardsPage: vi.fn(),
       ownerOptions: [],
       queryBoards
     });
@@ -94,6 +97,7 @@ describe("MyBoardsPage", () => {
 
     vi.mocked(useBoards).mockReturnValue({
       boards: [],
+      canLoadMoreBoards: false,
       boardsError: null,
       createBoard: vi.fn(),
       currentParams: {
@@ -104,6 +108,8 @@ describe("MyBoardsPage", () => {
       },
       isCreatingBoard: false,
       isLoadingBoards: false,
+      isLoadingMoreBoards: false,
+      loadNextBoardsPage: vi.fn(),
       ownerOptions: [],
       queryBoards: vi.fn()
     });

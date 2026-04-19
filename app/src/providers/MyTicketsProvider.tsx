@@ -33,7 +33,15 @@ export const MyTicketsProvider = ({
   const [currentParams, setCurrentParams] = useState(
     normalizeQueryMyTicketsParams(DEFAULT_QUERY_MY_TICKETS_PARAMS)
   );
-  const { isLoadingMyTickets, myTickets, myTicketsError, totalMyTickets } =
+  const {
+    canLoadMoreMyTickets,
+    isLoadingMyTickets,
+    isLoadingNextMyTicketsPage,
+    loadNextMyTicketsPage,
+    myTickets,
+    myTicketsError,
+    totalMyTickets
+  } =
     useMyTicketsService({
       currentParams
     });
@@ -41,8 +49,11 @@ export const MyTicketsProvider = ({
   return (
     <MyTicketsContext.Provider
       value={{
+        canLoadMoreMyTickets,
         currentParams,
         isLoadingMyTickets,
+        isLoadingNextMyTicketsPage,
+        loadNextMyTicketsPage,
         myTickets,
         myTicketsError,
         queryMyTickets: (params: QueryMyTicketsParams) => {

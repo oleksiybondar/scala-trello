@@ -1,7 +1,7 @@
 import type { QueryMyTicketsParams } from "@contexts/my-tickets-context";
 import type { Ticket } from "./graphql";
 
-export const MY_TICKETS_PER_PAGE = 20;
+export const MY_TICKETS_PER_PAGE = 30;
 
 const filterBySearch = (ticket: Ticket, keyword: string | undefined): boolean => {
   if (keyword === undefined || keyword.trim().length === 0) {
@@ -35,15 +35,11 @@ export const filterMyTickets = (
   tickets: Ticket[],
   params: QueryMyTicketsParams
 ): Ticket[] => {
-  const page = params.page ?? 1;
-  const filteredTickets = tickets
+  return tickets
     .filter(ticket => filterBySearch(ticket, params.keyword))
     .filter(ticket => filterByPriorities(ticket, params.priorities))
     .filter(ticket => filterBySeverities(ticket, params.severityIds))
     .sort((left, right) => right.modifiedAt.localeCompare(left.modifiedAt));
-  const offset = (page - 1) * MY_TICKETS_PER_PAGE;
-
-  return filteredTickets.slice(offset, offset + MY_TICKETS_PER_PAGE);
 };
 
 export const countMyTickets = (

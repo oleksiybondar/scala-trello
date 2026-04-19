@@ -44,6 +44,8 @@ object BoardApi {
   private val LegacyBoardIdArg    = Argument("dashboardId", OptionInputType(StringType))
   private val ActiveArg           = Argument("active", OptionInputType(BooleanType))
   private val KeywordArg          = Argument("keyword", OptionInputType(StringType))
+  private val OffsetArg           = Argument("offset", IntType, defaultValue = 0)
+  private val LimitArg            = Argument("limit", IntType, defaultValue = 10)
   private val NameArg             = Argument("name", StringType)
   private val OwnerUserIdArg      = Argument("ownerUserId", OptionInputType(StringType))
   private val DescriptionArg      = Argument("description", OptionInputType(StringType))
@@ -252,12 +254,15 @@ object BoardApi {
     Field(
       name = name,
       fieldType = ListType(BoardType),
-      arguments = ActiveArg :: KeywordArg :: OwnerUserIdArg :: Nil,
+      arguments = ActiveArg :: KeywordArg :: OwnerUserIdArg :: OffsetArg :: LimitArg :: Nil,
       resolve = ctx =>
         withCurrentUser(ctx) { currentUserId =>
           for {
             filters <- buildBoardQueryFilters(ctx)
-            boards  <- ctx.ctx.dashboardService.listDashboardsForUser(currentUserId, filters)
+            offset   = math.max(0, ctx.arg(OffsetArg))
+            limit    = math.max(0, ctx.arg(LimitArg))
+            boards  <- ctx.ctx.dashboardService
+                         .listDashboardsForUserPage(currentUserId, filters, offset, limit)
           } yield boards.map(toDashboardView)
         }.unsafeToFuture()
     )

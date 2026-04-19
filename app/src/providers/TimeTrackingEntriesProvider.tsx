@@ -36,7 +36,10 @@ export const TimeTrackingEntriesProvider = ({
     normalizeQueryTimeTrackingEntriesParams(DEFAULT_QUERY_TIME_TRACKING_ENTRIES_PARAMS)
   );
   const {
+    canLoadMoreEntries,
     isLoadingEntries,
+    isLoadingNextEntriesPage,
+    loadNextEntriesPage,
     timeTrackingEntries,
     timeTrackingEntriesError,
     totalTimeTrackingEntries
@@ -48,8 +51,11 @@ export const TimeTrackingEntriesProvider = ({
   return (
     <TimeTrackingEntriesContext.Provider
       value={{
+        canLoadMoreEntries,
         currentParams,
         isLoadingEntries,
+        isLoadingNextEntriesPage,
+        loadNextEntriesPage,
         queryEntries: (params: QueryTimeTrackingEntriesParams) => {
           setCurrentParams(currentState => {
             return normalizeQueryTimeTrackingEntriesParams({
