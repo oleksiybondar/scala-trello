@@ -76,7 +76,7 @@ describe("myTicketsApi", () => {
     ).toBe(2);
   });
 
-  test("applies pagination after filtering", () => {
+  test("returns all filtered tickets in modifiedAt desc order", () => {
     const tickets = Array.from({ length: MY_TICKETS_PER_PAGE + 5 }, (_value, index) => {
       return createTicket({
         modifiedAt: `2026-04-${String(index + 1).padStart(2, "0")}T00:00:00Z`,
@@ -85,10 +85,11 @@ describe("myTicketsApi", () => {
       });
     });
 
-    const firstPage = filterMyTickets(tickets, { page: 1 });
-    const secondPage = filterMyTickets(tickets, { page: 2 });
+    const result = filterMyTickets(tickets, { page: 1 });
 
-    expect(firstPage).toHaveLength(MY_TICKETS_PER_PAGE);
-    expect(secondPage).toHaveLength(5);
+    expect(MY_TICKETS_PER_PAGE).toBe(30);
+    expect(result).toHaveLength(MY_TICKETS_PER_PAGE + 5);
+    expect(result[0]?.ticketId).toBe(`ticket-${String(MY_TICKETS_PER_PAGE + 5)}`);
+    expect(result.at(-1)?.ticketId).toBe("ticket-1");
   });
 });

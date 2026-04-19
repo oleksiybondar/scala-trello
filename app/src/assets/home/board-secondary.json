@@ -1,0 +1,284 @@
+{
+  "active": false,
+  "boardId": "landing-board-demo-2",
+  "createdAt": "2026-03-20T08:00:00Z",
+  "createdBy": {
+    "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+    "firstName": "Jordan",
+    "lastName": "Keller",
+    "userId": "user-4"
+  },
+  "createdByUserId": "user-4",
+  "currentUserRole": {
+    "description": "Board administrator",
+    "permissions": [
+      {
+        "area": "dashboard",
+        "canCreate": true,
+        "canDelete": true,
+        "canModify": true,
+        "canRead": true,
+        "canReassign": true
+      }
+    ],
+    "roleId": "role-admin",
+    "roleName": "admin"
+  },
+  "description": "Closed board for release hardening with all work completed.",
+  "lastModifiedByUserId": "user-5",
+  "membersCount": 6,
+  "modifiedAt": "2026-04-12T16:10:00Z",
+  "name": "Release Hardening",
+  "owner": {
+    "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+    "firstName": "Riley",
+    "lastName": "Hughes",
+    "userId": "user-5"
+  },
+  "ownerUserId": "user-5",
+  "tickets": [
+    {
+      "acceptanceCriteria": "Release checklist completed and signed off.",
+      "assignedTo": {
+        "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+        "firstName": "Iris",
+        "lastName": "Coleman",
+        "userId": "user-6"
+      },
+      "assignedToUserId": "user-6",
+      "boardId": "landing-board-demo-2",
+      "commentsCount": 3,
+      "createdAt": "2026-03-22T09:10:00Z",
+      "createdBy": {
+        "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+        "firstName": "Jordan",
+        "lastName": "Keller",
+        "userId": "user-4"
+      },
+      "createdByUserId": "user-4",
+      "description": "Finalize release checklist and confirm rollback strategy.",
+      "estimatedMinutes": 150,
+      "lastModifiedBy": {
+        "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+        "firstName": "Riley",
+        "lastName": "Hughes",
+        "userId": "user-5"
+      },
+      "lastModifiedByUserId": "user-5",
+      "modifiedAt": "2026-04-11T12:20:00Z",
+      "name": "Release checklist",
+      "priority": 1,
+      "severityId": "1",
+      "severityName": "critical",
+      "status": "done",
+      "ticketId": "ticket-rh-1",
+      "timeEntries": [
+        {
+          "activityCode": "planning",
+          "activityId": "3",
+          "activityName": "Planning",
+          "description": "Prepared release execution plan",
+          "durationMinutes": 45,
+          "entryId": "entry-rh-1",
+          "loggedAt": "2026-03-22T09:30:00Z",
+          "ticket": null,
+          "ticketId": "ticket-rh-1",
+          "user": {
+            "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+            "firstName": "Jordan",
+            "lastName": "Keller",
+            "userId": "user-4"
+          },
+          "userId": "user-4"
+        },
+        {
+          "activityCode": "documentation",
+          "activityId": "5",
+          "activityName": "Documentation",
+          "description": "Updated runbook and post-release notes",
+          "durationMinutes": 55,
+          "entryId": "entry-rh-2",
+          "loggedAt": "2026-04-01T10:15:00Z",
+          "ticket": null,
+          "ticketId": "ticket-rh-1",
+          "user": {
+            "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+            "firstName": "Iris",
+            "lastName": "Coleman",
+            "userId": "user-6"
+          },
+          "userId": "user-6"
+        },
+        {
+          "activityCode": "code_review",
+          "activityId": "7",
+          "activityName": "Code Review",
+          "description": "Validated release branch changes",
+          "durationMinutes": 35,
+          "entryId": "entry-rh-3",
+          "loggedAt": "2026-04-05T13:00:00Z",
+          "ticket": null,
+          "ticketId": "ticket-rh-1",
+          "user": {
+            "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+            "firstName": "Riley",
+            "lastName": "Hughes",
+            "userId": "user-5"
+          },
+          "userId": "user-5"
+        }
+      ],
+      "trackedMinutes": 135
+    },
+    {
+      "acceptanceCriteria": "High-risk paths covered with integration tests.",
+      "assignedTo": {
+        "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+        "firstName": "Noah",
+        "lastName": "Patel",
+        "userId": "user-7"
+      },
+      "assignedToUserId": "user-7",
+      "boardId": "landing-board-demo-2",
+      "commentsCount": 2,
+      "createdAt": "2026-03-24T11:00:00Z",
+      "createdBy": {
+        "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+        "firstName": "Riley",
+        "lastName": "Hughes",
+        "userId": "user-5"
+      },
+      "createdByUserId": "user-5",
+      "description": "Run full integration suite and resolve regression failures.",
+      "estimatedMinutes": 210,
+      "lastModifiedBy": {
+        "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+        "firstName": "Noah",
+        "lastName": "Patel",
+        "userId": "user-7"
+      },
+      "lastModifiedByUserId": "user-7",
+      "modifiedAt": "2026-04-12T14:25:00Z",
+      "name": "Regression sweep",
+      "priority": 2,
+      "severityId": "2",
+      "severityName": "normal",
+      "status": "done",
+      "ticketId": "ticket-rh-2",
+      "timeEntries": [
+        {
+          "activityCode": "testing",
+          "activityId": "2",
+          "activityName": "Testing",
+          "description": "Executed integration scenarios",
+          "durationMinutes": 120,
+          "entryId": "entry-rh-4",
+          "loggedAt": "2026-03-28T10:40:00Z",
+          "ticket": null,
+          "ticketId": "ticket-rh-2",
+          "user": {
+            "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+            "firstName": "Noah",
+            "lastName": "Patel",
+            "userId": "user-7"
+          },
+          "userId": "user-7"
+        },
+        {
+          "activityCode": "debugging",
+          "activityId": "8",
+          "activityName": "Debugging",
+          "description": "Fixed flaky environment setup",
+          "durationMinutes": 70,
+          "entryId": "entry-rh-5",
+          "loggedAt": "2026-04-03T15:00:00Z",
+          "ticket": null,
+          "ticketId": "ticket-rh-2",
+          "user": {
+            "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+            "firstName": "Iris",
+            "lastName": "Coleman",
+            "userId": "user-6"
+          },
+          "userId": "user-6"
+        }
+      ],
+      "trackedMinutes": 190
+    },
+    {
+      "acceptanceCriteria": "UI cleanup and edge-case behavior confirmed.",
+      "assignedTo": {
+        "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+        "firstName": "Maya",
+        "lastName": "Santos",
+        "userId": "user-8"
+      },
+      "assignedToUserId": "user-8",
+      "boardId": "landing-board-demo-2",
+      "commentsCount": 1,
+      "createdAt": "2026-03-26T07:50:00Z",
+      "createdBy": {
+        "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+        "firstName": "Jordan",
+        "lastName": "Keller",
+        "userId": "user-4"
+      },
+      "createdByUserId": "user-4",
+      "description": "Polish release notes UI and close remaining review items.",
+      "estimatedMinutes": 140,
+      "lastModifiedBy": {
+        "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+        "firstName": "Maya",
+        "lastName": "Santos",
+        "userId": "user-8"
+      },
+      "lastModifiedByUserId": "user-8",
+      "modifiedAt": "2026-04-12T16:00:00Z",
+      "name": "Post-release polish",
+      "priority": 3,
+      "severityId": "3",
+      "severityName": "minor",
+      "status": "done",
+      "ticketId": "ticket-rh-3",
+      "timeEntries": [
+        {
+          "activityCode": "design",
+          "activityId": "4",
+          "activityName": "Design",
+          "description": "Adjusted visual hierarchy and spacing",
+          "durationMinutes": 60,
+          "entryId": "entry-rh-6",
+          "loggedAt": "2026-04-02T09:20:00Z",
+          "ticket": null,
+          "ticketId": "ticket-rh-3",
+          "user": {
+            "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+            "firstName": "Maya",
+            "lastName": "Santos",
+            "userId": "user-8"
+          },
+          "userId": "user-8"
+        },
+        {
+          "activityCode": "refinement",
+          "activityId": "6",
+          "activityName": "Refinement",
+          "description": "Updated final acceptance details with QA",
+          "durationMinutes": 30,
+          "entryId": "entry-rh-7",
+          "loggedAt": "2026-04-09T11:45:00Z",
+          "ticket": null,
+          "ticketId": "ticket-rh-3",
+          "user": {
+            "avatarUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3Zx7cAAAAASUVORK5CYII=",
+            "firstName": "Riley",
+            "lastName": "Hughes",
+            "userId": "user-5"
+          },
+          "userId": "user-5"
+        }
+      ],
+      "trackedMinutes": 90
+    }
+  ]
+}

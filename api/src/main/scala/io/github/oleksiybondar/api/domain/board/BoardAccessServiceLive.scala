@@ -12,35 +12,35 @@ final class BoardAccessServiceLive[F[_]: Monad](
 ) extends BoardAccessService[F] {
 
   override def canRead(dashboardId: BoardId, userId: UserId, area: PermissionArea): F[Boolean] =
-    checkPermission(dashboardId, userId)(_.canRead(area))
+    checkPermission(dashboardId, userId, allowInactiveRead = true)(_.canRead(area))
 
   override def canCreate(
       dashboardId: BoardId,
       userId: UserId,
       area: PermissionArea
   ): F[Boolean] =
-    checkPermission(dashboardId, userId)(_.canCreate(area))
+    checkPermission(dashboardId, userId, allowInactiveRead = false)(_.canCreate(area))
 
   override def canModify(
       dashboardId: BoardId,
       userId: UserId,
       area: PermissionArea
   ): F[Boolean] =
-    checkPermission(dashboardId, userId)(_.canModify(area))
+    checkPermission(dashboardId, userId, allowInactiveRead = false)(_.canModify(area))
 
   override def canDelete(
       dashboardId: BoardId,
       userId: UserId,
       area: PermissionArea
   ): F[Boolean] =
-    checkPermission(dashboardId, userId)(_.canDelete(area))
+    checkPermission(dashboardId, userId, allowInactiveRead = false)(_.canDelete(area))
 
   override def canReassign(
       dashboardId: BoardId,
       userId: UserId,
       area: PermissionArea
   ): F[Boolean] =
-    checkPermission(dashboardId, userId)(_.canReassign(area))
+    checkPermission(dashboardId, userId, allowInactiveRead = false)(_.canReassign(area))
 
   override def canReadDashboard(dashboardId: BoardId, userId: UserId): F[Boolean] =
     canRead(dashboardId, userId, PermissionArea.Board)
@@ -89,13 +89,15 @@ final class BoardAccessServiceLive[F[_]: Monad](
 
   private def checkPermission(
       dashboardId: BoardId,
-      userId: UserId
+      userId: UserId,
+      allowInactiveRead: Boolean
   )(evaluate: BoardMemberWithRole => Boolean): F[Boolean] =
     dashboardRepo.findById(dashboardId).flatMap {
       case None            => false.pure[F]
       case Some(dashboard) =>
-        if (!dashboard.active && dashboard.ownerUserId != userId) false.pure[F]
-        else
+        if (!dashboard.active && dashboard.ownerUserId != userId && !allowInactiveRead) {
+          false.pure[F]
+        } else
           dashboardMembershipService
             .findMember(dashboardId, userId)
             .map(_.exists(evaluate))

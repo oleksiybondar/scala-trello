@@ -1,7 +1,7 @@
 import type { BoardOwnerOption, QueryBoardsParams } from "@contexts/boards-context";
 import type { Board } from "./graphql";
 
-export const BOARDS_PER_PAGE = 15;
+export const BOARDS_PER_PAGE = 10;
 
 /**
  * Builds a stable owner option list for the boards toolbar from the full board collection.

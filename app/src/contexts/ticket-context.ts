@@ -23,6 +23,7 @@ export interface TicketContextValue {
   ticket: Ticket | null;
   ticketError: Error | null;
   ticketId: string;
+  updateTicket: (updater: (ticket: Ticket) => Ticket) => Promise<void>;
 }
 
 const missingTicketProvider = (): never => {
@@ -48,5 +49,6 @@ export const TicketContext = createContext<TicketContextValue>({
   severities: [],
   ticket: null,
   ticketError: null,
-  ticketId: ""
+  ticketId: "",
+  updateTicket: missingTicketProvider
 });

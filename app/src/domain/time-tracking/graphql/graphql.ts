@@ -19,6 +19,11 @@ const TIME_TRACKING_ENTRY_FIELDS = `
     id
     title
     description
+    board {
+      id
+      title
+      active
+    }
   }
   user {
     ${USER_FIELDS}
@@ -47,10 +52,18 @@ export const buildTimeTrackingEntryQuery = (entryId: string): string => {
   `;
 };
 
-export const buildTimeTrackingEntriesByUserQuery = (userId: string): string => {
+export const buildTimeTrackingEntriesByUserQuery = (
+  userId: string,
+  offset = 0,
+  limit = 50
+): string => {
   return /* GraphQL */ `
     query {
-      timeTrackingEntriesByUser(userId: ${serializeGraphQLString(userId)}) {
+      timeTrackingEntriesByUser(
+        userId: ${serializeGraphQLString(userId)}
+        offset: ${String(offset)}
+        limit: ${String(limit)}
+      ) {
         ${TIME_TRACKING_ENTRY_FIELDS}
       }
     }

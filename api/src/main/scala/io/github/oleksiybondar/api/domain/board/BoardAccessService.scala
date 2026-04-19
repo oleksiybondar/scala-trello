@@ -9,7 +9,8 @@ import io.github.oleksiybondar.api.domain.user.UserId
   * This service first evaluates whether the dashboard itself allows access:
   *   - missing dashboards deny access
   *   - active dashboards continue to membership-based permission checks
-  *   - inactive dashboards deny access unless the requester is the owner
+  *   - inactive dashboards still allow read checks for members
+  *   - inactive dashboards deny non-read checks unless the requester is the owner
   *
   * After the dashboard-level gate is passed, permission decisions are driven by the assigned
   * membership role. Missing membership is treated as denied access.

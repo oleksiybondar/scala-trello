@@ -6,8 +6,8 @@ import Divider from "@mui/material/Divider";
 
 import { AppPageLayout } from "@components/layout/AppPageLayout";
 import { LandingBoardsSection } from "@components/landing/LandingBoardsSection";
-import { LandingCollaborationSection } from "@components/landing/LandingCollaborationSection";
 import { LandingHeroSection } from "@components/landing/LandingHeroSection";
+import { LandingTimeTracking } from "@components/landing/LandingTimeTracking";
 
 /**
  * Visitor landing page with static introduction content.
@@ -37,7 +37,7 @@ export const HomePage = (): ReactElement => {
           <Divider />
           <LandingBoardsSection />
           <Divider />
-          <LandingCollaborationSection />
+          <LandingTimeTracking />
         </Stack>
       </AppPageLayout>
     </Box>

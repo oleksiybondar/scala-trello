@@ -48,10 +48,22 @@ object TimeTrackingApi {
   private val EntryIdArg     = Argument("entryId", StringType)
   private val TicketIdArg    = Argument("ticketId", StringType)
   private val UserIdArg      = Argument("userId", StringType)
+  private val OffsetArg      = Argument("offset", IntType, defaultValue = 0)
+  private val LimitArg       = Argument("limit", IntType, defaultValue = 50)
   private val ActivityIdArg  = Argument("activityId", LongType)
   private val DurationArg    = Argument("durationMinutes", IntType)
   private val LoggedAtArg    = Argument("loggedAt", StringType)
   private val DescriptionArg = Argument("description", OptionInputType(StringType))
+
+  val BoardSummaryType: ObjectType[GraphQLContext, TimeTrackingBoardSummaryView] =
+    ObjectType(
+      name = "TimeTrackingBoardSummaryView",
+      fields[GraphQLContext, TimeTrackingBoardSummaryView](
+        Field("id", StringType, resolve = _.value.id),
+        Field("title", StringType, resolve = _.value.title),
+        Field("active", sangria.schema.BooleanType, resolve = _.value.active)
+      )
+    )
 
   val TicketSummaryType: ObjectType[GraphQLContext, TimeTrackingTicketSummaryView] =
     ObjectType(
@@ -59,7 +71,8 @@ object TimeTrackingApi {
       fields[GraphQLContext, TimeTrackingTicketSummaryView](
         Field("id", StringType, resolve = _.value.id),
         Field("title", StringType, resolve = _.value.title),
-        Field("description", OptionType(StringType), resolve = _.value.description)
+        Field("description", OptionType(StringType), resolve = _.value.description),
+        Field("board", OptionType(BoardSummaryType), resolve = _.value.board)
       )
     )
 
@@ -87,9 +100,16 @@ object TimeTrackingApi {
                   parseTicketId(ctx.value.ticketId) match {
                     case Left(_)         => IO.pure(None).unsafeToFuture()
                     case Right(ticketId) =>
-                      ctx.ctx.ticketService.getTicket(
-                        ticketId
-                      ).map(_.map(toTicketSummaryView)).unsafeToFuture()
+                      ctx.ctx.ticketService
+                        .getTicket(ticketId)
+                        .flatMap {
+                          case None         => IO.pure(None)
+                          case Some(ticket) =>
+                            ctx.ctx.dashboardService
+                              .getDashboard(ticket.boardId)
+                              .map(board => Some(toTicketSummaryView(ticket, board)))
+                        }
+                        .unsafeToFuture()
                   }
               }
         ),
@@ -123,12 +143,15 @@ object TimeTrackingApi {
       Field(
         name = "timeTrackingEntriesByUser",
         fieldType = ListType(TimeTrackingEntryType),
-        arguments = UserIdArg :: Nil,
+        arguments = UserIdArg :: OffsetArg :: LimitArg :: Nil,
         resolve = ctx =>
           withCurrentUser(ctx) { currentUserId =>
             for {
               userId  <- IO.fromEither(parseUserId(ctx.arg(UserIdArg)))
-              entries <- ctx.ctx.timeTrackingService.listEntriesByUser(userId, currentUserId)
+              offset   = math.max(0, ctx.arg(OffsetArg))
+              limit    = math.max(0, ctx.arg(LimitArg))
+              entries <- ctx.ctx.timeTrackingService
+                           .listEntriesByUserPage(userId, currentUserId, offset, limit)
             } yield entries.map(toView)
           }.unsafeToFuture()
       ),
@@ -366,12 +389,20 @@ object TimeTrackingApi {
     )
 
   private def toTicketSummaryView(
-      ticket: io.github.oleksiybondar.api.domain.ticket.Ticket
+      ticket: io.github.oleksiybondar.api.domain.ticket.Ticket,
+      board: Option[io.github.oleksiybondar.api.domain.board.Board]
   ): TimeTrackingTicketSummaryView =
     TimeTrackingTicketSummaryView(
       id = ticket.id.value.toString,
       title = ticket.name.value,
-      description = ticket.description.map(_.value)
+      description = ticket.description.map(_.value),
+      board = board.map(boardValue =>
+        TimeTrackingBoardSummaryView(
+          id = boardValue.id.value.toString,
+          title = boardValue.name.value,
+          active = boardValue.active
+        )
+      )
     )
 
 }

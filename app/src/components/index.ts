@@ -1,7 +1,9 @@
 export { BoardCard } from "@components/boards/BoardCard";
+export { BoardCardView } from "@components/boards/BoardCardView";
 export { BoardCardHeader } from "@components/boards/BoardCardHeader";
 export { BoardColumn } from "@components/boards/board-page/BoardColumn";
 export { BoardTicketCard } from "@components/boards/board-page/BoardTicketCard";
+export { BoardTicketCardView } from "@components/boards/board-page/BoardTicketCardView";
 export { BoardSettingsHeader } from "@components/boards/board-settings/BoardSettingsHeader";
 export { BoardSettingsLayout } from "@components/boards/board-settings/BoardSettingsLayout";
 export { BoardSettingsPlaceholderPanel } from "@components/boards/board-settings/BoardSettingsPlaceholderPanel";
@@ -17,6 +19,7 @@ export { BoardsSearchInput } from "@components/boards/boards-toolbar/BoardsSearc
 export { CreateBoardToolbarButton } from "@components/boards/boards-toolbar/CreateBoardToolbarButton";
 export { DonutChart } from "@components/charts/DonutChart";
 export { DonutChartLegendItem } from "@components/charts/DonutChartLegendItem";
+export { DonutChartWithLegend } from "@components/charts/DonutChartWithLegend";
 export { TimeVelocityChart } from "@components/charts/TimeVelocityChart";
 export { TimeVelocityLegendItem } from "@components/charts/TimeVelocityLegendItem";
 export { TicketPieChart } from "@components/boards/tickets-info/TicketPieChart";
@@ -27,6 +30,8 @@ export { AppAvatar } from "@components/avatar/AppAvatar";
 export { CreateBoardDialog } from "@components/boards/CreateBoardDialog";
 export { CreateBoardForm } from "@components/boards/CreateBoardForm";
 export { TimeTrackingModal } from "@components/boards/board-page/TimeTrackingModal";
+export { TimeTrackingActivitySelect } from "@components/time-tracking/TimeTrackingActivitySelect";
+export { TimeTrackingActivityPieChart } from "@components/time-tracking/TimeTrackingActivityPieChart";
 export { TimeInput } from "@components/time-tracking/TimeInput";
 export { CreateTicketDialog } from "@components/tickets/CreateTicketDialog";
 export { CreateTicketForm } from "@components/tickets/CreateTicketForm";

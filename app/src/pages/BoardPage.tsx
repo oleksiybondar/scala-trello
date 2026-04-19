@@ -11,7 +11,7 @@ import { BoardPageToolbar } from "@components/boards/board-page/BoardPageToolbar
 import { AppPageLayout } from "@components/layout/AppPageLayout";
 import { useBoard } from "@hooks/useBoard";
 import { BoardProvider } from "@providers/BoardProvider";
-import { TimeTrackingProvider } from "@providers/TimeTrackingProvider";
+import { TicketTimeTrackingProvider } from "@providers/TicketTimeTrackingProvider";
 import { TicketsProvider } from "@providers/TicketsProvider";
 
 const BoardPageBody = (): ReactElement => {
@@ -47,11 +47,11 @@ const BoardPageBody = (): ReactElement => {
 export const BoardPage = (): ReactElement => {
   return (
     <BoardProvider>
-      <TimeTrackingProvider>
-        <TicketsProvider>
+      <TicketsProvider>
+        <TicketTimeTrackingProvider>
           <BoardPageBody />
-        </TicketsProvider>
-      </TimeTrackingProvider>
+        </TicketTimeTrackingProvider>
+      </TicketsProvider>
     </BoardProvider>
   );
 };

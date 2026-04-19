@@ -34,6 +34,7 @@ describe("BoardsToolbar", () => {
 
     vi.mocked(useBoards).mockReturnValue({
       boards: [],
+      canLoadMoreBoards: false,
       boardsError: null,
       createBoard: vi.fn(),
       currentParams: {
@@ -44,6 +45,8 @@ describe("BoardsToolbar", () => {
       },
       isCreatingBoard: false,
       isLoadingBoards: false,
+      isLoadingMoreBoards: false,
+      loadNextBoardsPage: vi.fn(),
       ownerOptions: [
         {
           label: "Zelda Owner",

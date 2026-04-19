@@ -5,7 +5,14 @@ import io.github.oleksiybondar.api.http.routes.graphql.user.UserView
 final case class TimeTrackingTicketSummaryView(
     id: String,
     title: String,
-    description: Option[String]
+    description: Option[String],
+    board: Option[TimeTrackingBoardSummaryView] = None
+)
+
+final case class TimeTrackingBoardSummaryView(
+    id: String,
+    title: String,
+    active: Boolean
 )
 
 final case class TimeTrackingEntryView(

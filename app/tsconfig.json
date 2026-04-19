@@ -4,9 +4,11 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
     "jsx": "react-jsx",
     "lib": ["DOM", "ES2022"],
     "paths": {
+      "@assets/*": ["src/assets/*"],
       "@app/*": ["src/app/*"],
       "@components/*": ["src/components/*"],
       "@configs/*": ["src/configs/*"],

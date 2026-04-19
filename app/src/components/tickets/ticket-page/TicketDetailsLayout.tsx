@@ -1,6 +1,7 @@
 import type { ChangeEvent, ReactElement } from "react";
 import { useEffect, useState } from "react";
 
+import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
@@ -10,69 +11,46 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { useTheme } from "@mui/material/styles";
 
 import { Person } from "@components/avatar/Person";
-import { DonutChart } from "@components/charts/DonutChart";
-import { DonutChartLegendItem } from "@components/charts/DonutChartLegendItem";
 import {
   TimeVelocityChart,
-  type TimeVelocityStats
+  type TimeVelocityData
 } from "@components/charts/TimeVelocityChart";
+import { TimeTrackingActivityPieChart } from "@components/time-tracking/TimeTrackingActivityPieChart";
 import { TimeInput } from "@components/time-tracking/TimeInput";
+import { TicketActivityEntryList } from "@components/tickets/ticket-page/TicketActivityEntryList";
 import { TicketPrioritySelect } from "@components/tickets/TicketPrioritySelect";
 import { TicketSeveritySelect } from "@components/tickets/TicketSeveritySelect";
 import type { Ticket } from "../../../domain/ticket/graphql";
-import { formatMinutesToTimeTrackingDuration } from "@helpers/timeTrackingConversions";
+import { useActivities } from "@hooks/useActivities";
 import { useTicket } from "@hooks/useTicket";
+import { useTimeTrackingActivityChart } from "@hooks/useTimeTrackingActivityChart";
+import { useTimeTracking } from "@hooks/useTimeTracking";
 
 interface TicketDetailsLayoutProps {
   ticket: Ticket;
 }
 
-interface ActivitySlice {
-  color: string;
-  key: string;
-  minutes: number;
-  name: string;
-}
-
-const getTimeVelocityStats = (ticket: Ticket): TimeVelocityStats => {
+const getTimeVelocityData = (ticket: Ticket): TimeVelocityData => {
   const estimatedMinutes = ticket.estimatedMinutes ?? 0;
-  const loggedMinutes = ticket.timeEntries.reduce((sum, entry) => {
-    return sum + entry.durationMinutes;
-  }, 0);
+  const sortedEntries = [...ticket.timeEntries].sort((left, right) => {
+    return (
+      new Date(left.loggedAt).getTime() - new Date(right.loggedAt).getTime()
+    );
+  });
+  const actualSeriesMinutes: number[] = [];
+  let runningActualMinutes = 0;
+
+  sortedEntries.forEach(entry => {
+    runningActualMinutes += Math.max(0, entry.durationMinutes);
+    actualSeriesMinutes.push(runningActualMinutes);
+  });
 
   return {
-    estimatedTime: formatMinutesToTimeTrackingDuration(estimatedMinutes),
-    loggedTime: formatMinutesToTimeTrackingDuration(loggedMinutes),
-    overdueTime: formatMinutesToTimeTrackingDuration(loggedMinutes - estimatedMinutes)
+    actualSeriesMinutes: actualSeriesMinutes.length > 0 ? actualSeriesMinutes : [0],
+    estimatedMinutes
   };
-};
-
-const getActivitySlices = (ticket: Ticket, colors: string[]): ActivitySlice[] => {
-  const byActivity = ticket.timeEntries.reduce((state, entry) => {
-    const label = entry.activityName?.trim() ?? "";
-    const key = label.length > 0 ? label : "Unspecified activity";
-    const currentMinutes = state.get(key) ?? 0;
-
-    state.set(key, currentMinutes + entry.durationMinutes);
-
-    return state;
-  }, new Map<string, number>());
-
-  return [...byActivity.entries()]
-    .sort((left, right) => right[1] - left[1])
-    .map(([name, minutes], index) => {
-      const color = colors[index % colors.length] ?? "#9e9e9e";
-
-      return {
-        color,
-        key: `${name}-${String(index)}`,
-        minutes,
-        name
-      };
-    });
 };
 
 const normalizeOptionalText = (value: string): string | null => {
@@ -84,7 +62,8 @@ const normalizeOptionalText = (value: string): string | null => {
 export const TicketDetailsLayout = ({
   ticket
 }: TicketDetailsLayoutProps): ReactElement => {
-  const theme = useTheme();
+  const { activities } = useActivities();
+  const { openLogTimeModal } = useTimeTracking();
   const {
     changeTicketAcceptanceCriteria,
     changeTicketDescription,
@@ -123,23 +102,21 @@ export const TicketDetailsLayout = ({
     setAcceptanceCriteria(ticket.acceptanceCriteria ?? "");
   }, [ticket]);
 
-  const timeVelocityStats = getTimeVelocityStats(ticket);
-  const activityColors = [
-    theme.palette.primary.main,
-    theme.palette.success.main,
-    theme.palette.warning.main,
-    theme.palette.info.main,
-    theme.palette.error.main
-  ];
-  const activitySlices = getActivitySlices(ticket, activityColors);
-  const totalActivityMinutes = activitySlices.reduce((sum, slice) => sum + slice.minutes, 0);
-  const isOverdue = timeVelocityStats.overdueTime !== "0h:00m";
+  const timeVelocityData = getTimeVelocityData(ticket);
+  const activityNameById = Object.fromEntries(
+    activities.map(activity => [activity.activityId, activity.name])
+  );
+  const { activityColorByName, activitySlices, totalActivityMinutes } = useTimeTrackingActivityChart(
+    ticket.timeEntries,
+    activityNameById
+  );
   const hasTitleChanged = title.trim() !== ticket.name.trim();
   const hasPrioritySeverityChanged = priority !== (ticket.priority ?? 5) || severityId !== ticket.severityId;
   const hasEstimatedTimeChanged = estimatedMinutes !== ticket.estimatedMinutes;
   const hasDescriptionChanged = description.trim() !== (ticket.description ?? "").trim();
   const hasAcceptanceCriteriaChanged =
     acceptanceCriteria.trim() !== (ticket.acceptanceCriteria ?? "").trim();
+  const canRegisterTime = ticket.board?.active === true;
   const isTitleDisabled = isUpdatingTicketTitle;
   const isPrioritySeverityDisabled = isUpdatingTicketPriority || isUpdatingTicketSeverity;
   const isEstimatedTimeDisabled = isUpdatingTicketEstimatedTime;
@@ -465,55 +442,54 @@ export const TicketDetailsLayout = ({
 
       <Grid size={{ lg: 4, xs: 12 }}>
         <Stack spacing={2}>
-          <Paper sx={{ p: 1.5 }} variant="outlined">
+          <Paper sx={{ minHeight: 210, p: 1.5 }} variant="outlined">
             <Stack spacing={1.25}>
               <Stack alignItems="center" direction="row" justifyContent="space-between" spacing={1}>
                 <Typography variant="subtitle2">Time velocity</Typography>
-                {isOverdue ? (
-                  <Typography color="warning.main" sx={{ fontWeight: 700 }} variant="caption">
-                    Overdue: {timeVelocityStats.overdueTime}
-                  </Typography>
-                ) : null}
               </Stack>
-              <TimeVelocityChart stats={timeVelocityStats} />
+              <TimeVelocityChart chartHeight={96} data={timeVelocityData} />
             </Stack>
           </Paper>
 
           <Paper sx={{ p: 1.5 }} variant="outlined">
             <Stack spacing={1.5}>
               <Typography variant="subtitle2">Activity</Typography>
-              <Stack
-                alignItems="center"
-                direction={{ md: "row", xs: "column" }}
-                justifyContent="center"
-                spacing={2}
-              >
-                <Stack alignItems="center" justifyContent="center" spacing={1} sx={{ flex: "0 0 160px" }}>
-                  <DonutChart
-                    centerLabel="Logged"
-                    centerValue={formatMinutesToTimeTrackingDuration(totalActivityMinutes)}
-                    segments={activitySlices.map(slice => ({
-                      color: slice.color,
-                      value: slice.minutes
-                    }))}
-                  />
-                </Stack>
-                <Stack spacing={1} sx={{ flex: 1, minWidth: 0 }}>
-                  {activitySlices.length === 0 ? (
-                    <Typography color="text.secondary" variant="body2">
-                      No activity tracked yet.
-                    </Typography>
-                  ) : (
-                    activitySlices.map(slice => (
-                      <DonutChartLegendItem
-                        color={slice.color}
-                        key={slice.key}
-                        value={`${slice.name}: ${formatMinutesToTimeTrackingDuration(slice.minutes)}`}
-                      />
-                    ))
-                  )}
-                </Stack>
-              </Stack>
+              <TimeTrackingActivityPieChart
+                activitySlices={activitySlices}
+                emptyLegendText="No activity tracked yet."
+                totalActivityMinutes={totalActivityMinutes}
+              />
+            </Stack>
+          </Paper>
+
+          <Paper sx={{ p: 1.5 }} variant="outlined">
+            <Stack spacing={0}>
+              {canRegisterTime ? (
+                <Button
+                  onClick={() => {
+                    openLogTimeModal(ticket.ticketId);
+                  }}
+                  size="small"
+                  startIcon={<AccessTimeRoundedIcon fontSize="small" />}
+                  variant="contained"
+                >
+                  Register time
+                </Button>
+              ) : (
+                <Typography color="text.secondary" variant="caption">
+                  Time tracking is unavailable because the board is closed.
+                </Typography>
+              )}
+            </Stack>
+          </Paper>
+
+          <Paper sx={{ p: 1.5 }} variant="outlined">
+            <Stack spacing={1.5}>
+              <Typography variant="subtitle2">Activity log</Typography>
+              <TicketActivityEntryList
+                activityColorByName={activityColorByName}
+                entries={ticket.timeEntries}
+              />
             </Stack>
           </Paper>
         </Stack>

@@ -12,6 +12,11 @@ describe("time tracking mappers", () => {
         id: "entry-1",
         loggedAt: "2026-04-10T09:00:00Z",
         ticket: {
+          board: {
+            active: true,
+            id: "board-1",
+            title: "Delivery Board"
+          },
           description: "Create ticket forms",
           id: "ticket-1",
           title: "Ticket UI"
@@ -34,6 +39,11 @@ describe("time tracking mappers", () => {
       entryId: "entry-1",
       loggedAt: "2026-04-10T09:00:00Z",
       ticket: {
+        board: {
+          active: true,
+          boardId: "board-1",
+          title: "Delivery Board"
+        },
         description: "Create ticket forms",
         ticketId: "ticket-1",
         title: "Ticket UI"

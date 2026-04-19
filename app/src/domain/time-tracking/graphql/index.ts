@@ -12,6 +12,7 @@ export { mapTimeTrackingEntryResponseToTimeTrackingEntry } from "./mappers";
 export type {
   CreateTimeTrackingEntryMutationResponse,
   DeleteTimeTrackingEntryMutationResponse,
+  TimeTrackingBoardSummaryResponse,
   TimeTrackingEntriesByTicketQueryResponse,
   TimeTrackingEntriesByUserQueryResponse,
   TimeTrackingEntryQueryResponse,
@@ -23,6 +24,7 @@ export type {
   UpdateTimeTrackingTimeMutationResponse
 } from "./dto";
 export type {
+  TimeTrackingBoardSummary,
   TimeTrackingEntry,
   TimeTrackingTicketSummary,
   TimeTrackingUserSummary

@@ -4,6 +4,12 @@ export { evaluatePasswordStrength } from "./passwordStrength";
 export { readFileAsDataUrl } from "./readFileAsDataUrl";
 export { requestGraphQL } from "./requestGraphQL";
 export {
+  buildTimeTrackingActivityColorMap,
+  buildTimeTrackingActivitySlices,
+  resolveActivityThemeColorToken,
+  resolveTimeTrackingActivityName
+} from "./timeTrackingActivities";
+export {
   formatMinutesToHoursField,
   formatMinutesToMinutesField,
   formatMinutesToTimeInput,

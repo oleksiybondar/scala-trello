@@ -71,6 +71,14 @@ final class TimeTrackingServiceLive[F[_]: MonadCancelThrow](
     if (userId == actorUserId) timeTrackingRepo.listByUser(userId)
     else List.empty[TimeTrackingEntry].pure[F]
 
+  override def listEntriesByUserPage(
+      userId: UserId,
+      actorUserId: UserId,
+      offset: Int,
+      limit: Int
+  ): F[List[TimeTrackingEntry]] =
+    listEntriesByUser(userId, actorUserId).map(paginate(_, offset, limit))
+
   override def listEntriesByTicket(
       ticketId: TicketId,
       actorUserId: UserId
@@ -138,4 +146,11 @@ final class TimeTrackingServiceLive[F[_]: MonadCancelThrow](
           case _                           => false.pure[F]
         }
     }
+
+  private def paginate[A](items: List[A], offset: Int, limit: Int): List[A] = {
+    val normalizedOffset = math.max(0, offset)
+    val normalizedLimit  = math.max(0, limit)
+
+    items.slice(normalizedOffset, normalizedOffset + normalizedLimit)
+  }
 }

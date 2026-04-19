@@ -25,11 +25,14 @@ export interface NormalizedQueryBoardsParams {
 
 export interface BoardsContextValue {
   boards: Board[];
+  canLoadMoreBoards: boolean;
   boardsError: Error | null;
   createBoard: (input: CreateBoardInput) => Promise<void>;
   currentParams: NormalizedQueryBoardsParams;
   isCreatingBoard: boolean;
   isLoadingBoards: boolean;
+  isLoadingMoreBoards: boolean;
+  loadNextBoardsPage: () => Promise<void>;
   ownerOptions: BoardOwnerOption[];
   queryBoards: (params: QueryBoardsParams) => void;
 }
@@ -40,6 +43,7 @@ const missingBoardsProvider = (): never => {
 
 export const BoardsContext = createContext<BoardsContextValue>({
   boards: [],
+  canLoadMoreBoards: false,
   boardsError: null,
   createBoard: missingBoardsProvider,
   currentParams: {
@@ -48,6 +52,8 @@ export const BoardsContext = createContext<BoardsContextValue>({
   },
   isCreatingBoard: false,
   isLoadingBoards: false,
+  isLoadingMoreBoards: false,
+  loadNextBoardsPage: missingBoardsProvider,
   ownerOptions: [],
   queryBoards: missingBoardsProvider
 });

@@ -15,16 +15,20 @@ import {
 } from "@helpers/timeTrackingConversions";
 
 interface TimeInputProps {
+  compact?: boolean | undefined;
   disabled?: boolean | undefined;
   label?: string | undefined;
   onChange: (value: number | null) => void;
+  showFormatHint?: boolean | undefined;
   value: number | null;
 }
 
 export const TimeInput = ({
+  compact = false,
   disabled = false,
   label = "Time (HH:MM)",
   onChange,
+  showFormatHint = true,
   value
 }: TimeInputProps): ReactElement => {
   const [rawDuration, setRawDuration] = useState(formatMinutesToTimeInput(value));
@@ -78,13 +82,27 @@ export const TimeInput = ({
         error={durationError}
         fullWidth
         helperText={
-          durationError
-            ? "Use HH:MM or just hours, for example 02:30 or 2."
-            : "Enter HH:MM. If you omit ':', the value is treated as hours."
+          showFormatHint
+            ? (
+                durationError
+                  ? "Use HH:MM or just hours, for example 02:30 or 2."
+                  : "Enter HH:MM. If you omit ':', the value is treated as hours."
+              )
+            : undefined
         }
         label={label}
         onBlur={handleDurationBlur}
         onChange={handleDurationChange}
+        size={compact ? "small" : "medium"}
+        sx={
+          compact
+            ? {
+                "& .MuiInputBase-root": {
+                  minHeight: 40
+                }
+              }
+            : undefined
+        }
         slotProps={{
           input: {
             endAdornment: (

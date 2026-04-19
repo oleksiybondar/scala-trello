@@ -7,14 +7,21 @@ Frontend for the training monorepo, built with React, TypeScript, Vite, MUI, and
 - authentication flows: register, login, refresh, logout
 - current user loading and settings updates (profile, username, email, avatar, password, UI preferences)
 - boards list page with search/owner/inactive filters and create board
+- boards list uses server pagination with infinite scrolling
 - board page with ticket columns, drag-and-drop state transitions, ticket filters, and priority direction toggles
 - board settings pages (general, members, ownership)
 - my tickets page with search, severity, priority, and assigned-only filtering
+- my tickets uses server pagination with infinite scrolling
 - ticket details page with:
   - header `[ticketId] name` and board link
   - card-based editable sections (title, priority+severity, description, acceptance criteria)
   - activity panel with time velocity and activity distribution charts
-- my time registration page stub
+- my time registration page with:
+  - search/activity filters
+  - server pagination with infinite scrolling
+  - inline editable table rows (activity, time, logged-at, description)
+  - ticket and board links per entry
+  - entry edit/delete actions
 
 ## Routes
 

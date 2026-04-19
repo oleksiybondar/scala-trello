@@ -6,4 +6,5 @@ export { useMyTickets } from "@hooks/useMyTickets";
 export { useRoles } from "@hooks/useRoles";
 export { useTicket } from "@hooks/useTicket";
 export { useTickets } from "@hooks/useTickets";
+export { useTimeTrackingEntries } from "@hooks/useTimeTrackingEntries";
 export { useThemeManager } from "@hooks/useThemeManager";

@@ -1,8 +1,10 @@
 import type {
   TimeTrackingEntryResponse,
+  TimeTrackingBoardSummaryResponse,
   TimeTrackingUserSummaryResponse
 } from "./dto";
 import type {
+  TimeTrackingBoardSummary,
   TimeTrackingEntry,
   TimeTrackingTicketSummary,
   TimeTrackingUserSummary
@@ -23,6 +25,20 @@ const mapTimeTrackingUserSummary = (
   };
 };
 
+const mapTimeTrackingBoardSummary = (
+  response: TimeTrackingBoardSummaryResponse | null
+): TimeTrackingBoardSummary | null => {
+  if (response === null) {
+    return null;
+  }
+
+  return {
+    active: response.active,
+    boardId: response.id,
+    title: response.title
+  };
+};
+
 const mapTimeTrackingTicketSummary = (
   response: TimeTrackingEntryResponse["ticket"]
 ): TimeTrackingTicketSummary | null => {
@@ -31,6 +47,7 @@ const mapTimeTrackingTicketSummary = (
   }
 
   return {
+    board: mapTimeTrackingBoardSummary(response.board ?? null),
     description: response.description,
     ticketId: response.id,
     title: response.title

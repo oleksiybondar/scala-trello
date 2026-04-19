@@ -1,4 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { InfiniteData } from "@tanstack/react-query";
 
 import type { NormalizedQueryBoardsParams } from "@contexts/boards-context";
 import { useAuth } from "@hooks/useAuth";
@@ -18,10 +21,13 @@ import type {
 
 interface BoardsService {
   boards: Board[];
+  canLoadMoreBoards: boolean;
   boardsError: Error | null;
   createBoard: (input: CreateBoardInput) => Promise<Board>;
+  loadNextBoardsPage: () => Promise<void>;
   isCreatingBoard: boolean;
   isLoadingBoards: boolean;
+  isLoadingMoreBoards: boolean;
 }
 
 interface UseBoardsServiceParams {
@@ -31,13 +37,29 @@ interface UseBoardsServiceParams {
 export const useBoardsService = ({
   currentParams
 }: UseBoardsServiceParams): BoardsService => {
+  const BOARDS_PER_PAGE = 10;
   const { accessToken, session } = useAuth();
   const queryClient = useQueryClient();
   const isEnabled = accessToken !== null && session !== null;
+  const isLoadingMoreRef = useRef(false);
 
-  const boardsQuery = useQuery({
+  const boardsQuery = useInfiniteQuery<
+    Board[],
+    Error,
+    InfiniteData<Board[]>,
+    readonly unknown[],
+    number
+  >({
     enabled: isEnabled,
-    queryFn: async () => {
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.length < BOARDS_PER_PAGE) {
+        return undefined;
+      }
+
+      return allPages.reduce((total, page) => total + page.length, 0);
+    },
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }) => {
       if (accessToken === null || session === null) {
         throw new Error("Authentication context is required for board operations.");
       }
@@ -47,6 +69,8 @@ export const useBoardsService = ({
         document: buildMyBoardsQuery({
           active: currentParams.showInactive ? undefined : true,
           keyword: currentParams.keyword,
+          limit: BOARDS_PER_PAGE,
+          offset: pageParam,
           ownerUserId: currentParams.owner
         }),
         tokenType: session.tokenType
@@ -83,13 +107,38 @@ export const useBoardsService = ({
     }
   });
 
+  useEffect(() => {
+    isLoadingMoreRef.current = boardsQuery.isFetchingNextPage;
+  }, [boardsQuery.isFetchingNextPage]);
+
+  const boards = useMemo(() => {
+    return boardsQuery.data?.pages.flatMap(page => page) ?? [];
+  }, [boardsQuery.data?.pages]);
+
+  const loadNextBoardsPage = useCallback(async () => {
+    if (isLoadingMoreRef.current || !boardsQuery.hasNextPage) {
+      return;
+    }
+
+    isLoadingMoreRef.current = true;
+
+    try {
+      await boardsQuery.fetchNextPage();
+    } finally {
+      isLoadingMoreRef.current = false;
+    }
+  }, [boardsQuery.fetchNextPage, boardsQuery.hasNextPage]);
+
   return {
-    boards: boardsQuery.data ?? [],
+    boards,
+    canLoadMoreBoards: boardsQuery.hasNextPage,
     boardsError: boardsQuery.error instanceof Error ? boardsQuery.error : null,
     createBoard: async (input: CreateBoardInput) => {
       return createBoardMutation.mutateAsync(input);
     },
+    loadNextBoardsPage,
     isCreatingBoard: createBoardMutation.isPending,
-    isLoadingBoards: boardsQuery.isLoading
+    isLoadingBoards: boardsQuery.isLoading,
+    isLoadingMoreBoards: boardsQuery.isFetchingNextPage
   };
 };

@@ -34,7 +34,8 @@ export default defineConfig(({ mode }) => {
         "@providers": path.resolve(__dirname, "src/providers"),
         "@routes": path.resolve(__dirname, "src/routes"),
         "@tests": path.resolve(__dirname, "tests"),
-        "@theme": path.resolve(__dirname, "src/theme")
+        "@theme": path.resolve(__dirname, "src/theme"),
+        "@assets": path.resolve(__dirname, "src/assets")
       }
     },
     plugins: [react()]

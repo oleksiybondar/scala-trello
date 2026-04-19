@@ -1,0 +1,7 @@
+.git
+.idea
+.bsp
+.metals
+.scala-build
+target
+project/target

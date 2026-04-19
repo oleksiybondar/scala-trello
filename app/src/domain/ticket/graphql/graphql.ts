@@ -119,10 +119,18 @@ export const buildTicketsQuery = (boardId: string): string => {
   `;
 };
 
-export const buildMyTicketsQuery = (assignedOnly: boolean): string => {
+export const buildMyTicketsQuery = (
+  assignedOnly: boolean,
+  offset = 0,
+  limit = 30
+): string => {
   return /* GraphQL */ `
     query {
-      myTickets(assignedOnly: ${String(assignedOnly)}) {
+      myTickets(
+        assignedOnly: ${String(assignedOnly)}
+        offset: ${String(offset)}
+        limit: ${String(limit)}
+      ) {
         ${TICKET_FIELDS}
       }
     }

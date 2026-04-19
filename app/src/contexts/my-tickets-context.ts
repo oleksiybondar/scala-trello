@@ -19,8 +19,11 @@ export interface NormalizedQueryMyTicketsParams {
 }
 
 export interface MyTicketsContextValue {
+  canLoadMoreMyTickets: boolean;
   currentParams: NormalizedQueryMyTicketsParams;
   isLoadingMyTickets: boolean;
+  isLoadingNextMyTicketsPage: boolean;
+  loadNextMyTicketsPage: () => Promise<void>;
   myTickets: Ticket[];
   myTicketsError: Error | null;
   queryMyTickets: (params: QueryMyTicketsParams) => void;
@@ -32,6 +35,7 @@ const missingMyTicketsProvider = (): never => {
 };
 
 export const MyTicketsContext = createContext<MyTicketsContextValue>({
+  canLoadMoreMyTickets: false,
   currentParams: {
     assignedOnly: false,
     page: 1,
@@ -39,6 +43,8 @@ export const MyTicketsContext = createContext<MyTicketsContextValue>({
     severityIds: []
   },
   isLoadingMyTickets: false,
+  isLoadingNextMyTicketsPage: false,
+  loadNextMyTicketsPage: missingMyTicketsProvider,
   myTickets: [],
   myTicketsError: null,
   queryMyTickets: missingMyTicketsProvider,

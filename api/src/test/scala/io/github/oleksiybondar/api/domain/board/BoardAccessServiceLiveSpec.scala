@@ -172,7 +172,7 @@ class BoardAccessServiceLiveSpec extends FunSuite {
     assertEquals(result, false)
   }
 
-  test("returns false for inactive dashboards when the requester is not the owner") {
+  test("allows read access for inactive dashboards when the requester is a member") {
     val inactiveDashboard = BoardFixtures.sampleDashboard.copy(active = false)
 
     val viewerMember =
@@ -188,6 +188,27 @@ class BoardAccessServiceLiveSpec extends FunSuite {
       permissions = List(PermissionFixtures.viewerDashboardPermission)
     ) { ctx =>
       ctx.dashboardAccessService.canReadDashboard(viewerMember.boardId, viewerMember.userId)
+    }
+
+    assertEquals(result, true)
+  }
+
+  test("returns false for inactive dashboards modify access when the requester is not the owner") {
+    val inactiveDashboard = BoardFixtures.sampleDashboard.copy(active = false)
+
+    val viewerMember =
+      BoardMemberFixtures.sampleMember.copy(
+        userId = UserId(UUID.fromString("22222222-2222-2222-2222-222222222222")),
+        roleId = io.github.oleksiybondar.api.domain.permission.RoleId(3)
+      )
+
+    val result = BoardAccessServiceFixtures.withBoardAccessService(
+      dashboards = List(inactiveDashboard),
+      members = List(viewerMember),
+      roles = List(RoleFixtures.viewerRole),
+      permissions = List(PermissionFixtures.viewerDashboardPermission)
+    ) { ctx =>
+      ctx.dashboardAccessService.canModifyDashboard(viewerMember.boardId, viewerMember.userId)
     }
 
     assertEquals(result, false)

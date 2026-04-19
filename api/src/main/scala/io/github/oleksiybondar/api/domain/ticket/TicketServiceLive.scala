@@ -68,6 +68,28 @@ final class TicketServiceLive[F[_]: Temporal](
       case true  => ticketRepo.listByBoard(boardId)
     }
 
+  override def listMyTicketsPage(
+      actorUserId: UserId,
+      assignedOnly: Boolean,
+      offset: Int,
+      limit: Int
+  ): F[List[Ticket]] =
+    boardMembershipService
+      .listMembershipsForUser(actorUserId)
+      .flatMap(
+        _.map(_.member.boardId).distinct.traverse(boardId => listTickets(boardId, actorUserId))
+      )
+      .map(_.flatten)
+      .map(
+        _.filter { ticket =>
+          if (assignedOnly) ticket.assignedToUserId.contains(actorUserId)
+          else
+            ticket.assignedToUserId.contains(actorUserId) || ticket.createdByUserId == actorUserId
+        }
+      )
+      .map(_.sortBy(_.modifiedAt)(Ordering[java.time.Instant].reverse))
+      .map(paginate(_, offset, limit))
+
   override def changeTitle(
       ticketId: TicketId,
       actorUserId: UserId,
@@ -201,4 +223,11 @@ final class TicketServiceLive[F[_]: Temporal](
       case Some(userId) =>
         boardMembershipService.findMember(boardId, userId).map(_.nonEmpty)
     }
+
+  private def paginate[A](items: List[A], offset: Int, limit: Int): List[A] = {
+    val normalizedOffset = math.max(0, offset)
+    val normalizedLimit  = math.max(0, limit)
+
+    items.slice(normalizedOffset, normalizedOffset + normalizedLimit)
+  }
 }
